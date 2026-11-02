@@ -69,6 +69,10 @@
   .seg { display: grid; grid-template-columns: 1fr 1fr; }
   .seg button + button { border-left: 0; }
 
+  /* Output: the radio at home, or this phone */
+  .out { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+  .out .seg button { height: 32px; font-size: 19px; }
+
   /* Dial + art */
   .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
   .dial-wrap { display: grid; justify-items: center; gap: 8px; }
@@ -100,6 +104,7 @@
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; }
+  .unit > *, .strip > div { min-width: 0; }  /* long scrolling titles must not widen the page */
   .detail { display: none; }
   .line { font-family: var(--dot); white-space: nowrap; overflow: hidden; line-height: 1; transition: opacity .2s; }
   .line.big { font-size: clamp(24px, 7.6vw, 32px); }
@@ -187,6 +192,7 @@
       grid-template-columns: minmax(220px, 24%) minmax(0, 1fr) 300px;
       grid-template-areas:
         "head head head"
+        "art  info out"
         "art  info keys"
         "art  info dial"
         "art  info vol"
@@ -197,11 +203,11 @@
     .mid { display: contents; }
     .art { grid-area: art; align-self: start; }
     .strip { grid-area: info; aspect-ratio: auto; padding: 18px 24px; align-content: space-between; gap: 14px; min-width: 0; }
-    .strip > div { min-width: 0; }
     .detail { display: grid; gap: 12px; }
     .line.big { font-size: clamp(36px, 4vw, 56px); }
     .line.small { font-size: clamp(22px, 2vw, 28px); }
     .top { grid-area: keys; }
+    .out { grid-area: out; }
     .dial-wrap { grid-area: dial; }
     .dial { max-width: 150px; }
     .vol { grid-area: vol; align-self: end; }
@@ -226,6 +232,14 @@
     <span class="sig" id="sig"></span>
     <span class="clock" id="clock"></span>
     <span id="status">--</span>
+  </div>
+
+  <div class="out">
+    <span class="label">Output</span>
+    <div class="seg" role="group" aria-label="Play on the radio or on this device">
+      <button id="outRadio">RADIO</button>
+      <button id="outPhone">THIS DEVICE</button>
+    </div>
   </div>
 
   <div class="top">
@@ -301,7 +315,7 @@ const hhmm = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", mi
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function api(path, body) {
-  const get = path.startsWith("/api/") && body === undefined && !path.match(/play|toggle|stop|step|volume/);
+  const get = body === undefined && !/^\/api\/(play|toggle|stop|step|volume)\b/.test(path);
   const opts = get ? {} : body === undefined ? { method: "POST" } :
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   try {
@@ -315,6 +329,132 @@ function setNote(html) {
   const n = $("note");
   n.innerHTML = html || "";
   n.classList.toggle("show", !!html);
+}
+
+/* Output mode. "radio" drives the speakers at home through the server.
+   "phone" plays the stream on this device and only asks the server what's on. */
+let mode = "radio";
+try { mode = localStorage.getItem("piRadioOutput") || "radio"; } catch (_) {}
+const URLS = {}, NAMES = {};   // station id -> stream URL, display name
+const audio = new Audio();
+audio.preload = "none";
+const local = { id: null, playing: false, volume: 80, desc: null };
+let hls = null;
+// iPhones only allow the hardware buttons to set volume; detect that so the bar can say so.
+const canSetVolume = (() => { const a = new Audio(); a.volume = 0.5; return a.volume === 0.5; })();
+const needsHlsJs = !audio.canPlayType("application/vnd.apple.mpegurl");
+let hlsLoading = null;
+
+function loadHlsJs() {
+  // Safari plays HLS (The Lot Radio) natively; other browsers need hls.js.
+  if (!needsHlsJs || window.Hls) return Promise.resolve();
+  return hlsLoading ||= new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js";
+    s.onload = ok; s.onerror = fail;
+    document.head.appendChild(s);
+  });
+}
+
+function phoneRender() {
+  if (!local.desc) return;
+  render({ ...local.desc, playing: local.playing, volume: canSetVolume ? local.volume : null, player: "phone" });
+}
+
+async function phoneDescribe() {
+  if (!local.id) return;
+  const d = await api(`/api/now/${local.id}`);
+  if (d && d.station.id === local.id) { local.desc = d; phoneRender(); }
+}
+
+async function phonePlay(id) {
+  if (hls) { hls.destroy(); hls = null; }
+  local.id = id;
+  const url = URLS[id];
+  // Start playback inside the tap: iPhones block audio that starts later.
+  if (url.includes(".m3u8") && needsHlsJs) {
+    await loadHlsJs();
+    hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(audio);
+  } else {
+    audio.src = url;
+  }
+  audio.volume = local.volume / 100;
+  local.playing = true;
+  audio.play().catch(() => setNote("TAP PLAY TO START AUDIO ON THIS DEVICE."));
+  local.desc = local.desc && local.desc.station.id === id ? local.desc :
+    { ...(local.desc || {}), station: { id, name: NAMES[id] || id, group: "" }, now: { title: "", subtitle: "" }, signal: {}, art: `/api/art/${id}` };
+  phoneRender();
+  phoneDescribe();
+}
+
+function phoneStop() {
+  if (hls) { hls.destroy(); hls = null; }
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();  // stops the download, not just the sound
+  local.playing = false;
+  phoneRender();
+}
+
+audio.addEventListener("playing", () => setNote(""));
+audio.addEventListener("error", () => {
+  if (!local.playing) return;
+  local.playing = false;
+  setNote("STREAM FAILED ON THIS DEVICE. TRY ANOTHER STATION.");
+  phoneRender();
+});
+
+// Lock-screen and headphone controls.
+if ("mediaSession" in navigator) {
+  const ms = navigator.mediaSession;
+  ms.setActionHandler("play", () => { if (mode === "phone" && !local.playing) act.toggle(); });
+  ms.setActionHandler("pause", () => { if (mode === "phone") act.stop(); });
+  ms.setActionHandler("stop", () => { if (mode === "phone") act.stop(); });
+  ms.setActionHandler("nexttrack", () => { if (mode === "phone") act.step(1); });
+  ms.setActionHandler("previoustrack", () => { if (mode === "phone") act.step(-1); });
+}
+function mediaMeta(s) {
+  if (!("mediaSession" in navigator) || s.player !== "phone") return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: s.now.title || s.station.name, artist: s.station.name, album: "Pi Radio",
+    artwork: [{ src: new URL(s.art, location.href).href, sizes: "128x128", type: "image/png" }],
+  });
+  navigator.mediaSession.playbackState = s.playing ? "playing" : "paused";
+}
+
+/* Every control goes through here, so each one works in both output modes. */
+const act = {
+  play: (id) => mode === "phone" ? phonePlay(id) : api(`/api/play/${id}`).then(render),
+  toggle: () => mode === "phone"
+    ? (local.playing ? phoneStop() : phonePlay(local.id || (S && S.station.id) || order[0]))
+    : api("/api/toggle").then(render),
+  stop: () => mode === "phone" ? phoneStop() : api("/api/stop").then(render),
+  step: (dir) => {
+    if (mode !== "phone") return api(`/api/step/${dir}`).then(render);
+    const cur = order.indexOf(local.id || (S && S.station.id));
+    return phonePlay(order[(cur + dir + order.length) % order.length]);
+  },
+  volume: (v) => {
+    if (mode !== "phone") return api("/api/volume", { value: v }).then(render);
+    local.volume = v; audio.volume = v / 100; phoneRender();
+  },
+};
+
+function setMode(m) {
+  if (m === mode) return;
+  if (m === "radio") phoneStop();
+  else if (S) { local.id = local.id || S.station.id; local.desc = local.desc || { ...S }; }
+  mode = m;
+  try { localStorage.setItem("piRadioOutput", m); } catch (_) {}
+  drawMode();
+  poll();
+}
+function drawMode() {
+  $("outRadio").classList.toggle("on", mode === "radio");
+  $("outPhone").classList.toggle("on", mode === "phone");
+  if (mode === "phone" && needsHlsJs) loadHlsJs().catch(() => {});
 }
 
 function setLine(el, text) {
@@ -365,10 +505,11 @@ function drawDetail(now) {
 function render(s) {
   if (!s) return;
   S = s;
-  setNote(s.player === "mock" ? "MOCK PLAYER: NO SOUND. START MPD OR RUN ON THE PI." : "");
+  if (s.player !== "phone") setNote(s.player === "mock" ? "MOCK PLAYER: NO SOUND. START MPD OR RUN ON THE PI." : "");
+  mediaMeta(s);
 
   const on = s.playing, id = s.station.id;
-  $("status").textContent = on ? "● ON AIR" : "○ STANDBY";
+  $("status").textContent = on ? (s.player === "phone" ? "● ON DEVICE" : "● ON AIR") : "○ STANDBY";
   $("status").className = on ? "glow" : "";
   $("btnPlay").classList.toggle("on", on);
   $("btnStop").classList.toggle("on", !on);
@@ -408,11 +549,12 @@ function stationGroup(g, startN) {
   sec.innerHTML = `<h2>${esc(g.name.toUpperCase())}</h2>`;
   g.stations.forEach((st, i) => {
     order.push(st.id);
+    URLS[st.id] = st.url; NAMES[st.id] = st.name;
     const b = document.createElement("button");
     b.className = "row"; b.dataset.id = st.id;
     b.innerHTML = `<span class="cur">&gt;</span><span class="n">${pad(startN + i)}</span>` +
       `<span>${esc(st.name.toUpperCase())}<span class="sub" data-sub="${st.id}">${esc(st.sub)}</span></span>`;
-    b.onclick = () => api(`/api/play/${st.id}`).then(render);
+    b.onclick = () => act.play(st.id);
     sec.appendChild(b);
   });
   return sec;
@@ -462,7 +604,7 @@ async function loadSchedule() {
     if (sub && shows[0]) sub.textContent = shows[0].title.toUpperCase();
   }
   $("sched").innerHTML = html || `<div class="empty">NO SCHEDULE</div>`;
-  $("sched").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => api(`/api/play/${b.dataset.ch}`).then(render));
+  $("sched").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => act.play(b.dataset.ch));
 }
 
 async function loadRecent() {
@@ -482,9 +624,11 @@ function tick() {
 
 /* Keys and play/stop */
 document.querySelectorAll("[data-play]").forEach(b =>
-  b.addEventListener("click", () => api(`/api/play/${b.dataset.play}`).then(render)));
-$("btnPlay").addEventListener("click", () => { if (!S || !S.playing) api("/api/toggle").then(render); });
-$("btnStop").addEventListener("click", () => api("/api/stop").then(render));
+  b.addEventListener("click", () => act.play(b.dataset.play)));
+$("btnPlay").addEventListener("click", () => { if (!S || !S.playing) act.toggle(); });
+$("btnStop").addEventListener("click", () => act.stop());
+$("outRadio").addEventListener("click", () => setMode("radio"));
+$("outPhone").addEventListener("click", () => setMode("phone"));
 
 /* Dial: drag round to step stations (one step per 30°), tap to play/stop. */
 const STEP_DEG = 30;
@@ -496,11 +640,11 @@ function angleAt(e) {
 function turn(dir) {
   if (navigator.vibrate) navigator.vibrate(8);
   // Move the lit square straight away; the server confirms a moment later.
-  if (S) {
+  if (S && mode === "radio") {
     const i = (order.indexOf(S.station.id) + dir + order.length) % order.length;
     render({ ...S, station: { ...S.station, id: order[i] } });
   }
-  api(`/api/step/${dir}`).then(render);
+  act.step(dir);
 }
 $("dial").addEventListener("pointerdown", e => {
   drag = { last: angleAt(e), acc: 0, moved: false };
@@ -522,14 +666,14 @@ $("dial").addEventListener("pointermove", e => {
   }
 });
 $("dial").addEventListener("pointerup", () => {
-  if (drag && !drag.moved) api("/api/toggle").then(render);
+  if (drag && !drag.moved) act.toggle();
   drag = null;
 });
 $("dial").addEventListener("pointercancel", () => { drag = null; });
 $("dial").addEventListener("keydown", e => {
   if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); turn(1); }
   if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); turn(-1); }
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); api("/api/toggle").then(render); }
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act.toggle(); }
 });
 
 /* Volume: update the bar live, send after a short pause. */
@@ -538,7 +682,7 @@ $("vol").addEventListener("input", e => {
   volDragging = true;
   drawVolume(+e.target.value);
   clearTimeout(volTimer);
-  volTimer = setTimeout(() => api("/api/volume", { value: +e.target.value }).then(s => { volDragging = false; render(s); }), 150);
+  volTimer = setTimeout(async () => { await act.volume(+e.target.value); volDragging = false; }, 150);
 });
 
 /* Spectrum: real levels from MPD when it's there; otherwise a simulation, labelled SIM. */
@@ -574,7 +718,7 @@ async function visLoop(t) {
   const playing = S && S.playing && !document.hidden;
   if (!playing) {
     visLevels = visLevels.map(v => v * 0.8);
-  } else if (visSource === "mpd") {
+  } else if (visSource === "mpd" && S.player !== "phone") {
     if (t - visLast > 66) {            // ~15 updates a second
       visLast = t;
       const d = await api("/api/spectrum");
@@ -587,14 +731,25 @@ async function visLoop(t) {
       api("/api/spectrum").then(d => { if (d) visSource = d.source; });
     }
   }
-  $("visSrc").textContent = !playing ? "" : visSource === "mpd" ? "LIVE" : "SIM";
+  $("visSrc").textContent = !playing ? "" : visSource === "mpd" && S.player !== "phone" ? "LIVE" : "SIM";
   drawVis();
   requestAnimationFrame(visLoop);
 }
 
 /* Poll so the app follows the physical controls and show changes. */
-async function poll() { render(await api("/api/state")); }
-build().then(() => { poll(); loadSchedule(); loadRecent(); requestAnimationFrame(visLoop); });
+async function poll() {
+  if (mode === "phone") return phoneDescribe();
+  render(await api("/api/state"));
+}
+build().then(async () => {
+  drawMode();
+  if (mode === "phone") {
+    // Start from whatever the radio was last on, stopped, until a station is tapped.
+    const s = await api("/api/state");
+    if (s) { local.id = s.station.id; local.desc = s; phoneRender(); }
+  } else poll();
+  loadSchedule(); loadRecent(); requestAnimationFrame(visLoop);
+});
 tick();
 setInterval(tick, 1000);
 setInterval(poll, 3000);

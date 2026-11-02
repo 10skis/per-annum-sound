@@ -158,7 +158,8 @@ def stations():
         if s["kind"] == "radio":
             return s.get("place", "")
         return ""  # NTS live: the page fills this from the schedule
-    return [{"name": g["name"], "stations": [{"id": s["id"], "name": s["name"], "sub": sub(s)} for s in g["stations"]]}
+    return [{"name": g["name"], "stations": [{"id": s["id"], "name": s["name"], "sub": sub(s), "url": s["url"]}
+                                             for s in g["stations"]]}
             for g in GROUPS]
 
 
@@ -170,18 +171,26 @@ def state():
         match = next((s["id"] for s in STATIONS if s["url"] == st["url"]), None)
         if match and match != current:
             _set_current(match)
-    station = BY_ID[current]
+    return {**_describe(BY_ID[current], st), "playing": st["playing"], "volume": st["volume"], "player": player.name}
+
+
+def _describe(station: dict, st: dict) -> dict:
     now = now_playing(station, st.get("title"))
     art_key = hashlib.sha1((now["art"] or station["name"]).encode()).hexdigest()[:10]
     return {
-        "station": {"id": station["id"], "name": station["name"], "group": station["group"]},
-        "playing": st["playing"],
-        "volume": st["volume"],
-        "player": player.name,
+        "station": {"id": station["id"], "name": station["name"], "group": station["group"], "url": station["url"]},
         "now": {k: now[k] for k in ("title", "subtitle", "description", "genres", "start", "end")},
         "signal": _signal(station, st),
         "art": f"/api/art/{station['id']}?v={art_key}",
     }
+
+
+@app.get("/api/now/{sid}")
+def now_for(sid: str):
+    """What's on a station, without touching the radio. Used when the phone plays the stream itself."""
+    if sid not in BY_ID:
+        raise HTTPException(404, "Unknown station")
+    return _describe(BY_ID[sid], {})
 
 
 @app.get("/api/schedule")

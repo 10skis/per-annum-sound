@@ -21,7 +21,7 @@ One control service runs on the Pi. The physical controls and the web app are tw
 | Control service | Python: `python-mpd2` for playback, `gpiozero` for buttons and dial, FastAPI for the web app |
 | Station list | `stations.yaml`: NTS 1, NTS 2, the 16 Infinite Mixtapes, then other stations |
 | Stream sources | NTS public stream URLs; radio-browser.info for everything else |
-| Network | Home Wi-Fi only |
+| Network | Home Wi-Fi, plus Tailscale for access away from home |
 
 ## Scope 1: Physical device
 
@@ -112,6 +112,8 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Station board | Live show under NTS 1/2, tagline under each mixtape, city under other stations |
 | Signal readout | Codec, bitrate, sample rate, plus a clock |
 | Recently played | Last 50 shows and tracks, logged every 15 s while playing |
+| Output switch | RADIO plays on the speakers at home; THIS DEVICE plays the stream on the phone or laptop, with lock-screen controls |
+| Away from home | Tailscale private network to the Pi; nothing exposed to the internet |
 | Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
 
 The visual style is flat retro digital: amber on near-black, dot-matrix type, an LED-ring dial and a segmented volume bar. Changed from mechanical-looking controls on 2026-11-02.
@@ -140,6 +142,7 @@ Changed 2026-11-02: the web app is built first, on the Mac, then the physical de
 | Mausberry's toggle version works with a latching switch on the Pi Zero 2 W | Before ordering |
 | moOde lets us add a FIFO output to its MPD config for the spectrum | Scope 1, Phase 1 |
 | A Pi Zero 2 W runs the spectrum analysis without audio dropouts | Scope 1, Phase 1 |
+| iPhone keeps playing in THIS DEVICE mode with the screen locked, from the home-screen icon | First phone test |
 
 ## Open items
 

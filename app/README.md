@@ -30,6 +30,19 @@ mpd dev/mpd.conf
 
 The spectrum shows LIVE when it's reading MPD's audio (the FIFO output in `dev/mpd.conf`) and SIM when it's simulating. On the Pi, moOde needs the same FIFO output added to its MPD config.
 
+## Listening away from home
+
+The OUTPUT switch at the top of the controls picks where sound comes out. RADIO drives the speakers at home. THIS DEVICE plays the stream on the phone or laptop you're holding, and the radio is left alone. The choice is remembered per device. Lock-screen and headphone controls work in THIS DEVICE mode.
+
+To reach the app from outside the home network, use Tailscale, a free private network between your own devices. Nothing is opened to the internet.
+
+1. Install Tailscale on the machine running the app (the Pi; the Mac for now) and sign in. On the Pi: `curl -fsSL https://tailscale.com/install.sh | sh`, then `sudo tailscale up`.
+2. Install the Tailscale app on the iPhone and sign in with the same account.
+3. In the Tailscale app, find the machine's name (for example `pi-radio`). On the iPhone, open `http://<that name>:8080` in Safari.
+4. Share → Add to Home Screen from that address. It works at home and away, so it replaces any icon made from the `.local` address.
+
+The machine at home has to be on and running `run.sh`.
+
 ## Adding a station
 
 Add a line under "Elsewhere" in `stations.yaml` with an id, name, place and stream URL (find streams at radio-browser.info), then restart `run.sh`.
