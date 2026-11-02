@@ -31,7 +31,8 @@ class MockPlayer:
         self._volume = max(0, min(100, value))
 
     def status(self) -> dict:
-        return {"playing": self._playing, "volume": self._volume, "url": self._url, "title": None}
+        return {"playing": self._playing, "volume": self._volume, "url": self._url, "title": None,
+                "bitrate": None, "audio": None}
 
 
 class MPDPlayer:
@@ -80,6 +81,8 @@ class MPDPlayer:
                 "volume": vol if vol >= 0 else None,
                 "url": song.get("file"),
                 "title": song.get("title"),
+                "bitrate": st.get("bitrate"),  # kbps, while playing
+                "audio": st.get("audio"),      # "samplerate:bits:channels", e.g. "44100:16:2"
             }
         return self._run(get)
 

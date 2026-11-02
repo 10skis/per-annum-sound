@@ -107,6 +107,12 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Now playing | Station, show, host, track, with the same dithered art as the device |
 | Volume | Software volume |
 | Sync | Reflects the physical controls live |
+| NTS schedule | Now and the next three shows on both channels, tap to tune in |
+| Show detail | Description, genres, and a progress bar with time left |
+| Station board | Live show under NTS 1/2, tagline under each mixtape, city under other stations |
+| Signal readout | Codec, bitrate, sample rate, plus a clock |
+| Recently played | Last 50 shows and tracks, logged every 15 s while playing |
+| Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
 
 The visual style is flat retro digital: amber on near-black, dot-matrix type, an LED-ring dial and a segmented volume bar. Changed from mechanical-looking controls on 2026-11-02.
 
@@ -132,6 +138,8 @@ Changed 2026-11-02: the web app is built first, on the Mac, then the physical de
 | moOde can resume playback on boot | Scope 1, Phase 5 |
 | The color OLED's amber can be matched closely to the yellow strip | Scope 1, Phase 4 |
 | Mausberry's toggle version works with a latching switch on the Pi Zero 2 W | Before ordering |
+| moOde lets us add a FIFO output to its MPD config for the spectrum | Scope 1, Phase 1 |
+| A Pi Zero 2 W runs the spectrum analysis without audio dropouts | Scope 1, Phase 1 |
 
 ## Open items
 

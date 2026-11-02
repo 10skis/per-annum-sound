@@ -2,15 +2,21 @@
 later, the physical controls both drive it through these endpoints.
 
 Run:  .venv/bin/uvicorn server:app --host 0.0.0.0 --port 8080
-Env:  PLAYER=mpd|mock (default: MPD if reachable, else mock), MPD_HOST, MPD_PORT
+Env:  PLAYER=mpd|mock (default: MPD if reachable, else mock), MPD_HOST, MPD_PORT,
+      VIS_FIFO (default /tmp/pi-radio.fifo, the FIFO output in dev/mpd.conf)
 """
 
 import hashlib
 import json
 import logging
 import os
+import threading
+import time
+from collections import deque
+from datetime import datetime
 from pathlib import Path
 
+import httpx
 import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
@@ -20,17 +26,20 @@ from pydantic import BaseModel
 import art
 import nts
 from player import make_player
+from vis import Spectrum
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 HERE = Path(__file__).parent
 STATE_FILE = HERE / "state.json"
+HISTORY_FILE = HERE / "history.json"
 
 GROUPS = yaml.safe_load((HERE / "stations.yaml").read_text())["groups"]
 STATIONS = [dict(s, group=g["name"]) for g in GROUPS for s in g["stations"]]
 BY_ID = {s["id"]: s for s in STATIONS}
 
 player = make_player(os.getenv("PLAYER"), os.getenv("MPD_HOST", "localhost"), int(os.getenv("MPD_PORT", "6600")))
+spectrum = Spectrum(os.getenv("VIS_FIFO", "/tmp/pi-radio.fifo"))
 
 
 def _load_current() -> str:
@@ -57,12 +66,85 @@ def now_playing(station: dict, stream_title=None) -> dict:
     if kind == "nts_live":
         info = nts.live_now(station["channel"])
     elif kind == "nts_mixtape":
-        info = nts.mixtape(station["id"])
-        info["title"] = info.get("subtitle", "")
-        info["subtitle"] = "Infinite Mixtape"
+        mix = nts.mixtape(station["id"])
+        info = {"title": mix.get("subtitle", ""), "subtitle": "Infinite Mixtape",
+                "description": mix.get("description", ""), "art": mix.get("art")}
     else:
         info = {"title": stream_title or "", "subtitle": station.get("place", ""), "art": station.get("art")}
-    return {"title": info.get("title", ""), "subtitle": info.get("subtitle", ""), "art": info.get("art")}
+    return {
+        "title": info.get("title", ""),
+        "subtitle": info.get("subtitle", ""),
+        "description": info.get("description", ""),
+        "genres": info.get("genres", []),
+        "start": info.get("start"),
+        "end": info.get("end"),
+        "art": info.get("art"),
+    }
+
+
+# Stream format, read once per station from the stream's Content-Type.
+_codecs = {}
+
+
+def _codec(station: dict) -> str:
+    url = station["url"]
+    if url not in _codecs:
+        codec = ""
+        if ".m3u8" in url:
+            codec = "HLS"
+        else:
+            try:
+                with httpx.stream("GET", url, timeout=3, follow_redirects=True) as r:
+                    ctype = r.headers.get("content-type", "")
+                codec = "MP3" if "mpeg" in ctype else "AAC" if "aac" in ctype else "OGG" if "ogg" in ctype else ""
+            except Exception:
+                pass
+        _codecs[url] = codec
+    return _codecs[url]
+
+
+def _signal(station: dict, st: dict) -> dict:
+    rate = bits = channels = None
+    if st.get("audio"):
+        parts = st["audio"].split(":")
+        if len(parts) == 3:
+            rate, bits, channels = parts
+    return {
+        "codec": _codec(station),
+        "kbps": int(st["bitrate"]) if st.get("bitrate") and st["bitrate"].isdigit() and st["bitrate"] != "0" else None,
+        "khz": round(int(rate) / 1000, 1) if rate and rate.isdigit() else None,
+        "channels": int(channels) if channels and channels.isdigit() else None,
+    }
+
+
+# Recently played: a background check every 15 s logs each new show or track while playing.
+_history = deque(maxlen=50)
+_history_lock = threading.Lock()
+try:
+    _history.extend(json.loads(HISTORY_FILE.read_text()))
+except Exception:
+    pass
+
+
+def _log_history():
+    while True:
+        try:
+            st = player.status()
+            if st["playing"]:
+                station = BY_ID[current]
+                title = now_playing(station, st.get("title"))["title"]
+                with _history_lock:
+                    last = _history[0] if _history else None
+                    if not last or last["station"] != station["name"] or last["title"] != title:
+                        _history.appendleft({"at": datetime.now().astimezone().isoformat(timespec="seconds"),
+                                             "station": station["name"], "title": title})
+                        HISTORY_FILE.write_text(json.dumps(list(_history)))
+        except Exception as e:
+            logging.warning("History check failed: %s", e)
+        time.sleep(15)
+
+
+threading.Thread(target=_log_history, daemon=True).start()
 
 
 app = FastAPI(title="Pi Radio")
@@ -70,7 +152,14 @@ app = FastAPI(title="Pi Radio")
 
 @app.get("/api/stations")
 def stations():
-    return [{"name": g["name"], "stations": [{"id": s["id"], "name": s["name"]} for s in g["stations"]]} for g in GROUPS]
+    def sub(s):
+        if s["kind"] == "nts_mixtape":
+            return nts.mixtape(s["id"]).get("subtitle", "")
+        if s["kind"] == "radio":
+            return s.get("place", "")
+        return ""  # NTS live: the page fills this from the schedule
+    return [{"name": g["name"], "stations": [{"id": s["id"], "name": s["name"], "sub": sub(s)} for s in g["stations"]]}
+            for g in GROUPS]
 
 
 @app.get("/api/state")
@@ -89,9 +178,26 @@ def state():
         "playing": st["playing"],
         "volume": st["volume"],
         "player": player.name,
-        "now": {"title": now["title"], "subtitle": now["subtitle"]},
+        "now": {k: now[k] for k in ("title", "subtitle", "description", "genres", "start", "end")},
+        "signal": _signal(station, st),
         "art": f"/api/art/{station['id']}?v={art_key}",
     }
+
+
+@app.get("/api/schedule")
+def schedule():
+    return {"NTS 1": nts.schedule("1"), "NTS 2": nts.schedule("2")}
+
+
+@app.get("/api/history")
+def history():
+    with _history_lock:
+        return list(_history)[:20]
+
+
+@app.get("/api/spectrum")
+def spectrum_levels():
+    return spectrum.levels()
 
 
 @app.post("/api/play/{sid}")

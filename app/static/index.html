@@ -47,10 +47,13 @@
     user-select: none; -webkit-user-select: none;
   }
   .head {
-    display: flex; justify-content: space-between; align-items: baseline;
+    display: flex; gap: 14px; align-items: baseline;
     font-family: var(--dot); font-size: 18px; color: var(--amber-dim); letter-spacing: .08em;
     border-bottom: 1px dashed var(--line); padding-bottom: 8px; margin: -4px 0 0;
   }
+  .head .sig { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .head .clock { color: var(--amber-mid); }
+  .head .clock i { font-style: normal; animation: blink 2s steps(1) infinite; }
   .label { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--amber-dim); }
 
   /* Keys row */
@@ -93,16 +96,35 @@
     width: 100%; height: 100%; display: block; image-rendering: pixelated;
     filter: drop-shadow(0 0 2px #ffb02e66); transition: opacity .2s;
   }
-  .off img, .off .line { opacity: .2; text-shadow: none; }
+  .off img, .off .line, .off .detail { opacity: .2; text-shadow: none; }
 
-  /* Text strip */
+  /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; }
+  .detail { display: none; }
   .line { font-family: var(--dot); white-space: nowrap; overflow: hidden; line-height: 1; transition: opacity .2s; }
   .line.big { font-size: clamp(24px, 7.6vw, 32px); }
   .line.small { font-size: clamp(17px, 5vw, 21px); color: var(--amber-mid); }
   .line .run { display: inline-block; }
   .line.scroll .run { animation: marquee var(--dur, 12s) linear infinite; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags span { font-family: var(--dot); font-size: 17px; padding: 0 6px; border: 1px solid var(--amber-dim); color: var(--amber-mid); }
+  .desc {
+    font-family: var(--dot); font-size: 21px; line-height: 1.15; color: var(--amber-mid);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .prog { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-family: var(--dot); font-size: 19px; }
+  .prog-bar { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; height: 10px; }
+  .prog-bar i { background: var(--amber-ghost); }
+  .prog-bar i.lit { background: var(--amber); }
+  .prog-left { color: var(--amber-dim); font-family: var(--dot); font-size: 17px; text-align: right; }
+
+  /* Spectrum */
+  .vis { display: grid; gap: 6px; }
+  .vis-head { display: flex; justify-content: space-between; }
+  .vis-src { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .1em; }
+  .vis canvas { width: 100%; height: 64px; display: block; }
 
   /* Volume: segmented bar with an invisible range input on top for touch and keys */
   .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
@@ -112,36 +134,52 @@
   .bar input { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); opacity: 0; margin: 0; cursor: pointer; }
   .vol-read { font-family: var(--dot); font-size: 26px; min-width: 2.4ch; text-align: right; }
 
-  /* Station list */
+  /* Station board */
   .list { width: 100%; max-width: 420px; }
-  .group { margin-bottom: 14px; }
+  .list-head {
+    display: none; justify-content: space-between; font-family: var(--dot); font-size: 18px;
+    letter-spacing: .08em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
+    padding-bottom: 8px; margin: -4px 0 4px;
+  }
+  .cols { display: grid; gap: 14px; }
   .group h2 {
     margin: 0; padding: 6px 4px; font-family: var(--dot); font-weight: 400; font-size: 18px;
     letter-spacing: .1em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
   }
   .row {
-    width: 100%; display: grid; grid-template-columns: 1.6ch 2.4ch 1fr; gap: 10px; align-items: baseline;
+    width: 100%; display: grid; grid-template-columns: 1.6ch 2.4ch minmax(0, 1fr); gap: 10px; align-items: baseline;
     text-align: left; padding: 6px 4px; font-family: var(--dot); font-size: 22px; color: var(--amber-mid);
   }
   .row .cur { color: var(--amber); visibility: hidden; }
   .row .n { color: var(--amber-dim); }
+  .row .sub { display: block; font-size: 16px; color: var(--amber-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
   .row:hover { background: var(--amber-ghost); }
   .row.active { color: var(--amber); text-shadow: 0 0 6px #ffb02e88; }
   .row.active .cur { visibility: visible; }
   .row.active .n { color: var(--amber-mid); }
+  .row.active .sub { color: var(--amber-mid); text-shadow: none; }
+
+  /* Schedule and recently played: time column + text */
+  .log { width: 100%; display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 10px; align-items: baseline;
+         text-align: left; padding: 5px 4px; font-family: var(--dot); font-size: 19px; color: var(--amber-mid); }
+  .log .t { color: var(--amber-dim); }
+  .log .x { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log .x small { font-size: 16px; color: var(--amber-dim); }
+  .log.now { color: var(--amber); }
+  .log.now .t { color: var(--amber-mid); }
+  button.log:hover { background: var(--amber-ghost); }
+  .ch { padding: 8px 4px 2px; font-family: var(--dot); font-size: 16px; color: var(--amber-dim); letter-spacing: .1em; }
+  .empty { padding: 8px 4px; font-family: var(--dot); font-size: 18px; color: var(--amber-dim); }
 
   .note {
     width: 100%; max-width: 420px; font-family: var(--dot); font-size: 17px; color: var(--amber-mid);
     border: 1px dashed var(--line); padding: 6px 10px; display: none;
   }
   .note.show { display: block; }
-  .list-head {
-    display: none; justify-content: space-between; font-family: var(--dot); font-size: 18px;
-    letter-spacing: .08em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
-    padding-bottom: 8px; margin: -4px 0 4px;
-  }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
 
-  /* Desktop: a wide now-playing deck (art, text, controls) above a station board */
+  /* Desktop: a wide now-playing deck above a station board */
   @media (min-width: 960px) {
     body { max-width: 1360px; margin: 0 auto; padding: 32px; align-items: stretch; }
     .note, .unit, .list { max-width: none; }
@@ -151,28 +189,31 @@
         "head head head"
         "art  info keys"
         "art  info dial"
-        "art  info vol";
+        "art  info vol"
+        "vis  vis  vis";
       column-gap: 24px; row-gap: 16px; padding: 20px;
     }
     .head { grid-area: head; }
     .mid { display: contents; }
     .art { grid-area: art; align-self: start; }
-    .strip { grid-area: info; aspect-ratio: auto; padding: 20px 24px; align-content: end; gap: 10px; }
+    .strip { grid-area: info; aspect-ratio: auto; padding: 18px 24px; align-content: space-between; gap: 14px; min-width: 0; }
+    .strip > div { min-width: 0; }
+    .detail { display: grid; gap: 12px; }
     .line.big { font-size: clamp(36px, 4vw, 56px); }
     .line.small { font-size: clamp(22px, 2vw, 28px); }
     .top { grid-area: keys; }
     .dial-wrap { grid-area: dial; }
     .dial { max-width: 150px; }
     .vol { grid-area: vol; align-self: end; }
-    .list {
-      border: 1px solid var(--line); padding: 16px 20px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); column-gap: 32px; align-items: start;
-    }
-    .list-head { display: flex; grid-column: 1 / -1; }
-    .group { margin-bottom: 0; }
+    .vis { grid-area: vis; }
+    .vis canvas { height: 90px; }
+    .list { border: 1px solid var(--line); padding: 16px 20px; }
+    .list-head { display: flex; }
+    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 20px; align-items: start; }
   }
-  .blink { animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
+  @media (min-width: 1280px) {
+    .cols { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
 </style>
 </head>
 <body>
@@ -180,7 +221,12 @@
 <div class="note" id="note"></div>
 
 <main class="unit" aria-label="Radio controls">
-  <div class="head"><span>PI RADIO</span><span id="status">--</span></div>
+  <div class="head">
+    <span>PI RADIO</span>
+    <span class="sig" id="sig"></span>
+    <span class="clock" id="clock"></span>
+    <span id="status">--</span>
+  </div>
 
   <div class="top">
     <button class="key" data-play="nts1" id="key-nts1" aria-label="Play NTS 1">NTS 1</button>
@@ -204,8 +250,25 @@
   </div>
 
   <div class="screen strip off" id="strip">
-    <div class="line big glow" id="line1"><span class="run">—</span></div>
-    <div class="line small" id="line2"><span class="run"></span></div>
+    <div class="detail">
+      <div class="tags" id="tags"></div>
+      <div class="desc" id="desc"></div>
+      <div class="prog" id="prog" hidden>
+        <span id="progStart"></span>
+        <div class="prog-bar" id="progBar"></div>
+        <span id="progEnd"></span>
+      </div>
+      <div class="prog-left" id="progLeft"></div>
+    </div>
+    <div>
+      <div class="line big glow" id="line1"><span class="run">—</span></div>
+      <div class="line small" id="line2"><span class="run"></span></div>
+    </div>
+  </div>
+
+  <div class="vis">
+    <div class="vis-head"><span class="label">Spectrum</span><span class="vis-src" id="visSrc"></span></div>
+    <canvas id="vis" aria-hidden="true"></canvas>
   </div>
 
   <div class="vol">
@@ -215,8 +278,16 @@
   </div>
 </main>
 
-<nav class="list" id="list" aria-label="Stations">
+<nav class="list" aria-label="Stations">
   <div class="list-head"><span>STATIONS</span><span id="listCount">--</span></div>
+  <div class="cols">
+    <div id="colLive"></div>
+    <div id="colMix"></div>
+    <div id="colElse"></div>
+    <div>
+      <section class="group"><h2>RECENTLY PLAYED</h2><div id="recent"></div></section>
+    </div>
+  </div>
 </nav>
 
 <script>
@@ -224,10 +295,13 @@ const $ = (id) => document.getElementById(id);
 let S = null;            // last state from the server
 let order = [];          // flat station ids in dial order
 let volDragging = false;
+let schedule = {};
 const pad = (n) => String(n).padStart(2, "0");
+const hhmm = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function api(path, body) {
-  const get = path.startsWith("/api/state");
+  const get = path.startsWith("/api/") && body === undefined && !path.match(/play|toggle|stop|step|volume/);
   const opts = get ? {} : body === undefined ? { method: "POST" } :
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   try {
@@ -266,6 +340,28 @@ function drawVolume(v) {
   $("volRead").textContent = v === null ? "--" : pad(Math.min(v, 99));
 }
 
+function drawSignal(sig, playing) {
+  if (!playing) { $("sig").textContent = ""; return; }
+  const parts = [sig.codec, sig.kbps && sig.kbps + "K", sig.khz && sig.khz + "KHZ", sig.channels && (sig.channels > 1 ? "ST" : "MONO")];
+  $("sig").textContent = parts.filter(Boolean).join(" · ") || "";
+}
+
+function drawDetail(now) {
+  $("tags").innerHTML = (now.genres || []).slice(0, 5).map(g => `<span>${esc(g.toUpperCase())}</span>`).join("");
+  $("desc").textContent = now.description || "";
+  const has = now.start && now.end;
+  $("prog").hidden = !has;
+  if (!has) { $("progLeft").textContent = ""; return; }
+  const a = new Date(now.start), b = new Date(now.end), t = Date.now();
+  const frac = Math.min(1, Math.max(0, (t - a) / (b - a)));
+  $("progStart").textContent = hhmm(now.start);
+  $("progEnd").textContent = hhmm(now.end);
+  const lit = Math.round(frac * 30);
+  [...$("progBar").children].forEach((c, i) => c.classList.toggle("lit", i < lit));
+  const left = Math.max(0, Math.round((b - t) / 60000));
+  $("progLeft").textContent = left + " MIN LEFT";
+}
+
 function render(s) {
   if (!s) return;
   S = s;
@@ -284,6 +380,8 @@ function render(s) {
   const title = [s.station.name, s.now.title].filter(Boolean).join(" · ");
   setLine($("line1"), title.toUpperCase());
   setLine($("line2"), (s.now.subtitle || s.station.group).toUpperCase());
+  drawDetail(s.now);
+  drawSignal(s.signal, on);
 
   const img = $("art");
   if (img.dataset.src !== s.art) { img.dataset.src = s.art; img.src = s.art; }
@@ -304,25 +402,36 @@ function render(s) {
   document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === id));
 }
 
+function stationGroup(g, startN) {
+  const sec = document.createElement("section");
+  sec.className = "group";
+  sec.innerHTML = `<h2>${esc(g.name.toUpperCase())}</h2>`;
+  g.stations.forEach((st, i) => {
+    order.push(st.id);
+    const b = document.createElement("button");
+    b.className = "row"; b.dataset.id = st.id;
+    b.innerHTML = `<span class="cur">&gt;</span><span class="n">${pad(startN + i)}</span>` +
+      `<span>${esc(st.name.toUpperCase())}<span class="sub" data-sub="${st.id}">${esc(st.sub)}</span></span>`;
+    b.onclick = () => api(`/api/play/${st.id}`).then(render);
+    sec.appendChild(b);
+  });
+  return sec;
+}
+
 async function build() {
   const groups = await (await fetch("/api/stations")).json();
-  let n = 0;
-  for (const g of groups) {
-    const sec = document.createElement("section");
-    sec.className = "group";
-    sec.innerHTML = `<h2>${g.name.toUpperCase()}</h2>`;
-    for (const st of g.stations) {
-      n++;
-      order.push(st.id);
-      const b = document.createElement("button");
-      b.className = "row"; b.dataset.id = st.id;
-      b.innerHTML = `<span class="cur">&gt;</span><span class="n">${pad(n)}</span><span></span>`;
-      b.children[2].textContent = st.name.toUpperCase();
-      b.onclick = () => api(`/api/play/${st.id}`).then(render);
-      sec.appendChild(b);
-    }
-    $("list").appendChild(sec);
-  }
+  const cols = [$("colLive"), $("colMix"), $("colElse")];
+  let n = 1;
+  groups.forEach((g, i) => {
+    cols[Math.min(i, cols.length - 1)].appendChild(stationGroup(g, n));
+    n += g.stations.length;
+  });
+  // NTS schedule sits under the NTS Live group.
+  const sch = document.createElement("section");
+  sch.className = "group"; sch.style.marginTop = "14px";
+  sch.innerHTML = `<h2>NTS SCHEDULE</h2><div id="sched"></div>`;
+  $("colLive").appendChild(sch);
+
   $("dialOf").textContent = "/" + pad(order.length);
   $("listCount").textContent = pad(order.length);
 
@@ -333,8 +442,42 @@ async function build() {
     d.style.transform = `rotate(${a}deg) translateX(min(72px, 21vw)) rotate(${-a}deg)`;
     $("dial").appendChild(d);
   });
-
   for (let i = 0; i < 20; i++) $("bar").insertBefore(document.createElement("i"), $("vol"));
+  for (let i = 0; i < 30; i++) $("progBar").appendChild(document.createElement("i"));
+}
+
+async function loadSchedule() {
+  const d = await api("/api/schedule");
+  if (!d) return;
+  schedule = d;
+  const ids = { "NTS 1": "nts1", "NTS 2": "nts2" };
+  let html = "";
+  for (const [ch, shows] of Object.entries(d)) {
+    html += `<div class="ch">${ch}</div>`;
+    shows.slice(0, 4).forEach((s, i) => {
+      html += `<button class="log${i === 0 ? " now" : ""}" data-ch="${ids[ch]}"><span class="t">${i === 0 ? "NOW" : hhmm(s.start)}</span>` +
+        `<span class="x">${esc(s.title.toUpperCase())}</span></button>`;
+    });
+    const sub = document.querySelector(`[data-sub="${ids[ch]}"]`);
+    if (sub && shows[0]) sub.textContent = shows[0].title.toUpperCase();
+  }
+  $("sched").innerHTML = html || `<div class="empty">NO SCHEDULE</div>`;
+  $("sched").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => api(`/api/play/${b.dataset.ch}`).then(render));
+}
+
+async function loadRecent() {
+  const d = await api("/api/history");
+  if (!d) return;
+  $("recent").innerHTML = d.length ? d.slice(0, 12).map(h =>
+    `<div class="log"><span class="t">${hhmm(h.at)}</span><span class="x">${esc(h.station.toUpperCase())}` +
+    (h.title ? `<br><small>${esc(h.title.toUpperCase())}</small>` : "") + `</span></div>`).join("")
+    : `<div class="empty">NOTHING YET</div>`;
+}
+
+/* Clock */
+function tick() {
+  const d = new Date();
+  $("clock").innerHTML = `${pad(d.getHours())}<i>:</i>${pad(d.getMinutes())}`;
 }
 
 /* Keys and play/stop */
@@ -398,11 +541,66 @@ $("vol").addEventListener("input", e => {
   volTimer = setTimeout(() => api("/api/volume", { value: +e.target.value }).then(s => { volDragging = false; render(s); }), 150);
 });
 
+/* Spectrum: real levels from MPD when it's there; otherwise a simulation, labelled SIM. */
+const BANDS = 32, CELLS = 14;
+let visLevels = new Array(BANDS).fill(0), visSource = "none", visLast = 0, visChecked = 0;
+function simLevels(t) {
+  return visLevels.map((v, i) => {
+    const x = i / BANDS;
+    const base = 0.75 - x * 0.45;                       // more energy in the low end, like music
+    const wob = Math.sin(t / 180 + i * 0.9) * 0.18 + Math.sin(t / 97 + i * 2.3) * 0.12;
+    const hit = (Math.sin(t / 240) > 0.6 && i < 6) ? 0.25 : 0; // a kick now and then
+    const target = Math.max(0, Math.min(1, base + wob + hit + (Math.random() - 0.5) * 0.15));
+    return target > v ? target : v * 0.86;
+  });
+}
+function drawVis() {
+  const c = $("vis"), dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== w * dpr || c.height !== h * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const g = c.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const gap = 3, bw = (w - gap * (BANDS - 1)) / BANDS, ch = (h - gap * (CELLS - 1)) / CELLS;
+  for (let i = 0; i < BANDS; i++) {
+    const lit = Math.round(visLevels[i] * CELLS);
+    for (let j = 0; j < CELLS; j++) {
+      g.fillStyle = j < lit ? (j >= CELLS - 2 ? "#ffd27a" : "#ffb02e") : "#241907";
+      g.fillRect(i * (bw + gap), h - (j + 1) * ch - j * gap, bw, ch);
+    }
+  }
+}
+async function visLoop(t) {
+  const playing = S && S.playing && !document.hidden;
+  if (!playing) {
+    visLevels = visLevels.map(v => v * 0.8);
+  } else if (visSource === "mpd") {
+    if (t - visLast > 66) {            // ~15 updates a second
+      visLast = t;
+      const d = await api("/api/spectrum");
+      if (d) { visSource = d.source; visLevels = d.levels; }
+    }
+  } else {
+    visLevels = simLevels(t);
+    if (t - visChecked > 5000) {       // look for MPD's feed every few seconds
+      visChecked = t;
+      api("/api/spectrum").then(d => { if (d) visSource = d.source; });
+    }
+  }
+  $("visSrc").textContent = !playing ? "" : visSource === "mpd" ? "LIVE" : "SIM";
+  drawVis();
+  requestAnimationFrame(visLoop);
+}
+
 /* Poll so the app follows the physical controls and show changes. */
 async function poll() { render(await api("/api/state")); }
-build().then(poll);
+build().then(() => { poll(); loadSchedule(); loadRecent(); requestAnimationFrame(visLoop); });
+tick();
+setInterval(tick, 1000);
 setInterval(poll, 3000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+setInterval(loadSchedule, 60000);
+setInterval(loadRecent, 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); loadRecent(); } });
 </script>
 </body>
 </html>

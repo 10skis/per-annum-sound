@@ -1,4 +1,4 @@
-"""NTS public data feeds: what's live on Channel 1/2, and the Infinite Mixtapes."""
+"""NTS public data feeds: what's live on Channel 1/2, the schedule, and the Infinite Mixtapes."""
 
 import html
 import logging
@@ -33,18 +33,37 @@ _live = _Cached(LIVE_URL, ttl=60)
 _mixtapes = _Cached(MIXTAPES_URL, ttl=6 * 3600)
 
 
-def live_now(channel: str) -> dict:
-    """Current show on an NTS channel: title, location, art URL."""
+def _show(broadcast: dict) -> dict:
+    details = broadcast.get("embeds", {}).get("details", {})
+    return {
+        "title": html.unescape(broadcast.get("broadcast_title", "")).strip(),
+        "subtitle": details.get("location_long") or "",
+        "description": html.unescape(details.get("description") or "").strip(),
+        "genres": [g["value"] for g in details.get("genres", []) if g.get("value")],
+        "start": broadcast.get("start_timestamp"),
+        "end": broadcast.get("end_timestamp"),
+        "art": details.get("media", {}).get("picture_medium"),
+    }
+
+
+def _channel(channel: str) -> dict:
     for ch in _live.get().get("results", []):
         if ch.get("channel_name") == channel:
-            now = ch.get("now", {})
-            details = now.get("embeds", {}).get("details", {})
-            return {
-                "title": html.unescape(now.get("broadcast_title", "")).strip(),
-                "subtitle": details.get("location_long") or "",
-                "art": details.get("media", {}).get("picture_medium"),
-            }
+            return ch
     return {}
+
+
+def live_now(channel: str) -> dict:
+    """Current show on an NTS channel."""
+    now = _channel(channel).get("now")
+    return _show(now) if now else {}
+
+
+def schedule(channel: str, count: int = 5) -> list:
+    """The current show plus the next count-1, oldest first."""
+    ch = _channel(channel)
+    keys = ["now", "next"] + [f"next{i}" for i in range(2, count)]
+    return [_show(ch[k]) for k in keys[:count] if ch.get(k)]
 
 
 def mixtape(alias: str) -> dict:
@@ -53,6 +72,7 @@ def mixtape(alias: str) -> dict:
             return {
                 "title": m.get("title", ""),
                 "subtitle": m.get("subtitle", ""),
+                "description": html.unescape(m.get("description") or "").strip(),
                 "art": m.get("media", {}).get("picture_medium"),
             }
     return {}
