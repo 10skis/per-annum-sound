@@ -108,6 +108,9 @@
   .unit > *, .strip > div { min-width: 0; }  /* long scrolling titles must not widen the page */
   .detail { display: none; }
   .line { font-family: var(--dot); white-space: nowrap; overflow: hidden; line-height: 1; transition: opacity .2s; }
+  /* Scrolling text fades at the edges instead of being chopped mid-letter */
+  .line.scroll { -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+                 mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
   .line.big { font-size: clamp(24px, 7.6vw, 32px); }
   .line.small { font-size: clamp(17px, 5vw, 21px); color: var(--amber-mid); }
   .line .run { display: inline-block; }
@@ -118,7 +121,8 @@
   .tags span { font-family: var(--dot); font-size: 17px; padding: 0 6px; border: 1px solid var(--amber-dim); color: var(--amber-mid); }
   .desc {
     font-family: var(--dot); font-size: 21px; line-height: 1.15; color: var(--amber-mid);
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    max-height: calc(21px * 1.15 * 6); overflow-y: auto; padding-right: 6px;
+    scrollbar-width: thin; scrollbar-color: var(--amber-dim) transparent;
   }
   .prog { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-family: var(--dot); font-size: 19px; }
   .prog-bar { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; height: 10px; }
@@ -205,8 +209,8 @@
     .art { grid-area: art; align-self: start; }
     .strip { grid-area: info; aspect-ratio: auto; padding: 18px 24px; align-content: space-between; gap: 14px; min-width: 0; }
     .detail { display: grid; gap: 12px; }
-    .line.big { font-size: clamp(36px, 4vw, 56px); }
-    .line.small { font-size: clamp(22px, 2vw, 28px); }
+    .line.big { font-size: clamp(30px, 2.4vw, 36px); }
+    .line.small { font-size: clamp(20px, 1.6vw, 24px); }
     .top { grid-area: keys; }
     .out { grid-area: out; }
     .dial-wrap { grid-area: dial; }
@@ -637,7 +641,7 @@ function setLine(el, text) {
   requestAnimationFrame(() => {
     if (run.scrollWidth > el.clientWidth) {
       // Duplicate the text so the loop is seamless, speed scaled to length.
-      const gap = "   ";
+      const gap = "   ·   ";
       run.textContent = text + gap + text + gap;
       el.style.setProperty("--dur", Math.max(8, text.length * 0.35) + "s");
       el.classList.add("scroll");
@@ -670,7 +674,7 @@ function drawDetail(now) {
   const lit = Math.round(frac * 30);
   [...$("progBar").children].forEach((c, i) => c.classList.toggle("lit", i < lit));
   const left = Math.max(0, Math.round((b - t) / 60000));
-  $("progLeft").textContent = left + " MIN LEFT";
+  $("progLeft").textContent = left > 0 ? left + " MIN LEFT" : "ENDING";
 }
 
 function render(s) {
