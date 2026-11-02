@@ -135,6 +135,42 @@
     border: 1px dashed var(--line); padding: 6px 10px; display: none;
   }
   .note.show { display: block; }
+  .list-head {
+    display: none; justify-content: space-between; font-family: var(--dot); font-size: 18px;
+    letter-spacing: .08em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
+    padding-bottom: 8px; margin: -4px 0 4px;
+  }
+
+  /* Desktop: a wide now-playing deck (art, text, controls) above a station board */
+  @media (min-width: 960px) {
+    body { max-width: 1360px; margin: 0 auto; padding: 32px; align-items: stretch; }
+    .note, .unit, .list { max-width: none; }
+    .unit {
+      grid-template-columns: minmax(220px, 24%) minmax(0, 1fr) 300px;
+      grid-template-areas:
+        "head head head"
+        "art  info keys"
+        "art  info dial"
+        "art  info vol";
+      column-gap: 24px; row-gap: 16px; padding: 20px;
+    }
+    .head { grid-area: head; }
+    .mid { display: contents; }
+    .art { grid-area: art; align-self: start; }
+    .strip { grid-area: info; aspect-ratio: auto; padding: 20px 24px; align-content: end; gap: 10px; }
+    .line.big { font-size: clamp(36px, 4vw, 56px); }
+    .line.small { font-size: clamp(22px, 2vw, 28px); }
+    .top { grid-area: keys; }
+    .dial-wrap { grid-area: dial; }
+    .dial { max-width: 150px; }
+    .vol { grid-area: vol; align-self: end; }
+    .list {
+      border: 1px solid var(--line); padding: 16px 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); column-gap: 32px; align-items: start;
+    }
+    .list-head { display: flex; grid-column: 1 / -1; }
+    .group { margin-bottom: 0; }
+  }
   .blink { animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 </style>
@@ -179,7 +215,9 @@
   </div>
 </main>
 
-<nav class="list" id="list" aria-label="Stations"></nav>
+<nav class="list" id="list" aria-label="Stations">
+  <div class="list-head"><span>STATIONS</span><span id="listCount">--</span></div>
+</nav>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -286,6 +324,7 @@ async function build() {
     $("list").appendChild(sec);
   }
   $("dialOf").textContent = "/" + pad(order.length);
+  $("listCount").textContent = pad(order.length);
 
   // One square per station around the dial, like an LED ring.
   order.forEach((_, i) => {

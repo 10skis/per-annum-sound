@@ -32,6 +32,8 @@ groups:
 
   - name: Elsewhere
     stations:
+      # The Lot only streams video. 14_0 is the lowest-bandwidth version (240p, ~0.4 Mbps); the player keeps the audio.
+      - {id: lot, name: The Lot Radio, kind: radio, place: Brooklyn, url: "https://livepeercdn.studio/hls/85c28sa2o8wppm58/14_0/index.m3u8", art: "https://cdn.prod.website-files.com/5f4bdfc87623ea5cc5d24cf3/606da84551eef3d5fa8c0cb9_icon.png"}
       - {id: dublab, name: Dublab, kind: radio, place: Los Angeles, url: "https://dublab.out.airtime.pro/dublab_a"}
       - {id: refuge, name: Refuge Worldwide, kind: radio, place: Berlin, url: "https://streaming.radio.co/s3699c5e49/listen", art: "https://refugeworldwide.com/apple-touch-icon.png"}
       - {id: kiosk, name: Kiosk Radio, kind: radio, place: Brussels, url: "https://kioskradiobxl.out.airtime.pro/kioskradiobxl_b", art: "https://kioskradio.com/favicon.png"}
