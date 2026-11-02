@@ -17,10 +17,10 @@
   :root {
     --bg: #0b0906;
     --amber: #ffb02e;
-    --amber-mid: #b87a1c;
-    --amber-dim: #5c3e10;
+    --amber-mid: #d08c26;   /* ~7:1 on --bg */
+    --amber-dim: #9c6c22;   /* ~4.5:1, the floor for small text */
     --amber-ghost: #241907;
-    --line: #3a2a10;
+    --line: #4a3616;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
     --dot: "VT323", ui-monospace, Menlo, monospace;
   }
@@ -80,7 +80,9 @@
   .dial {
     width: 100%; max-width: 160px; aspect-ratio: 1; position: relative;
     touch-action: none; cursor: grab; border-radius: 50%; outline: none;
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   }
+  .dial:active { cursor: grabbing; }
   .dial:focus-visible { box-shadow: 0 0 0 1px var(--amber-dim); }
   .dial i {
     position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px;
@@ -680,6 +682,7 @@ function drawDetail(now) {
 function render(s) {
   if (!s) return;
   S = s;
+  if (drag) return;  // mid-turn on the dial; release repaints
   if (s.player !== "phone") setNote(s.player === "mock" ? "MOCK PLAYER: NO SOUND. START MPD OR RUN ON THE PI." : "");
   mediaMeta(s);
 
@@ -805,49 +808,67 @@ $("btnStop").addEventListener("click", () => act.stop());
 $("outRadio").addEventListener("click", () => setMode("radio"));
 $("outPhone").addEventListener("click", () => setMode("phone"));
 
-/* Dial: drag round to step stations (one step per 30°), tap to play/stop. */
-const STEP_DEG = 30;
-let drag = null;
-function angleAt(e) {
+/* Dial: drag round to pick a station (one step per 24°), release to play it; tap to play/stop.
+   While dragging only the dial and the station name move. Nothing plays until release, so the
+   keys above stay put, and the phone starts audio inside the release gesture as Safari requires. */
+const STEP_DEG = 24;
+var drag = null;  // var: render() checks it and can run before this line
+function dialGeom(e) {
   const r = $("dial").getBoundingClientRect();
-  return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  return { angle: Math.atan2(dy, dx) * 180 / Math.PI, dist: Math.hypot(dx, dy), radius: r.width / 2 };
 }
-function turn(dir) {
-  if (navigator.vibrate) navigator.vibrate(8);
-  // Move the lit square straight away; the server confirms a moment later.
-  if (S && mode === "radio") {
-    const i = (order.indexOf(S.station.id) + dir + order.length) % order.length;
-    render({ ...S, station: { ...S.station, id: order[i] } });
-  }
-  act.step(dir);
+function currentIndex() {
+  return order.indexOf((mode === "phone" && local.id) || (S && S.station.id));
+}
+function previewDial(idx) {
+  $("dialNum").textContent = pad(idx + 1);
+  [...$("dial").querySelectorAll("i")].forEach((d, i) => {
+    const dist = Math.min(Math.abs(i - idx), order.length - Math.abs(i - idx));
+    d.className = i === idx ? "lit" : dist === 1 ? "near" : "";
+  });
+  setLine($("line1"), (NAMES[order[idx]] || order[idx]).toUpperCase());
+  setLine($("line2"), "RELEASE TO TUNE");
 }
 $("dial").addEventListener("pointerdown", e => {
-  drag = { last: angleAt(e), acc: 0, moved: false };
+  if (e.button > 0) return;
+  e.preventDefault();  // no text selection or focus jumps while dragging with a mouse
+  const g = dialGeom(e);
+  drag = { last: g.angle, acc: 0, x: e.clientX, y: e.clientY, moved: false, idx: currentIndex(), start: currentIndex() };
   try { $("dial").setPointerCapture(e.pointerId); } catch (_) {}
 });
 $("dial").addEventListener("pointermove", e => {
   if (!drag) return;
-  const a = angleAt(e);
-  let d = a - drag.last;
+  e.preventDefault();
+  const g = dialGeom(e);
+  if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8) drag.moved = true;
+  // Near the centre a tiny finger movement is a huge angle; ignore it there.
+  if (g.dist < g.radius * 0.3) { drag.last = g.angle; return; }
+  let d = g.angle - drag.last;
   if (d > 180) d -= 360;
   if (d < -180) d += 360;
-  drag.last = a;
+  drag.last = g.angle;
+  if (!drag.moved) return;
   drag.acc += d;
-  if (Math.abs(drag.acc) > 6) drag.moved = true;
   while (Math.abs(drag.acc) >= STEP_DEG) {
     const dir = drag.acc > 0 ? 1 : -1;
     drag.acc -= dir * STEP_DEG;
-    turn(dir);
+    drag.idx = ((drag.idx < 0 ? 0 : drag.idx) + dir + order.length) % order.length;
+    if (navigator.vibrate) navigator.vibrate(6);
+    previewDial(drag.idx);
   }
 });
 $("dial").addEventListener("pointerup", () => {
-  if (drag && !drag.moved) act.toggle();
-  drag = null;
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.moved) act.toggle();
+  else if (d.idx !== d.start && d.idx >= 0) act.play(order[d.idx]);
+  else if (S) render(S);  // turned and came back: restore the display
 });
-$("dial").addEventListener("pointercancel", () => { drag = null; });
+$("dial").addEventListener("pointercancel", () => { drag = null; if (S) render(S); });
 $("dial").addEventListener("keydown", e => {
-  if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); turn(1); }
-  if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); turn(-1); }
+  const dir = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+  if (dir) { e.preventDefault(); const i = currentIndex(); act.play(order[((i < 0 ? 0 : i) + dir + order.length) % order.length]); }
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act.toggle(); }
 });
 
