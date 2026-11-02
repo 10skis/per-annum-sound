@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pi Radio</title>
+<meta name="theme-color" content="#0e0c0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pi Radio">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c0a;
+    --plate: #1c1916;
+    --plate-edge: #2b2723;
+    --screen: #0a0704;
+    --amber: #ffb02e;
+    --amber-dim: #7a5216;
+    --amber-ghost: #2a1d09;
+    --label: #8f877c;
+    --cap: #e6dfcd;
+    --cap-side: #bdb49f;
+    --cap-ink: #2a2620;
+    --led-off: #3a2a14;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --dot: "VT323", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--label); font-family: var(--mono); }
+  body {
+    min-height: 100vh;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: center; gap: 22px;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+  /* Faceplate */
+  .plate {
+    width: 100%; max-width: 420px;
+    background: linear-gradient(180deg, #221e1a 0%, var(--plate) 40%, #181512 100%);
+    border: 1px solid var(--plate-edge);
+    border-radius: 14px;
+    padding: 22px 20px 20px;
+    box-shadow: 0 1px 0 #3a352f inset, 0 20px 40px -20px #000;
+    display: grid; gap: 22px;
+    user-select: none; -webkit-user-select: none;
+  }
+  .label { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--label); }
+
+  /* Top row: keys + play switch */
+  .top { display: flex; align-items: flex-end; gap: 14px; }
+  .key-wrap { display: grid; justify-items: center; gap: 7px; }
+  .led { width: 6px; height: 6px; border-radius: 50%; background: var(--led-off); transition: background .15s, box-shadow .15s; }
+  .led.on { background: var(--amber); box-shadow: 0 0 6px var(--amber), 0 0 14px #ffb02e66; }
+  .key {
+    width: 58px; height: 54px; border-radius: 7px;
+    background: var(--cap-side);
+    box-shadow: 0 3px 0 #8a826f, 0 6px 10px -4px #000;
+    padding: 4px 5px 8px;
+    transition: transform .06s, box-shadow .06s;
+  }
+  .key span {
+    display: grid; place-items: center; height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #f2ecdc, var(--cap));
+    color: var(--cap-ink); font-weight: 600; font-size: 12px; letter-spacing: .06em;
+  }
+  .key:active { transform: translateY(3px); box-shadow: 0 0 0 #8a826f, 0 2px 4px -2px #000; }
+
+  .switch-wrap { margin-left: auto; display: grid; justify-items: center; gap: 7px; }
+  .switch {
+    width: 40px; height: 62px; border-radius: 20px;
+    background: #0d0b09; border: 1px solid #000;
+    box-shadow: 0 1px 0 #3a352f, inset 0 2px 6px #000;
+    position: relative;
+  }
+  .switch::after {
+    content: ""; position: absolute; left: 50%; width: 14px; height: 30px; margin-left: -7px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892);
+    box-shadow: 0 2px 4px #000;
+    top: 26px; transition: top .12s ease-out;
+  }
+  .switch.on::after { top: 6px; }
+  .switch-legend { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+
+  /* Middle row: dial + art */
+  .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; }
+  .dial-wrap { display: grid; justify-items: center; gap: 10px; }
+  .dial {
+    width: 132px; height: 132px; border-radius: 50%;
+    position: relative; touch-action: none; cursor: grab;
+  }
+  .dial:active { cursor: grabbing; }
+  .dial-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 58%, #0007 59%, transparent 62%),
+      repeating-conic-gradient(from 0deg, #c9c5bd 0deg 3deg, #77736c 3deg 6deg);
+    box-shadow: 0 8px 16px -6px #000, 0 0 0 1px #000;
+  }
+  .dial-cap {
+    position: absolute; inset: 15px; border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, #f4f2ee 0%, #bdb8b0 45%, #85807a 100%);
+    box-shadow: inset 0 -3px 6px #0005, inset 0 2px 3px #fff8, 0 1px 2px #000;
+  }
+  .dial-cap::before {
+    content: ""; position: absolute; inset: 14%; border-radius: 50%;
+    background: repeating-radial-gradient(circle, #0000 0 2px, #0000000a 2px 3px);
+  }
+  .dial-notch {
+    position: absolute; left: 50%; top: 9px; width: 4px; height: 20px; margin-left: -2px;
+    border-radius: 2px; background: var(--amber); box-shadow: 0 0 6px #ffb02e99;
+  }
+  .dial-rot { position: absolute; inset: 0; transition: transform .18s cubic-bezier(.3,1.4,.5,1); }
+  .dial-ticks { position: absolute; inset: -9px; border-radius: 50%; pointer-events: none; }
+  .dial-ticks i {
+    position: absolute; left: 50%; top: 0; width: 1px; height: 5px; background: #5a544c;
+    transform-origin: 50% calc(66px + 9px);
+  }
+
+  .screen {
+    background: var(--screen);
+    border-radius: 6px;
+    border: 1px solid #000;
+    box-shadow: inset 0 0 0 3px #15110c, inset 0 4px 14px #000, 0 1px 0 #3a352f;
+    position: relative; overflow: hidden;
+  }
+  .screen::after {
+    /* faint pixel grid so the glass reads as an OLED, not a web image */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, #0000 0 2px, #00000038 2px 3px);
+  }
+  .art { aspect-ratio: 1; padding: 9px; }
+  .art img {
+    width: 100%; height: 100%; display: block;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 2px #ffb02e88);
+    transition: opacity .25s;
+  }
+  .screen.off img, .screen.off .strip-line { opacity: .18; filter: none; text-shadow: none; }
+
+  /* Text strip */
+  .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 1px; }
+  .strip-line {
+    font-family: var(--dot); color: var(--amber);
+    text-shadow: 0 0 4px #ffb02eaa;
+    white-space: nowrap; overflow: hidden; line-height: 1.05;
+    transition: opacity .25s;
+  }
+  .strip-line.big { font-size: clamp(22px, 7.4vw, 30px); }
+  .strip-line.small { font-size: clamp(16px, 5vw, 20px); color: #e89a20; }
+  .strip-line .run { display: inline-block; padding-right: 3em; }
+  .strip-line.scroll .run { animation: marquee var(--dur, 12s) linear infinite; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* Volume */
+  .vol { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+  .vol-read { font-family: var(--dot); color: var(--amber); font-size: 24px; min-width: 2.2ch; text-align: right; text-shadow: 0 0 4px #ffb02e88; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; margin: 0;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 6px; border-radius: 3px; background: #0b0907; box-shadow: inset 0 1px 3px #000, 0 1px 0 #3a352f;
+  }
+  input[type=range]::-moz-range-track {
+    height: 6px; border-radius: 3px; background: #0b0907; box-shadow: inset 0 1px 3px #000, 0 1px 0 #3a352f;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 30px; margin-top: -12px; border-radius: 3px;
+    background: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892);
+    box-shadow: 0 2px 4px #000, inset 0 0 0 1px #0004;
+    background-image: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892), linear-gradient(#000, #000);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 30px; border-radius: 3px; border: 0;
+    background: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892);
+    box-shadow: 0 2px 4px #000;
+  }
+
+  /* Station card */
+  .card { width: 100%; max-width: 420px; }
+  .group { margin-bottom: 18px; }
+  .group h2 {
+    margin: 0 0 6px; padding: 0 4px 6px; font-size: 10px; font-weight: 500;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--label);
+    border-bottom: 1px solid #2b2723;
+  }
+  .row {
+    width: 100%; display: grid; grid-template-columns: 2.6ch 1fr auto; gap: 12px; align-items: baseline;
+    text-align: left; padding: 9px 4px; border-radius: 4px; color: #cfc7ba; font-size: 14px;
+  }
+  .row .n { color: #5d564d; font-size: 11px; }
+  .row .mark { width: 6px; height: 6px; border-radius: 50%; align-self: center; }
+  .row:hover { background: #17140f; }
+  .row.active { color: var(--amber); }
+  .row.active .n { color: var(--amber-dim); }
+  .row.active .mark { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+  .note {
+    width: 100%; max-width: 420px; font-size: 11px; color: #a07a3c;
+    border: 1px dashed #4a3a20; border-radius: 6px; padding: 8px 10px; display: none;
+  }
+  .note.show { display: block; }
+  .net { color: #c0503a; }
+</style>
+</head>
+<body>
+
+<div class="note" id="note"></div>
+
+<main class="plate" aria-label="Radio controls">
+  <div class="top">
+    <div class="key-wrap">
+      <div class="led" id="led-nts1"></div>
+      <button class="key" data-play="nts1" aria-label="Play NTS 1"><span>NTS 1</span></button>
+    </div>
+    <div class="key-wrap">
+      <div class="led" id="led-nts2"></div>
+      <button class="key" data-play="nts2" aria-label="Play NTS 2"><span>NTS 2</span></button>
+    </div>
+    <div class="switch-wrap">
+      <span class="label">Play</span>
+      <button class="switch" id="switch" role="switch" aria-checked="false" aria-label="Play or stop"></button>
+      <span class="label">Stop</span>
+    </div>
+  </div>
+
+  <div class="mid">
+    <div class="dial-wrap">
+      <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
+        <div class="dial-ticks" id="ticks"></div>
+        <div class="dial-rot" id="dialRot">
+          <div class="dial-ring"></div>
+          <div class="dial-cap"></div>
+          <div class="dial-notch"></div>
+        </div>
+      </div>
+      <span class="label">Station</span>
+    </div>
+    <div class="screen art off" id="artScreen">
+      <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+    </div>
+  </div>
+
+  <div class="screen strip off" id="strip">
+    <div class="strip-line big" id="line1"><span class="run">—</span></div>
+    <div class="strip-line small" id="line2"><span class="run"></span></div>
+  </div>
+
+  <div class="vol">
+    <span class="label">Vol</span>
+    <input type="range" id="vol" min="0" max="100" step="1" aria-label="Volume">
+    <span class="vol-read" id="volRead">--</span>
+  </div>
+</main>
+
+<nav class="card" id="card" aria-label="Stations"></nav>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let S = null;            // last state from the server
+let order = [];          // flat station ids in dial order
+let dialAngle = 0;       // visual rotation of the knob
+let volDragging = false;
+
+async function api(path, body) {
+  const opts = body === undefined ? { method: "POST" } :
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  try {
+    const r = await fetch(path, path.startsWith("/api/state") ? {} : opts);
+    if (!r.ok) throw new Error(r.status);
+    setNet(true);
+    return await r.json();
+  } catch (e) { setNet(false); return null; }
+}
+
+function setNet(ok) {
+  const n = $("note");
+  if (!ok) { n.innerHTML = '<span class="net">No connection to the radio.</span> Retrying.'; n.classList.add("show"); }
+  else if (S && S.player === "mock") { n.textContent = "Mock player: the app works but makes no sound. Install MPD or run on the Pi for audio."; n.classList.add("show"); }
+  else n.classList.remove("show");
+}
+
+function setLine(el, text) {
+  const run = el.querySelector(".run");
+  if (run.dataset.text === text) return;
+  run.dataset.text = text;
+  el.classList.remove("scroll");
+  run.textContent = text;
+  requestAnimationFrame(() => {
+    if (run.scrollWidth > el.clientWidth) {
+      // Duplicate the text so the loop is seamless, speed scaled to length.
+      run.textContent = text + "   " + text + "   ";
+      el.style.setProperty("--dur", Math.max(8, text.length * 0.35) + "s");
+      el.classList.add("scroll");
+    }
+  });
+}
+
+function render(s) {
+  if (!s) return;
+  S = s;
+  setNet(true);
+
+  const on = s.playing;
+  $("switch").classList.toggle("on", on);
+  $("switch").setAttribute("aria-checked", on);
+  $("artScreen").classList.toggle("off", !on);
+  $("strip").classList.toggle("off", !on);
+  $("led-nts1").classList.toggle("on", on && s.station.id === "nts1");
+  $("led-nts2").classList.toggle("on", on && s.station.id === "nts2");
+
+  const title = [s.station.name, s.now.title].filter(Boolean).join(" · ");
+  setLine($("line1"), title.toUpperCase());
+  setLine($("line2"), s.now.subtitle || s.station.group);
+
+  const img = $("art");
+  if (img.dataset.src !== s.art) { img.dataset.src = s.art; img.src = s.art; }
+
+  if (!volDragging) {
+    if (s.volume === null) { $("vol").disabled = true; $("volRead").textContent = "--"; }
+    else { $("vol").disabled = false; $("vol").value = s.volume; $("volRead").textContent = s.volume; }
+  }
+
+  document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === s.station.id));
+}
+
+async function buildCard() {
+  const r = await fetch("/api/stations");
+  const groups = await r.json();
+  const card = $("card");
+  let n = 0;
+  for (const g of groups) {
+    const sec = document.createElement("section");
+    sec.className = "group";
+    sec.innerHTML = `<h2>${g.name}</h2>`;
+    for (const st of g.stations) {
+      n++;
+      order.push(st.id);
+      const b = document.createElement("button");
+      b.className = "row"; b.dataset.id = st.id;
+      b.innerHTML = `<span class="n">${String(n).padStart(2, "0")}</span><span></span><span class="mark"></span>`;
+      b.children[1].textContent = st.name;
+      b.onclick = () => api(`/api/play/${st.id}`).then(render);
+      sec.appendChild(b);
+    }
+    card.appendChild(sec);
+  }
+  // Tick marks around the dial, one per station.
+  const ticks = $("ticks");
+  order.forEach((_, i) => {
+    const t = document.createElement("i");
+    t.style.transform = `rotate(${(i / order.length) * 360}deg)`;
+    ticks.appendChild(t);
+  });
+}
+
+/* Keys and switch */
+document.querySelectorAll("[data-play]").forEach(b =>
+  b.addEventListener("click", () => api(`/api/play/${b.dataset.play}`).then(render)));
+$("switch").addEventListener("click", () => api("/api/toggle").then(render));
+
+/* Dial: drag round to step stations (one step per 30°), tap to play/stop. */
+const STEP_DEG = 30;
+let drag = null;
+function angleAt(e) {
+  const r = $("dial").getBoundingClientRect();
+  return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+}
+function turn(dir) {
+  dialAngle += dir * STEP_DEG;
+  $("dialRot").style.transform = `rotate(${dialAngle}deg)`;
+  if (navigator.vibrate) navigator.vibrate(8);
+  api(`/api/step/${dir}`).then(render);
+}
+$("dial").addEventListener("pointerdown", e => {
+  drag = { last: angleAt(e), acc: 0, moved: false };
+  try { $("dial").setPointerCapture(e.pointerId); } catch (_) {}
+});
+$("dial").addEventListener("pointermove", e => {
+  if (!drag) return;
+  const a = angleAt(e);
+  let d = a - drag.last;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  drag.last = a;
+  drag.acc += d;
+  if (Math.abs(drag.acc) > 6) drag.moved = true;
+  while (Math.abs(drag.acc) >= STEP_DEG) {
+    const dir = drag.acc > 0 ? 1 : -1;
+    drag.acc -= dir * STEP_DEG;
+    turn(dir);
+  }
+});
+$("dial").addEventListener("pointerup", () => {
+  if (drag && !drag.moved) api("/api/toggle").then(render);
+  drag = null;
+});
+$("dial").addEventListener("pointercancel", () => { drag = null; });
+$("dial").addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); turn(1); }
+  if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); turn(-1); }
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); api("/api/toggle").then(render); }
+});
+
+/* Volume: update the readout live, send after a short pause. */
+let volTimer;
+$("vol").addEventListener("input", e => {
+  volDragging = true;
+  $("volRead").textContent = e.target.value;
+  clearTimeout(volTimer);
+  volTimer = setTimeout(() => api("/api/volume", { value: +e.target.value }).then(s => { volDragging = false; render(s); }), 150);
+});
+
+/* Poll so the app follows the physical controls and show changes. */
+async function poll() { render(await api("/api/state")); }
+buildCard().then(poll);
+setInterval(poll, 3000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+</script>
+</body>
+</html>

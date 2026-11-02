@@ -121,14 +121,14 @@ The visual style matches the device: retro-analog, amber on dark, monospace type
 
 ## Build order
 
-Scope 1 Phases 1–2 come first. Then live with moOde's stock web interface for a week before building the rest of either scope.
+Changed 2026-11-02: the web app is built first, on the Mac, then the physical device.
 
 ## Unverified assumptions
 
 | Assumption | When it gets checked |
 |---|---|
-| The Infinite Mixtapes have public stream URLs like NTS 1 and 2 | Scope 1, Phase 2 |
-| NTS's live data feed includes show images | Scope 1, Phase 4 |
+| The Infinite Mixtapes have public stream URLs like NTS 1 and 2 | Confirmed 2026-11-02 |
+| NTS's live data feed includes show images | Confirmed 2026-11-02 |
 | moOde can resume playback on boot | Scope 1, Phase 5 |
 | The color OLED's amber can be matched closely to the yellow strip | Scope 1, Phase 4 |
 | Mausberry's toggle version works with a latching switch on the Pi Zero 2 W | Before ordering |
