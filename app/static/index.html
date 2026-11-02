@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pi Radio</title>
-<meta name="theme-color" content="#0e0c0a">
+<meta name="theme-color" content="#0b0906">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pi Radio">
@@ -12,237 +12,155 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0e0c0a;
-    --plate: #1c1916;
-    --plate-edge: #2b2723;
-    --screen: #0a0704;
+    --bg: #0b0906;
     --amber: #ffb02e;
-    --amber-dim: #7a5216;
-    --amber-ghost: #2a1d09;
-    --label: #8f877c;
-    --cap: #e6dfcd;
-    --cap-side: #bdb49f;
-    --cap-ink: #2a2620;
-    --led-off: #3a2a14;
+    --amber-mid: #b87a1c;
+    --amber-dim: #5c3e10;
+    --amber-ghost: #241907;
+    --line: #3a2a10;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
     --dot: "VT323", ui-monospace, Menlo, monospace;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--label); font-family: var(--mono); }
+  html, body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: var(--mono); }
   body {
     min-height: 100vh;
     padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
-    display: flex; flex-direction: column; align-items: center; gap: 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  body::after {
+    /* scanlines over everything */
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 10;
+    background: repeating-linear-gradient(0deg, #0000 0 2px, #0000002e 2px 3px);
   }
   button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .glow { color: var(--amber); text-shadow: 0 0 6px #ffb02e88; }
 
-  /* Faceplate */
-  .plate {
+  .unit {
     width: 100%; max-width: 420px;
-    background: linear-gradient(180deg, #221e1a 0%, var(--plate) 40%, #181512 100%);
-    border: 1px solid var(--plate-edge);
-    border-radius: 14px;
-    padding: 22px 20px 20px;
-    box-shadow: 0 1px 0 #3a352f inset, 0 20px 40px -20px #000;
-    display: grid; gap: 22px;
+    border: 1px solid var(--line);
+    padding: 16px;
+    display: grid; gap: 16px;
     user-select: none; -webkit-user-select: none;
   }
-  .label { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--label); }
+  .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--dot); font-size: 18px; color: var(--amber-dim); letter-spacing: .08em;
+    border-bottom: 1px dashed var(--line); padding-bottom: 8px; margin: -4px 0 0;
+  }
+  .label { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--amber-dim); }
 
-  /* Top row: keys + play switch */
-  .top { display: flex; align-items: flex-end; gap: 14px; }
-  .key-wrap { display: grid; justify-items: center; gap: 7px; }
-  .led { width: 6px; height: 6px; border-radius: 50%; background: var(--led-off); transition: background .15s, box-shadow .15s; }
-  .led.on { background: var(--amber); box-shadow: 0 0 6px var(--amber), 0 0 14px #ffb02e66; }
-  .key {
-    width: 58px; height: 54px; border-radius: 7px;
-    background: var(--cap-side);
-    box-shadow: 0 3px 0 #8a826f, 0 6px 10px -4px #000;
-    padding: 4px 5px 8px;
-    transition: transform .06s, box-shadow .06s;
+  /* Keys row */
+  .top { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 10px; }
+  .key, .seg button {
+    height: 48px; border: 1px solid var(--amber-dim);
+    font-family: var(--dot); font-size: 24px; letter-spacing: .06em; color: var(--amber-mid);
+    display: grid; place-items: center; position: relative;
+    transition: background .08s, color .08s;
   }
-  .key span {
-    display: grid; place-items: center; height: 100%;
-    border-radius: 5px;
-    background: linear-gradient(180deg, #f2ecdc, var(--cap));
-    color: var(--cap-ink); font-weight: 600; font-size: 12px; letter-spacing: .06em;
-  }
-  .key:active { transform: translateY(3px); box-shadow: 0 0 0 #8a826f, 0 2px 4px -2px #000; }
+  .key.on, .seg button.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
+  .key:active, .seg button:active { background: var(--amber-mid); color: var(--bg); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; }
+  .seg button + button { border-left: 0; }
 
-  .switch-wrap { margin-left: auto; display: grid; justify-items: center; gap: 7px; }
-  .switch {
-    width: 40px; height: 62px; border-radius: 20px;
-    background: #0d0b09; border: 1px solid #000;
-    box-shadow: 0 1px 0 #3a352f, inset 0 2px 6px #000;
-    position: relative;
-  }
-  .switch::after {
-    content: ""; position: absolute; left: 50%; width: 14px; height: 30px; margin-left: -7px;
-    border-radius: 7px;
-    background: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892);
-    box-shadow: 0 2px 4px #000;
-    top: 26px; transition: top .12s ease-out;
-  }
-  .switch.on::after { top: 6px; }
-  .switch-legend { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-
-  /* Middle row: dial + art */
-  .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; }
-  .dial-wrap { display: grid; justify-items: center; gap: 10px; }
+  /* Dial + art */
+  .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
+  .dial-wrap { display: grid; justify-items: center; gap: 8px; }
   .dial {
-    width: 132px; height: 132px; border-radius: 50%;
-    position: relative; touch-action: none; cursor: grab;
+    width: 100%; max-width: 160px; aspect-ratio: 1; position: relative;
+    touch-action: none; cursor: grab; border-radius: 50%; outline: none;
   }
-  .dial:active { cursor: grabbing; }
-  .dial-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    background:
-      radial-gradient(circle at 50% 50%, transparent 58%, #0007 59%, transparent 62%),
-      repeating-conic-gradient(from 0deg, #c9c5bd 0deg 3deg, #77736c 3deg 6deg);
-    box-shadow: 0 8px 16px -6px #000, 0 0 0 1px #000;
+  .dial:focus-visible { box-shadow: 0 0 0 1px var(--amber-dim); }
+  .dial i {
+    position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px;
+    background: var(--amber-ghost);
   }
-  .dial-cap {
-    position: absolute; inset: 15px; border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 30%, #f4f2ee 0%, #bdb8b0 45%, #85807a 100%);
-    box-shadow: inset 0 -3px 6px #0005, inset 0 2px 3px #fff8, 0 1px 2px #000;
+  .dial i.lit { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .dial i.near { background: var(--amber-dim); }
+  .dial-read {
+    position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+    font-family: var(--dot); pointer-events: none;
   }
-  .dial-cap::before {
-    content: ""; position: absolute; inset: 14%; border-radius: 50%;
-    background: repeating-radial-gradient(circle, #0000 0 2px, #0000000a 2px 3px);
-  }
-  .dial-notch {
-    position: absolute; left: 50%; top: 9px; width: 4px; height: 20px; margin-left: -2px;
-    border-radius: 2px; background: var(--amber); box-shadow: 0 0 6px #ffb02e99;
-  }
-  .dial-rot { position: absolute; inset: 0; transition: transform .18s cubic-bezier(.3,1.4,.5,1); }
-  .dial-ticks { position: absolute; inset: -9px; border-radius: 50%; pointer-events: none; }
-  .dial-ticks i {
-    position: absolute; left: 50%; top: 0; width: 1px; height: 5px; background: #5a544c;
-    transform-origin: 50% calc(66px + 9px);
-  }
+  .dial-read b { font-weight: 400; font-size: 46px; line-height: .85; }
+  .dial-read span { font-size: 16px; color: var(--amber-dim); }
 
-  .screen {
-    background: var(--screen);
-    border-radius: 6px;
-    border: 1px solid #000;
-    box-shadow: inset 0 0 0 3px #15110c, inset 0 4px 14px #000, 0 1px 0 #3a352f;
-    position: relative; overflow: hidden;
-  }
-  .screen::after {
-    /* faint pixel grid so the glass reads as an OLED, not a web image */
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: repeating-linear-gradient(0deg, #0000 0 2px, #00000038 2px 3px);
-  }
-  .art { aspect-ratio: 1; padding: 9px; }
+  .screen { border: 1px solid var(--line); background: #070503; position: relative; }
+  .art { aspect-ratio: 1; padding: 8px; }
   .art img {
-    width: 100%; height: 100%; display: block;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 0 2px #ffb02e88);
-    transition: opacity .25s;
+    width: 100%; height: 100%; display: block; image-rendering: pixelated;
+    filter: drop-shadow(0 0 2px #ffb02e66); transition: opacity .2s;
   }
-  .screen.off img, .screen.off .strip-line { opacity: .18; filter: none; text-shadow: none; }
+  .off img, .off .line { opacity: .2; text-shadow: none; }
 
   /* Text strip */
-  .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 1px; }
-  .strip-line {
-    font-family: var(--dot); color: var(--amber);
-    text-shadow: 0 0 4px #ffb02eaa;
-    white-space: nowrap; overflow: hidden; line-height: 1.05;
-    transition: opacity .25s;
-  }
-  .strip-line.big { font-size: clamp(22px, 7.4vw, 30px); }
-  .strip-line.small { font-size: clamp(16px, 5vw, 20px); color: #e89a20; }
-  .strip-line .run { display: inline-block; padding-right: 3em; }
-  .strip-line.scroll .run { animation: marquee var(--dur, 12s) linear infinite; }
+  .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; }
+  .line { font-family: var(--dot); white-space: nowrap; overflow: hidden; line-height: 1; transition: opacity .2s; }
+  .line.big { font-size: clamp(24px, 7.6vw, 32px); }
+  .line.small { font-size: clamp(17px, 5vw, 21px); color: var(--amber-mid); }
+  .line .run { display: inline-block; }
+  .line.scroll .run { animation: marquee var(--dur, 12s) linear infinite; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-  /* Volume */
-  .vol { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
-  .vol-read { font-family: var(--dot); color: var(--amber); font-size: 24px; min-width: 2.2ch; text-align: right; text-shadow: 0 0 4px #ffb02e88; }
-  input[type=range] {
-    -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; margin: 0;
-  }
-  input[type=range]::-webkit-slider-runnable-track {
-    height: 6px; border-radius: 3px; background: #0b0907; box-shadow: inset 0 1px 3px #000, 0 1px 0 #3a352f;
-  }
-  input[type=range]::-moz-range-track {
-    height: 6px; border-radius: 3px; background: #0b0907; box-shadow: inset 0 1px 3px #000, 0 1px 0 #3a352f;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 18px; height: 30px; margin-top: -12px; border-radius: 3px;
-    background: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892);
-    box-shadow: 0 2px 4px #000, inset 0 0 0 1px #0004;
-    background-image: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892), linear-gradient(#000, #000);
-  }
-  input[type=range]::-moz-range-thumb {
-    width: 18px; height: 30px; border-radius: 3px; border: 0;
-    background: linear-gradient(90deg, #8d8a85, #e2dfd8 45%, #9c9892);
-    box-shadow: 0 2px 4px #000;
-  }
+  /* Volume: segmented bar with an invisible range input on top for touch and keys */
+  .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+  .bar { position: relative; height: 22px; display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; }
+  .bar i { background: var(--amber-ghost); }
+  .bar i.lit { background: var(--amber); box-shadow: 0 0 4px #ffb02e88; }
+  .bar input { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); opacity: 0; margin: 0; cursor: pointer; }
+  .vol-read { font-family: var(--dot); font-size: 26px; min-width: 2.4ch; text-align: right; }
 
-  /* Station card */
-  .card { width: 100%; max-width: 420px; }
-  .group { margin-bottom: 18px; }
+  /* Station list */
+  .list { width: 100%; max-width: 420px; }
+  .group { margin-bottom: 14px; }
   .group h2 {
-    margin: 0 0 6px; padding: 0 4px 6px; font-size: 10px; font-weight: 500;
-    letter-spacing: .2em; text-transform: uppercase; color: var(--label);
-    border-bottom: 1px solid #2b2723;
+    margin: 0; padding: 6px 4px; font-family: var(--dot); font-weight: 400; font-size: 18px;
+    letter-spacing: .1em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
   }
   .row {
-    width: 100%; display: grid; grid-template-columns: 2.6ch 1fr auto; gap: 12px; align-items: baseline;
-    text-align: left; padding: 9px 4px; border-radius: 4px; color: #cfc7ba; font-size: 14px;
+    width: 100%; display: grid; grid-template-columns: 1.6ch 2.4ch 1fr; gap: 10px; align-items: baseline;
+    text-align: left; padding: 6px 4px; font-family: var(--dot); font-size: 22px; color: var(--amber-mid);
   }
-  .row .n { color: #5d564d; font-size: 11px; }
-  .row .mark { width: 6px; height: 6px; border-radius: 50%; align-self: center; }
-  .row:hover { background: #17140f; }
-  .row.active { color: var(--amber); }
-  .row.active .n { color: var(--amber-dim); }
-  .row.active .mark { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .row .cur { color: var(--amber); visibility: hidden; }
+  .row .n { color: var(--amber-dim); }
+  .row:hover { background: var(--amber-ghost); }
+  .row.active { color: var(--amber); text-shadow: 0 0 6px #ffb02e88; }
+  .row.active .cur { visibility: visible; }
+  .row.active .n { color: var(--amber-mid); }
 
   .note {
-    width: 100%; max-width: 420px; font-size: 11px; color: #a07a3c;
-    border: 1px dashed #4a3a20; border-radius: 6px; padding: 8px 10px; display: none;
+    width: 100%; max-width: 420px; font-family: var(--dot); font-size: 17px; color: var(--amber-mid);
+    border: 1px dashed var(--line); padding: 6px 10px; display: none;
   }
   .note.show { display: block; }
-  .net { color: #c0503a; }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
 </style>
 </head>
 <body>
 
 <div class="note" id="note"></div>
 
-<main class="plate" aria-label="Radio controls">
+<main class="unit" aria-label="Radio controls">
+  <div class="head"><span>PI RADIO</span><span id="status">--</span></div>
+
   <div class="top">
-    <div class="key-wrap">
-      <div class="led" id="led-nts1"></div>
-      <button class="key" data-play="nts1" aria-label="Play NTS 1"><span>NTS 1</span></button>
-    </div>
-    <div class="key-wrap">
-      <div class="led" id="led-nts2"></div>
-      <button class="key" data-play="nts2" aria-label="Play NTS 2"><span>NTS 2</span></button>
-    </div>
-    <div class="switch-wrap">
-      <span class="label">Play</span>
-      <button class="switch" id="switch" role="switch" aria-checked="false" aria-label="Play or stop"></button>
-      <span class="label">Stop</span>
+    <button class="key" data-play="nts1" id="key-nts1" aria-label="Play NTS 1">NTS 1</button>
+    <button class="key" data-play="nts2" id="key-nts2" aria-label="Play NTS 2">NTS 2</button>
+    <div class="seg" role="group" aria-label="Play or stop">
+      <button id="btnPlay" aria-label="Play">PLAY</button>
+      <button id="btnStop" aria-label="Stop">STOP</button>
     </div>
   </div>
 
   <div class="mid">
     <div class="dial-wrap">
       <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
-        <div class="dial-ticks" id="ticks"></div>
-        <div class="dial-rot" id="dialRot">
-          <div class="dial-ring"></div>
-          <div class="dial-cap"></div>
-          <div class="dial-notch"></div>
-        </div>
+        <div class="dial-read"><b class="glow" id="dialNum">--</b><span id="dialOf">/--</span></div>
       </div>
-      <span class="label">Station</span>
+      <span class="label">Turn · Press</span>
     </div>
     <div class="screen art off" id="artScreen">
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
@@ -250,42 +168,41 @@
   </div>
 
   <div class="screen strip off" id="strip">
-    <div class="strip-line big" id="line1"><span class="run">—</span></div>
-    <div class="strip-line small" id="line2"><span class="run"></span></div>
+    <div class="line big glow" id="line1"><span class="run">—</span></div>
+    <div class="line small" id="line2"><span class="run"></span></div>
   </div>
 
   <div class="vol">
     <span class="label">Vol</span>
-    <input type="range" id="vol" min="0" max="100" step="1" aria-label="Volume">
-    <span class="vol-read" id="volRead">--</span>
+    <div class="bar" id="bar"><input type="range" id="vol" min="0" max="100" step="5" aria-label="Volume"></div>
+    <span class="vol-read glow" id="volRead">--</span>
   </div>
 </main>
 
-<nav class="card" id="card" aria-label="Stations"></nav>
+<nav class="list" id="list" aria-label="Stations"></nav>
 
 <script>
 const $ = (id) => document.getElementById(id);
 let S = null;            // last state from the server
 let order = [];          // flat station ids in dial order
-let dialAngle = 0;       // visual rotation of the knob
 let volDragging = false;
+const pad = (n) => String(n).padStart(2, "0");
 
 async function api(path, body) {
-  const opts = body === undefined ? { method: "POST" } :
+  const get = path.startsWith("/api/state");
+  const opts = get ? {} : body === undefined ? { method: "POST" } :
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   try {
-    const r = await fetch(path, path.startsWith("/api/state") ? {} : opts);
+    const r = await fetch(path, opts);
     if (!r.ok) throw new Error(r.status);
-    setNet(true);
     return await r.json();
-  } catch (e) { setNet(false); return null; }
+  } catch (e) { setNote("NO SIGNAL FROM RADIO. RETRYING<span class='blink'>_</span>"); return null; }
 }
 
-function setNet(ok) {
+function setNote(html) {
   const n = $("note");
-  if (!ok) { n.innerHTML = '<span class="net">No connection to the radio.</span> Retrying.'; n.classList.add("show"); }
-  else if (S && S.player === "mock") { n.textContent = "Mock player: the app works but makes no sound. Install MPD or run on the Pi for audio."; n.classList.add("show"); }
-  else n.classList.remove("show");
+  n.innerHTML = html || "";
+  n.classList.toggle("show", !!html);
 }
 
 function setLine(el, text) {
@@ -297,75 +214,95 @@ function setLine(el, text) {
   requestAnimationFrame(() => {
     if (run.scrollWidth > el.clientWidth) {
       // Duplicate the text so the loop is seamless, speed scaled to length.
-      run.textContent = text + "   " + text + "   ";
+      const gap = "   ";
+      run.textContent = text + gap + text + gap;
       el.style.setProperty("--dur", Math.max(8, text.length * 0.35) + "s");
       el.classList.add("scroll");
     }
   });
 }
 
+function drawVolume(v) {
+  const lit = v === null ? 0 : Math.round(v / 5);
+  [...$("bar").querySelectorAll("i")].forEach((c, i) => c.classList.toggle("lit", i < lit));
+  $("volRead").textContent = v === null ? "--" : pad(Math.min(v, 99));
+}
+
 function render(s) {
   if (!s) return;
   S = s;
-  setNet(true);
+  setNote(s.player === "mock" ? "MOCK PLAYER: NO SOUND. START MPD OR RUN ON THE PI." : "");
 
-  const on = s.playing;
-  $("switch").classList.toggle("on", on);
-  $("switch").setAttribute("aria-checked", on);
+  const on = s.playing, id = s.station.id;
+  $("status").textContent = on ? "● ON AIR" : "○ STANDBY";
+  $("status").className = on ? "glow" : "";
+  $("btnPlay").classList.toggle("on", on);
+  $("btnStop").classList.toggle("on", !on);
   $("artScreen").classList.toggle("off", !on);
   $("strip").classList.toggle("off", !on);
-  $("led-nts1").classList.toggle("on", on && s.station.id === "nts1");
-  $("led-nts2").classList.toggle("on", on && s.station.id === "nts2");
+  $("key-nts1").classList.toggle("on", on && id === "nts1");
+  $("key-nts2").classList.toggle("on", on && id === "nts2");
 
   const title = [s.station.name, s.now.title].filter(Boolean).join(" · ");
   setLine($("line1"), title.toUpperCase());
-  setLine($("line2"), s.now.subtitle || s.station.group);
+  setLine($("line2"), (s.now.subtitle || s.station.group).toUpperCase());
 
   const img = $("art");
   if (img.dataset.src !== s.art) { img.dataset.src = s.art; img.src = s.art; }
 
+  const idx = order.indexOf(id);
+  $("dialNum").textContent = idx >= 0 ? pad(idx + 1) : "--";
+  [...$("dial").querySelectorAll("i")].forEach((d, i) => {
+    const dist = Math.min(Math.abs(i - idx), order.length - Math.abs(i - idx));
+    d.className = i === idx ? "lit" : dist === 1 ? "near" : "";
+  });
+
   if (!volDragging) {
-    if (s.volume === null) { $("vol").disabled = true; $("volRead").textContent = "--"; }
-    else { $("vol").disabled = false; $("vol").value = s.volume; $("volRead").textContent = s.volume; }
+    $("vol").disabled = s.volume === null;
+    if (s.volume !== null) $("vol").value = s.volume;
+    drawVolume(s.volume);
   }
 
-  document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === s.station.id));
+  document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === id));
 }
 
-async function buildCard() {
-  const r = await fetch("/api/stations");
-  const groups = await r.json();
-  const card = $("card");
+async function build() {
+  const groups = await (await fetch("/api/stations")).json();
   let n = 0;
   for (const g of groups) {
     const sec = document.createElement("section");
     sec.className = "group";
-    sec.innerHTML = `<h2>${g.name}</h2>`;
+    sec.innerHTML = `<h2>${g.name.toUpperCase()}</h2>`;
     for (const st of g.stations) {
       n++;
       order.push(st.id);
       const b = document.createElement("button");
       b.className = "row"; b.dataset.id = st.id;
-      b.innerHTML = `<span class="n">${String(n).padStart(2, "0")}</span><span></span><span class="mark"></span>`;
-      b.children[1].textContent = st.name;
+      b.innerHTML = `<span class="cur">&gt;</span><span class="n">${pad(n)}</span><span></span>`;
+      b.children[2].textContent = st.name.toUpperCase();
       b.onclick = () => api(`/api/play/${st.id}`).then(render);
       sec.appendChild(b);
     }
-    card.appendChild(sec);
+    $("list").appendChild(sec);
   }
-  // Tick marks around the dial, one per station.
-  const ticks = $("ticks");
+  $("dialOf").textContent = "/" + pad(order.length);
+
+  // One square per station around the dial, like an LED ring.
   order.forEach((_, i) => {
-    const t = document.createElement("i");
-    t.style.transform = `rotate(${(i / order.length) * 360}deg)`;
-    ticks.appendChild(t);
+    const d = document.createElement("i");
+    const a = (i / order.length) * 360 - 90;
+    d.style.transform = `rotate(${a}deg) translateX(min(72px, 21vw)) rotate(${-a}deg)`;
+    $("dial").appendChild(d);
   });
+
+  for (let i = 0; i < 20; i++) $("bar").insertBefore(document.createElement("i"), $("vol"));
 }
 
-/* Keys and switch */
+/* Keys and play/stop */
 document.querySelectorAll("[data-play]").forEach(b =>
   b.addEventListener("click", () => api(`/api/play/${b.dataset.play}`).then(render)));
-$("switch").addEventListener("click", () => api("/api/toggle").then(render));
+$("btnPlay").addEventListener("click", () => { if (!S || !S.playing) api("/api/toggle").then(render); });
+$("btnStop").addEventListener("click", () => api("/api/stop").then(render));
 
 /* Dial: drag round to step stations (one step per 30°), tap to play/stop. */
 const STEP_DEG = 30;
@@ -375,9 +312,12 @@ function angleAt(e) {
   return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
 }
 function turn(dir) {
-  dialAngle += dir * STEP_DEG;
-  $("dialRot").style.transform = `rotate(${dialAngle}deg)`;
   if (navigator.vibrate) navigator.vibrate(8);
+  // Move the lit square straight away; the server confirms a moment later.
+  if (S) {
+    const i = (order.indexOf(S.station.id) + dir + order.length) % order.length;
+    render({ ...S, station: { ...S.station, id: order[i] } });
+  }
   api(`/api/step/${dir}`).then(render);
 }
 $("dial").addEventListener("pointerdown", e => {
@@ -410,18 +350,18 @@ $("dial").addEventListener("keydown", e => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); api("/api/toggle").then(render); }
 });
 
-/* Volume: update the readout live, send after a short pause. */
+/* Volume: update the bar live, send after a short pause. */
 let volTimer;
 $("vol").addEventListener("input", e => {
   volDragging = true;
-  $("volRead").textContent = e.target.value;
+  drawVolume(+e.target.value);
   clearTimeout(volTimer);
   volTimer = setTimeout(() => api("/api/volume", { value: +e.target.value }).then(s => { volDragging = false; render(s); }), 150);
 });
 
 /* Poll so the app follows the physical controls and show changes. */
 async function poll() { render(await api("/api/state")); }
-buildCard().then(poll);
+build().then(poll);
 setInterval(poll, 3000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 </script>

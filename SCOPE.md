@@ -108,7 +108,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Volume | Software volume |
 | Sync | Reflects the physical controls live |
 
-The visual style matches the device: retro-analog, amber on dark, monospace type, mechanical-looking controls.
+The visual style is flat retro digital: amber on near-black, dot-matrix type, an LED-ring dial and a segmented volume bar. Changed from mechanical-looking controls on 2026-11-02.
 
 ### Build phases
 
