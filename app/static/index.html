@@ -146,6 +146,10 @@
   .bar i.lit { background: var(--amber); box-shadow: 0 0 4px #ffb02e88; }
   .bar input { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); opacity: 0; margin: 0; cursor: pointer; }
   .vol-read { font-family: var(--dot); font-size: 26px; min-width: 2.4ch; text-align: right; }
+  /* iPhones only let the hardware buttons set volume, so there the bar gives way to a note */
+  .vol-hw { display: none; grid-column: 2 / 4; font-family: var(--dot); font-size: 19px; color: var(--amber-dim); letter-spacing: .06em; }
+  .vol.hw .bar, .vol.hw .vol-read { display: none; }
+  .vol.hw .vol-hw { display: block; }
 
   /* Station board */
   .list { width: 100%; max-width: 420px; }
@@ -260,14 +264,14 @@
   </div>
 
   <div class="mid">
+    <div class="screen art off" id="artScreen">
+      <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+    </div>
     <div class="dial-wrap">
       <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
         <div class="dial-read"><b class="glow" id="dialNum">--</b><span id="dialOf">/--</span></div>
       </div>
       <span class="label">Turn · Press</span>
-    </div>
-    <div class="screen art off" id="artScreen">
-      <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
     </div>
   </div>
 
@@ -297,6 +301,7 @@
     <span class="label">Vol</span>
     <div class="bar" id="bar"><input type="range" id="vol" min="0" max="100" step="5" aria-label="Volume"></div>
     <span class="vol-read glow" id="volRead">--</span>
+    <span class="vol-hw">USE THE PHONE'S VOLUME BUTTONS</span>
   </div>
 </main>
 
@@ -729,6 +734,7 @@ function render(s) {
 
   if (!volDragging) {
     $("vol").disabled = s.volume === null;
+    document.querySelector(".vol").classList.toggle("hw", s.volume === null && s.player === "phone");
     if (s.volume !== null) $("vol").value = s.volume;
     drawVolume(s.volume);
   }
