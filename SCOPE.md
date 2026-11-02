@@ -113,7 +113,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Signal readout | Codec, bitrate, sample rate, plus a clock |
 | Recently played | Last 50 shows and tracks, logged every 15 s while playing |
 | Output switch | RADIO plays on the speakers at home; THIS DEVICE plays the stream on the phone or laptop, with lock-screen controls |
-| Away from home | Until the Pi: a no-server build on a free static host (Netlify). With the Pi: Tailscale private network to it |
+| Away from home | Until the Pi: a no-server build on a free static host (Netlify, live at https://spiffy-elf-9ebf5d.netlify.app). With the Pi: Tailscale private network to it |
 | Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
 
 The visual style is flat retro digital: amber on near-black, dot-matrix type, an LED-ring dial and a segmented volume bar. Changed from mechanical-looking controls on 2026-11-02.

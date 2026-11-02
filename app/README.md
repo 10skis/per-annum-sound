@@ -39,6 +39,8 @@ The spectrum shows LIVE when it's reading MPD's audio (the FIFO output in `dev/m
 .venv/bin/python build_static.py
 ```
 
+Live at https://spiffy-elf-9ebf5d.netlify.app (published 2026-11-02).
+
 That writes `web/`. To publish it, go to https://app.netlify.com/drop (free account), drag the `web` folder onto the page, and open the address Netlify gives you on the iPhone, then Share → Add to Home Screen. To update it later, rebuild and drag the folder onto the same site's Deploys page. Cloudflare Pages works the same way.
 
 ## Listening away from home with the Pi

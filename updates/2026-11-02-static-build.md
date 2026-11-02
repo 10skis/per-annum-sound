@@ -20,3 +20,4 @@
 
 ## Next steps
 - See TODO.md.
+- Published 2026-11-02 at https://spiffy-elf-9ebf5d.netlify.app. Checked from the live host: 30 stations, NTS schedule, bundled art and KEXP playback all work.

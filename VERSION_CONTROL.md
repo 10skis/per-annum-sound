@@ -6,7 +6,7 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.7: Web app with dashboard, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi. Not yet published. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.7: Web app with dashboard, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
