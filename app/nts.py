@@ -3,6 +3,7 @@
 import html
 import logging
 import time
+from datetime import datetime, timezone
 
 import httpx
 
@@ -53,17 +54,27 @@ def _channel(channel: str) -> dict:
     return {}
 
 
-def live_now(channel: str) -> dict:
-    """Current show on an NTS channel."""
-    now = _channel(channel).get("now")
-    return _show(now) if now else {}
+def _ended(show: dict) -> bool:
+    end = show.get("end")
+    try:
+        return bool(end) and datetime.fromisoformat(end.replace("Z", "+00:00")) <= datetime.now(timezone.utc)
+    except ValueError:
+        return False
 
 
 def schedule(channel: str, count: int = 5) -> list:
-    """The current show plus the next count-1, oldest first."""
+    """The current show plus the next count-1, oldest first. NTS keeps listing a show as
+    "now" for a while after it ends, so anything already over is skipped."""
     ch = _channel(channel)
-    keys = ["now", "next"] + [f"next{i}" for i in range(2, count)]
-    return [_show(ch[k]) for k in keys[:count] if ch.get(k)]
+    keys = ["now", "next"] + [f"next{i}" for i in range(2, 18)]
+    shows = [_show(ch[k]) for k in keys if ch.get(k)]
+    return [s for s in shows if not _ended(s)][:count]
+
+
+def live_now(channel: str) -> dict:
+    """Current show on an NTS channel."""
+    shows = schedule(channel, 1)
+    return shows[0] if shows else {}
 
 
 def mixtape(alias: str) -> dict:

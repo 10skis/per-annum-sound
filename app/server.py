@@ -70,7 +70,8 @@ def now_playing(station: dict, stream_title=None) -> dict:
         info = {"title": mix.get("subtitle", ""), "subtitle": "Infinite Mixtape",
                 "description": mix.get("description", ""), "art": mix.get("art")}
     else:
-        info = {"title": stream_title or "", "subtitle": station.get("place", ""), "art": station.get("art")}
+        info = {"title": stream_title or "", "subtitle": station.get("place", ""),
+                "description": station.get("about", ""), "art": station.get("art")}
     return {
         "title": info.get("title", ""),
         "subtitle": info.get("subtitle", ""),

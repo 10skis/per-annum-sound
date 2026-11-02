@@ -3,7 +3,7 @@
 #   nts_live     NTS Channel 1/2. Show info and art come from the NTS live feed.
 #   nts_mixtape  NTS Infinite Mixtape. Title and art come from the NTS mixtapes feed by alias.
 #   radio        Any other stream. Track info comes from the stream itself (ICY metadata).
-# Stream URLs checked 2026-11-02. Find more at https://www.radio-browser.info
+# Stream URLs checked 2026-11-02 (Kool FM, WQXR and Chillhop added the same day). Find more at https://www.radio-browser.info
 
 groups:
   - name: NTS Live
@@ -31,17 +31,102 @@ groups:
       - {id: field-recordings, name: Field Recordings, kind: nts_mixtape, url: "https://stream-mixtape-geo.ntslive.net/mixtape23"}
 
   - name: Elsewhere
+    # about: shown as the station description, since these streams carry no show info.
     stations:
       # The Lot only streams video. 14_0 is the lowest-bandwidth version (240p, ~0.4 Mbps); the player keeps the audio.
-      - {id: lot, name: The Lot Radio, kind: radio, place: Brooklyn, url: "https://livepeercdn.studio/hls/85c28sa2o8wppm58/14_0/index.m3u8", art: "https://cdn.prod.website-files.com/5f4bdfc87623ea5cc5d24cf3/606da84551eef3d5fa8c0cb9_icon.png"}
-      - {id: dublab, name: Dublab, kind: radio, place: Los Angeles, url: "https://dublab.out.airtime.pro/dublab_a"}
-      - {id: refuge, name: Refuge Worldwide, kind: radio, place: Berlin, url: "https://streaming.radio.co/s3699c5e49/listen", art: "https://refugeworldwide.com/apple-touch-icon.png"}
-      - {id: kiosk, name: Kiosk Radio, kind: radio, place: Brussels, url: "https://kioskradiobxl.out.airtime.pro/kioskradiobxl_b", art: "https://kioskradio.com/favicon.png"}
-      - {id: cashmere, name: Cashmere Radio, kind: radio, place: Berlin, url: "https://cashmereradio.out.airtime.pro/cashmereradio_b"}
-      - {id: noods, name: Noods Radio, kind: radio, place: Bristol, url: "https://noods-radio.radiocult.fm/stream"}
-      - {id: alhara, name: Radio alHara, kind: radio, place: Bethlehem, url: "https://stream.radioalhara.net/ra", art: "https://radioalhara.net/img/radio-alhara-logo-512.png"}
-      - {id: rinse, name: Rinse FM, kind: radio, place: London, url: "https://admin.stream.rinse.fm/proxy/rinse_uk/stream"}
-      - {id: wfmu, name: WFMU, kind: radio, place: New Jersey, url: "https://stream0.wfmu.org/freeform-high.aac"}
-      - {id: kexp, name: KEXP, kind: radio, place: Seattle, url: "https://kexp.streamguys1.com/kexp160.aac"}
-      - {id: fip, name: FIP, kind: radio, place: Paris, url: "https://icecast.radiofrance.fr/fip-hifi.aac", art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"}
-      - {id: fip-jazz, name: FIP Jazz, kind: radio, place: Paris, url: "https://icecast.radiofrance.fr/fipjazz-hifi.aac", art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"}
+      - id: lot
+        name: The Lot Radio
+        kind: radio
+        place: Brooklyn
+        url: "https://livepeercdn.studio/hls/85c28sa2o8wppm58/14_0/index.m3u8"
+        art: "https://cdn.prod.website-files.com/5f4bdfc87623ea5cc5d24cf3/606da84551eef3d5fa8c0cb9_icon.png"
+        about: "Independent, non-profit radio streaming around the clock from a shipping container on an empty lot in Williamsburg. Live DJs from New York and beyond, across every genre."
+      - id: dublab
+        name: Dublab
+        kind: radio
+        place: Los Angeles
+        url: "https://dublab.out.airtime.pro/dublab_a"
+        about: "Non-profit, listener-supported web radio from Los Angeles since 1999. It calls itself future roots radio: experimental, jazz, electronic, folk and everything between."
+      - id: refuge
+        name: Refuge Worldwide
+        kind: radio
+        place: Berlin
+        url: "https://streaming.radio.co/s3699c5e49/listen"
+        art: "https://refugeworldwide.com/apple-touch-icon.png"
+        about: "Community radio from Neukölln, grown out of a Berlin fundraising party series. Resident shows across club, experimental and global sounds."
+      - id: kiosk
+        name: Kiosk Radio
+        kind: radio
+        place: Brussels
+        url: "https://kioskradiobxl.out.airtime.pro/kioskradiobxl_b"
+        art: "https://kioskradio.com/favicon.png"
+        about: "Community radio broadcasting live from a wooden kiosk in Brussels' Parc Royal. Local selectors and touring guests, from slow mornings to club nights."
+      - id: cashmere
+        name: Cashmere Radio
+        kind: radio
+        place: Berlin
+        url: "https://cashmereradio.out.airtime.pro/cashmereradio_b"
+        about: "Non-commercial community station in Berlin-Lichtenberg since 2015. Leans experimental: ambient, noise, sound art and the odd corners of club music."
+      - id: noods
+        name: Noods Radio
+        kind: radio
+        place: Bristol
+        url: "https://noods-radio.radiocult.fm/stream"
+        about: "Independent community radio from Bristol since 2015. DJ-led and eclectic, with a strong line in leftfield dance, dub and bass."
+      - id: alhara
+        name: Radio alHara
+        kind: radio
+        place: Bethlehem
+        url: "https://stream.radioalhara.net/ra"
+        art: "https://radioalhara.net/img/radio-alhara-logo-512.png"
+        about: "Started in Bethlehem during the 2020 lockdown; alHara means the neighbourhood. Open, community-run programming from Palestine and the wider Arab world, with guests from everywhere."
+      - id: rinse
+        name: Rinse FM
+        kind: radio
+        place: London
+        url: "https://admin.stream.rinse.fm/proxy/rinse_uk/stream"
+        about: "Began as a London pirate station in 1994 and helped launch UK garage, grime and dubstep. Licensed since 2010 and still the home of UK club music."
+      - id: kool
+        name: Kool FM
+        kind: radio
+        place: London
+        url: "https://admin.stream.rinse.fm/proxy/kool/stream"
+        about: "London's jungle and drum & bass station, on air since it started as a pirate in 1991. Selectors and MCs from the original scene to now, broadcast through Rinse."
+      - id: wfmu
+        name: WFMU
+        kind: radio
+        place: New Jersey
+        url: "https://stream0.wfmu.org/freeform-high.aac"
+        about: "Listener-supported freeform radio from Jersey City since 1958, the longest-running freeform station in the US. DJs play whatever they want, and it shows."
+      - id: kexp
+        name: KEXP
+        kind: radio
+        place: Seattle
+        url: "https://kexp.streamguys1.com/kexp160.aac"
+        about: "Listener-supported public radio from Seattle, known for its live studio sessions. Indie, rock, hip-hop and world music chosen by DJs."
+      - id: fip
+        name: FIP
+        kind: radio
+        place: Paris
+        url: "https://icecast.radiofrance.fr/fip-hifi.aac"
+        art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"
+        about: "Radio France's eclectic music station since 1971. Jazz, rock, soul, electronic and world music in long segues with very little talk."
+      - id: fip-jazz
+        name: FIP Jazz
+        kind: radio
+        place: Paris
+        url: "https://icecast.radiofrance.fr/fipjazz-hifi.aac"
+        art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"
+        about: "FIP's jazz channel. Classic and contemporary jazz all day, with the same light touch."
+      - id: wqxr
+        name: WQXR
+        kind: radio
+        place: New York
+        url: "https://stream.wqxr.org/wqxr-web"
+        about: "New York's classical station, listener-supported and on air since 1936. Orchestral, chamber music and opera, plus live performances from around the city."
+      - id: chillhop
+        name: Chillhop Radio
+        kind: radio
+        place: Berlin
+        url: "https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/"
+        about: "Lo-fi hip-hop curated by the Chillhop Music label, broadcast by Berlin's FluxFM. Mellow beats for working, reading or winding down."

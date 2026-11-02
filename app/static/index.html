@@ -25,6 +25,7 @@
     --dot: "VT323", ui-monospace, Menlo, monospace;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }  /* class display rules would otherwise override it */
   html, body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: var(--mono); }
   body {
     min-height: 100vh;
@@ -355,8 +356,11 @@ const ntsFeed = (() => {
     async schedule(ch, count = 5) {
       const d = await get("https://www.nts.live/api/v2/live", 60000);
       const c = (d.results || []).find(r => r.channel_name === ch) || {};
-      return ["now", "next", ...Array.from({ length: count - 2 }, (_, i) => `next${i + 2}`)]
-        .filter(k => c[k]).map(k => show(c[k]));
+      // NTS keeps listing a show as "now" for a while after it ends; skip anything already over.
+      const t = Date.now();
+      return ["now", "next", ...Array.from({ length: 16 }, (_, i) => `next${i + 2}`)]
+        .filter(k => c[k]).map(k => show(c[k]))
+        .filter(x => !x.end || new Date(x.end) > t).slice(0, count);
     },
     async mixtape(alias) {
       const d = await get("https://www.nts.live/api/v2/mixtapes", 6 * 3600e3);
@@ -383,7 +387,7 @@ const DATA = {
     if (!STATIC) return api(`/api/now/${id}`);
     const st = STN[id];
     if (!st) return null;
-    let now = { title: "", subtitle: st.place || "", art: st.art || "" };
+    let now = { title: "", subtitle: st.place || "", description: st.about || "", art: st.art || "" };
     if (st.kind === "nts_live") now = (await ntsFeed.schedule(st.channel, 1))[0] || now;
     if (st.kind === "nts_mixtape") {
       const m = await ntsFeed.mixtape(id);
@@ -672,6 +676,11 @@ function drawSignal(sig, playing) {
 function drawDetail(now) {
   $("tags").innerHTML = (now.genres || []).slice(0, 5).map(g => `<span>${esc(g.toUpperCase())}</span>`).join("");
   $("desc").textContent = now.description || "";
+  drawProgress(now);
+}
+
+/* How far through the current NTS show. Redrawn every 10 s by tick(), not only on new data. */
+function drawProgress(now) {
   const has = now.start && now.end;
   $("prog").hidden = !has;
   if (!has) { $("progLeft").textContent = ""; return; }
@@ -804,6 +813,7 @@ async function loadRecent() {
 function tick() {
   const d = new Date();
   $("clock").innerHTML = `${pad(d.getHours())}<i>:</i>${pad(d.getMinutes())}`;
+  if (d.getSeconds() % 10 === 0 && S && S.now && !drag) drawProgress(S.now);
 }
 
 /* Keys and play/stop */
