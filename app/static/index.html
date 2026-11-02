@@ -72,6 +72,7 @@
   /* Output: the radio at home, or this phone */
   .out { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
   .out .seg button { height: 32px; font-size: 19px; }
+  .static .out { display: none; }
 
   /* Dial + art */
   .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
@@ -304,6 +305,7 @@
   </div>
 </nav>
 
+<!-- static-flag -->
 <script>
 const $ = (id) => document.getElementById(id);
 let S = null;            // last state from the server
@@ -313,6 +315,170 @@ let schedule = {};
 const pad = (n) => String(n).padStart(2, "0");
 const hhmm = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* No-server mode. The static build (build_static.py) sets PI_RADIO_STATIC: the page reads
+   stations.json, fetches NTS's public feeds itself, dithers art in the browser, plays every
+   stream on this device, and keeps Recently played on this device. */
+const STATIC = !!window.PI_RADIO_STATIC;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+};
+
+const ntsFeed = (() => {
+  const cache = {};
+  async function get(url, ttl) {
+    const c = cache[url];
+    if (c && Date.now() - c.at < ttl) return c.data;
+    try {
+      const d = await (await fetch(url)).json();
+      cache[url] = { at: Date.now(), data: d };
+      return d;
+    } catch (_) { return c ? c.data : {}; }  // keep the last good copy
+  }
+  const unescape = (t) => { const el = document.createElement("textarea"); el.innerHTML = t || ""; return el.value.trim(); };
+  const show = (b) => {
+    const det = (b.embeds || {}).details || {};
+    return {
+      title: unescape(b.broadcast_title), subtitle: det.location_long || "",
+      description: unescape(det.description), genres: (det.genres || []).map(g => g.value).filter(Boolean),
+      start: b.start_timestamp, end: b.end_timestamp, art: (det.media || {}).picture_medium || "",
+    };
+  };
+  return {
+    async schedule(ch, count = 5) {
+      const d = await get("https://www.nts.live/api/v2/live", 60000);
+      const c = (d.results || []).find(r => r.channel_name === ch) || {};
+      return ["now", "next", ...Array.from({ length: count - 2 }, (_, i) => `next${i + 2}`)]
+        .filter(k => c[k]).map(k => show(c[k]));
+    },
+    async mixtape(alias) {
+      const d = await get("https://www.nts.live/api/v2/mixtapes", 6 * 3600e3);
+      const m = (d.results || []).find(r => r.mixtape_alias === alias);
+      return m ? { title: m.title, subtitle: m.subtitle || "", description: unescape(m.description), art: (m.media || {}).picture_medium || "" } : {};
+    },
+  };
+})();
+
+let STN = {};  // static mode: station id -> full station record from stations.json
+
+/* Where the page gets its data: the server, or (static) NTS and stations.json directly. */
+const DATA = {
+  async stations() {
+    if (!STATIC) return (await fetch("/api/stations")).json();
+    const { groups } = await (await fetch("stations.json")).json();
+    for (const g of groups) for (const st of g.stations) {
+      STN[st.id] = { ...st, group: g.name };
+      st.sub = st.kind === "radio" ? st.place || "" : st.kind === "nts_mixtape" ? (await ntsFeed.mixtape(st.id)).subtitle || "" : "";
+    }
+    return groups;
+  },
+  async now(id) {
+    if (!STATIC) return api(`/api/now/${id}`);
+    const st = STN[id];
+    if (!st) return null;
+    let now = { title: "", subtitle: st.place || "", art: st.art || "" };
+    if (st.kind === "nts_live") now = (await ntsFeed.schedule(st.channel, 1))[0] || now;
+    if (st.kind === "nts_mixtape") {
+      const m = await ntsFeed.mixtape(id);
+      now = { title: m.subtitle || "", subtitle: "Infinite Mixtape", description: m.description || "", art: m.art || "" };
+    }
+    const codec = /\.m3u8/.test(st.url) ? "HLS" : /aac/i.test(st.url) ? "AAC" : /mp3|mpeg/i.test(st.url) ? "MP3" : "";
+    return {
+      station: { id, name: st.name, group: st.group, url: st.url },
+      now: { genres: [], description: "", start: null, end: null, ...now },
+      signal: { codec }, art: now.art || "name:" + st.name, artSrc: now.art || "",
+    };
+  },
+  async schedule() {
+    if (!STATIC) return api("/api/schedule");
+    const [a, b] = await Promise.all([ntsFeed.schedule("1"), ntsFeed.schedule("2")]);
+    return { "NTS 1": a, "NTS 2": b };
+  },
+  async history() { return STATIC ? store.get("piRadioHistory", []) : api("/api/history"); },
+};
+
+/* Static mode logs Recently played on this device, the same way the server does for the radio. */
+function logLocalHistory() {
+  if (!STATIC || !local.playing || !local.desc) return;
+  const h = store.get("piRadioHistory", []);
+  const entry = { at: new Date().toISOString(), station: local.desc.station.name, title: local.desc.now.title || "" };
+  if (h[0] && h[0].station === entry.station && h[0].title === entry.title) return;
+  store.set("piRadioHistory", [entry, ...h].slice(0, 50));
+  loadRecent();
+}
+
+/* Dithers art to 128x128 1-bit amber in the browser, matching art.py on the server. */
+const artCache = {};
+function loadImage(url) {
+  return new Promise((ok, fail) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => ok(img); img.onerror = fail;
+    img.src = url;
+  });
+}
+async function ditherArt(url, name) {
+  const key = url || "name:" + name;
+  if (artCache[key]) return artCache[key];
+  if (url && url.startsWith("art/")) return url;  // pre-dithered by build_static.py
+  const N = 128, c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  let px = null, isText = false;
+  if (url) {
+    try {
+      const img = await loadImage(url);
+      const k = Math.max(N / img.width, N / img.height);
+      g.drawImage(img, (N - img.width * k) / 2, (N - img.height * k) / 2, img.width * k, img.height * k);
+      px = g.getImageData(0, 0, N, N);  // throws if the image host blocks it
+    } catch (_) { px = null; }
+  }
+  if (!px) {
+    // Station name in block letters, for stations with no usable art.
+    isText = true;
+    if (document.fonts) await document.fonts.ready;
+    g.fillStyle = "#000"; g.fillRect(0, 0, N, N);
+    g.fillStyle = "#fff"; g.strokeStyle = "#fff";
+    g.strokeRect(2.5, 2.5, N - 5, N - 5);
+    g.font = "26px VT323, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+    const words = name.toUpperCase().split(" ");
+    const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
+    lines.forEach((l, i) => g.fillText(l, N / 2, N / 2 + (i - (lines.length - 1) / 2) * 26));
+    px = g.getImageData(0, 0, N, N);
+  }
+  const d = px.data, gray = new Float32Array(N * N);
+  for (let i = 0; i < N * N; i++) gray[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) * d[i * 4 + 3] / 255;
+  if (!isText) {
+    // Stretch contrast (ignoring the extreme 1% each end), then Floyd-Steinberg dither.
+    const sorted = Float32Array.from(gray).sort();
+    const lo = sorted[Math.floor(N * N * 0.01)], hi = sorted[Math.floor(N * N * 0.99)];
+    for (let i = 0; i < N * N; i++) gray[i] = hi > lo ? (gray[i] - lo) * 255 / (hi - lo) : gray[i];
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = y * N + x, old = gray[i], v = old < 128 ? 0 : 255, err = old - v;
+    gray[i] = v;
+    if (!isText) {
+      if (x + 1 < N) gray[i + 1] += err * 7 / 16;
+      if (y + 1 < N) {
+        if (x > 0) gray[i + N - 1] += err * 3 / 16;
+        gray[i + N] += err * 5 / 16;
+        if (x + 1 < N) gray[i + N + 1] += err / 16;
+      }
+    }
+  }
+  for (let i = 0; i < N * N; i++) {
+    const lit = gray[i] > 0;
+    d[i * 4] = 255; d[i * 4 + 1] = 176; d[i * 4 + 2] = 46; d[i * 4 + 3] = lit ? 255 : 0;
+  }
+  g.putImageData(px, 0, 0);
+  return (artCache[key] = c.toDataURL());
+}
+function setArt(img, s) {
+  if (!STATIC) { img.src = s.art; return; }
+  const key = s.art;
+  ditherArt(s.artSrc, s.station.name).then(u => { if (img.dataset.src === key) img.src = u; });
+}
 
 async function api(path, body) {
   const get = body === undefined && !/^\/api\/(play|toggle|stop|step|volume)\b/.test(path);
@@ -335,6 +501,7 @@ function setNote(html) {
    "phone" plays the stream on this device and only asks the server what's on. */
 let mode = "radio";
 try { mode = localStorage.getItem("piRadioOutput") || "radio"; } catch (_) {}
+if (STATIC) mode = "phone";
 const URLS = {}, NAMES = {};   // station id -> stream URL, display name
 const audio = new Audio();
 audio.preload = "none";
@@ -363,13 +530,14 @@ function phoneRender() {
 
 async function phoneDescribe() {
   if (!local.id) return;
-  const d = await api(`/api/now/${local.id}`);
+  const d = await DATA.now(local.id);
   if (d && d.station.id === local.id) { local.desc = d; phoneRender(); }
 }
 
 async function phonePlay(id) {
   if (hls) { hls.destroy(); hls = null; }
   local.id = id;
+  store.set("piRadioLast", id);
   const url = URLS[id];
   // Start playback inside the tap: iPhones block audio that starts later.
   if (url.includes(".m3u8") && needsHlsJs) {
@@ -384,7 +552,8 @@ async function phonePlay(id) {
   local.playing = true;
   audio.play().catch(() => setNote("TAP PLAY TO START AUDIO ON THIS DEVICE."));
   local.desc = local.desc && local.desc.station.id === id ? local.desc :
-    { ...(local.desc || {}), station: { id, name: NAMES[id] || id, group: "" }, now: { title: "", subtitle: "" }, signal: {}, art: `/api/art/${id}` };
+    { ...(local.desc || {}), station: { id, name: NAMES[id] || id, group: "" }, now: { title: "", subtitle: "" }, signal: {},
+      art: STATIC ? "name:" + (NAMES[id] || id) : `/api/art/${id}`, artSrc: "" };
   phoneRender();
   phoneDescribe();
 }
@@ -419,7 +588,8 @@ function mediaMeta(s) {
   if (!("mediaSession" in navigator) || s.player !== "phone") return;
   navigator.mediaSession.metadata = new MediaMetadata({
     title: s.now.title || s.station.name, artist: s.station.name, album: "Pi Radio",
-    artwork: [{ src: new URL(s.art, location.href).href, sizes: "128x128", type: "image/png" }],
+    artwork: STATIC ? (s.artSrc ? [{ src: s.artSrc, sizes: "400x400" }] : [])
+      : [{ src: new URL(s.art, location.href).href, sizes: "128x128", type: "image/png" }],
   });
   navigator.mediaSession.playbackState = s.playing ? "playing" : "paused";
 }
@@ -452,6 +622,7 @@ function setMode(m) {
   poll();
 }
 function drawMode() {
+  document.body.classList.toggle("static", STATIC);
   $("outRadio").classList.toggle("on", mode === "radio");
   $("outPhone").classList.toggle("on", mode === "phone");
   if (mode === "phone" && needsHlsJs) loadHlsJs().catch(() => {});
@@ -509,7 +680,7 @@ function render(s) {
   mediaMeta(s);
 
   const on = s.playing, id = s.station.id;
-  $("status").textContent = on ? (s.player === "phone" ? "● ON DEVICE" : "● ON AIR") : "○ STANDBY";
+  $("status").textContent = on ? (s.player === "phone" && !STATIC ? "● ON DEVICE" : "● ON AIR") : "○ STANDBY";
   $("status").className = on ? "glow" : "";
   $("btnPlay").classList.toggle("on", on);
   $("btnStop").classList.toggle("on", !on);
@@ -525,7 +696,7 @@ function render(s) {
   drawSignal(s.signal, on);
 
   const img = $("art");
-  if (img.dataset.src !== s.art) { img.dataset.src = s.art; img.src = s.art; }
+  if (img.dataset.src !== s.art) { img.dataset.src = s.art; setArt(img, s); }
 
   const idx = order.indexOf(id);
   $("dialNum").textContent = idx >= 0 ? pad(idx + 1) : "--";
@@ -561,7 +732,7 @@ function stationGroup(g, startN) {
 }
 
 async function build() {
-  const groups = await (await fetch("/api/stations")).json();
+  const groups = await DATA.stations();
   const cols = [$("colLive"), $("colMix"), $("colElse")];
   let n = 1;
   groups.forEach((g, i) => {
@@ -589,7 +760,7 @@ async function build() {
 }
 
 async function loadSchedule() {
-  const d = await api("/api/schedule");
+  const d = await DATA.schedule();
   if (!d) return;
   schedule = d;
   const ids = { "NTS 1": "nts1", "NTS 2": "nts2" };
@@ -608,7 +779,7 @@ async function loadSchedule() {
 }
 
 async function loadRecent() {
-  const d = await api("/api/history");
+  const d = await DATA.history();
   if (!d) return;
   $("recent").innerHTML = d.length ? d.slice(0, 12).map(h =>
     `<div class="log"><span class="t">${hhmm(h.at)}</span><span class="x">${esc(h.station.toUpperCase())}` +
@@ -728,7 +899,7 @@ async function visLoop(t) {
     visLevels = simLevels(t);
     if (t - visChecked > 5000) {       // look for MPD's feed every few seconds
       visChecked = t;
-      api("/api/spectrum").then(d => { if (d) visSource = d.source; });
+      if (!STATIC) api("/api/spectrum").then(d => { if (d) visSource = d.source; });
     }
   }
   $("visSrc").textContent = !playing ? "" : visSource === "mpd" && S.player !== "phone" ? "LIVE" : "SIM";
@@ -743,7 +914,14 @@ async function poll() {
 }
 build().then(async () => {
   drawMode();
-  if (mode === "phone") {
+  if (STATIC) {
+    // Start on the last station played here, stopped, until a station is tapped.
+    local.id = store.get("piRadioLast", order[0]);
+    if (!URLS[local.id]) local.id = order[0];
+    local.desc = await DATA.now(local.id);
+    phoneRender();
+    setInterval(logLocalHistory, 15000);
+  } else if (mode === "phone") {
     // Start from whatever the radio was last on, stopped, until a station is tapped.
     const s = await api("/api/state");
     if (s) { local.id = s.station.id; local.desc = s; phoneRender(); }

@@ -33,7 +33,14 @@ def dither(url: str) -> Optional[bytes]:
     try:
         r = httpx.get(url, timeout=8, follow_redirects=True, headers={"User-Agent": "pi-radio/0.1"})
         r.raise_for_status()
-        img = Image.open(io.BytesIO(r.content)).convert("L")
+        img = Image.open(io.BytesIO(r.content))
+        if img.mode in ("RGBA", "LA", "P"):
+            # Logos with transparent backgrounds: put them on white, or dark logos vanish.
+            img = img.convert("RGBA")
+            backed = Image.new("RGBA", img.size, (255, 255, 255, 255))
+            backed.alpha_composite(img)
+            img = backed
+        img = img.convert("L")
     except Exception as e:
         log.warning("Art fetch failed (%s): %s", url, e)
         return None

@@ -43,5 +43,5 @@ groups:
       - {id: rinse, name: Rinse FM, kind: radio, place: London, url: "https://admin.stream.rinse.fm/proxy/rinse_uk/stream"}
       - {id: wfmu, name: WFMU, kind: radio, place: New Jersey, url: "https://stream0.wfmu.org/freeform-high.aac"}
       - {id: kexp, name: KEXP, kind: radio, place: Seattle, url: "https://kexp.streamguys1.com/kexp160.aac"}
-      - {id: fip, name: FIP, kind: radio, place: Paris, url: "https://icecast.radiofrance.fr/fip-hifi.aac", art: "https://www.fip.fr/dist/favicons/logo-120.png"}
-      - {id: fip-jazz, name: FIP Jazz, kind: radio, place: Paris, url: "https://icecast.radiofrance.fr/fipjazz-hifi.aac", art: "https://www.fip.fr/dist/favicons/logo-120.png"}
+      - {id: fip, name: FIP, kind: radio, place: Paris, url: "https://icecast.radiofrance.fr/fip-hifi.aac", art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"}
+      - {id: fip-jazz, name: FIP Jazz, kind: radio, place: Paris, url: "https://icecast.radiofrance.fr/fipjazz-hifi.aac", art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"}
