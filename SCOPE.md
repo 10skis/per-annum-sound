@@ -60,7 +60,7 @@ Both screens are amber/yellow. The art screen is a color OLED drawing in amber o
 
 | Display | Part | Shows |
 |---|---|---|
-| Art | 1.5" 128×128 color OLED (SSD1351), amber in software | Dithered 1-bit art: NTS show image, mixtape art, station logo or AirPlay cover art |
+| Art | 1.5" 128×128 color OLED (SSD1351), amber in software | 1-bit amber art: 45° halftone for NTS show, mixtape and AirPlay cover art; clean 1-bit for station logos |
 | Text strip | 3.12" 256×64 yellow OLED (SSD1322) | Station, show, song, artist |
 
 ### Parts
@@ -90,7 +90,7 @@ The enclosure is printed on a library printer and modeled in OpenSCAD, a free to
 | 1. Bench test | Flash moOde, attach the DAC, confirm AirPlay and NTS through the Edifiers | 1–2 hrs |
 | 2. Stations | Build `stations.yaml` | 1 hr |
 | 3. Controls | Wire keys and dial on a breadboard, write the control service | 2–3 hrs |
-| 4. Displays | Drive both OLEDs, dithering, amber tuning, NTS show info | 3–4 hrs |
+| 4. Displays | Drive both OLEDs, halftone art, amber tuning, NTS show info | 3–4 hrs |
 | 5. Power | Mausberry and toggle wiring, resume on boot | 1 hr |
 | 6. Enclosure | Model, print a cutout test piece, print the final parts, assemble | 4–6 hrs plus print time |
 
@@ -104,7 +104,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 |---|---|
 | NTS keys | NTS 1, NTS 2, play/stop |
 | Station list | Tap any station to play |
-| Now playing | Station, show, host, track, with the same dithered art as the device |
+| Now playing | Station, show, host, track, with the same halftone art as the device |
 | Volume | Software volume |
 | Sync | Reflects the physical controls live |
 | NTS schedule | Now and the next three shows on both channels, tap to tune in |

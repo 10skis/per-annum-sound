@@ -26,7 +26,7 @@ stations = yaml.safe_load((HERE / "stations.yaml").read_text())
 for group in stations["groups"]:
     for st in group["stations"]:
         if st.get("art"):
-            png = art.dither(st["art"])
+            png = art.dither(st["art"], "logo")
             if png:
                 (OUT / "art" / f"{st['id']}.png").write_bytes(png)
                 st["art"] = f"art/{st['id']}.png"

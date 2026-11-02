@@ -256,7 +256,8 @@ def station_art(sid: str):
     if not station:
         raise HTTPException(404, "Unknown station")
     url = now_playing(station)["art"]
-    png = (art.dither(url) if url else None) or art.placeholder(station["name"])
+    style = "logo" if station["kind"] == "radio" else "halftone"  # radio stations' art is their logo
+    png = (art.dither(url, style) if url else None) or art.placeholder(station["name"])
     return Response(png, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 

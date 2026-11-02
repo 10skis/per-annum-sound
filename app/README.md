@@ -7,7 +7,7 @@ Control service and web app for Pi Radio. See `../SCOPE.md` for the full design.
 | `server.py` | Control service and web endpoints |
 | `player.py` | Playback: MPD, or a silent mock when MPD isn't running |
 | `nts.py` | NTS live show info and mixtape details |
-| `art.py` | Dithers art to the 128×128 amber image both screens use |
+| `art.py` | Renders art as an amber halftone (show and mixtape art) or 1-bit (station logos); 512px for the web, 128px for the OLED |
 | `vis.py` | Spectrum analyser reading MPD's FIFO output |
 | `stations.yaml` | The station list, in dial order |
 | `build_static.py` | Builds the no-server version into `web/` |
@@ -33,7 +33,7 @@ The spectrum shows LIVE when it's reading MPD's audio (the FIFO output in `dev/m
 
 ## No-server version (for away from home, until the Pi)
 
-`build_static.py` builds a version of the app that needs no server: the page reads the station list from a file, fetches NTS's public feeds itself, dithers art in the browser (station logos are pre-dithered into the folder), and plays everything on the device. Recently played is kept on each device. There's no RADIO output in this version.
+`build_static.py` builds a version of the app that needs no server: the page reads the station list from a file, fetches NTS's public feeds itself, renders the halftone art in the browser (station logos are pre-rendered into the folder), and plays everything on the device. Recently played is kept on each device. There's no RADIO output in this version.
 
 ```
 .venv/bin/python build_static.py

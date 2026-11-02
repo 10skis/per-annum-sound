@@ -100,7 +100,7 @@
   .screen { border: 1px solid var(--line); background: #070503; position: relative; }
   .art { aspect-ratio: 1; padding: 8px; }
   .art img {
-    width: 100%; height: 100%; display: block; image-rendering: pixelated;
+    width: 100%; height: 100%; display: block;
     filter: drop-shadow(0 0 2px #ffb02e66); transition: opacity .2s;
   }
   .off img, .off .line, .off .detail { opacity: .2; text-shadow: none; }
@@ -424,14 +424,38 @@ function loadImage(url) {
     img.src = url;
   });
 }
+/* Cover art as an amber halftone: one dot per cell on a 45° grid, dot area tracking brightness
+   (midtones eased darker so highlights stay separate dots). Station names with no usable art
+   become block letters. Same treatment as art.py, so both versions match. */
+const ART_N = 128, ART_OUT = 512, HT_CELLS = 32, HT_ANGLE = 45, HT_GAMMA = 1.2;
+function halftoneCanvas(gray) {
+  const N = ART_N, c = document.createElement("canvas");
+  c.width = c.height = ART_OUT;
+  const g = c.getContext("2d"), pitch = N / HT_CELLS, k = ART_OUT / N;
+  const a = HT_ANGLE * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), span = Math.ceil(HT_CELLS * 0.75) + 1;
+  const at = (x, y) => gray[Math.min(N - 1, Math.max(0, y)) * N + Math.min(N - 1, Math.max(0, x))];
+  g.fillStyle = "#ffb02e";
+  for (let j = -span; j < span; j++) for (let i = -span; i < span; i++) {
+    const u = (i + .5) * pitch, v = (j + .5) * pitch;
+    const x = N / 2 + u * ca - v * sa, y = N / 2 + u * sa + v * ca;
+    if (x < -pitch || y < -pitch || x > N + pitch || y > N + pitch) continue;
+    const x0 = Math.round(x - pitch / 2), y0 = Math.round(y - pitch / 2), w = Math.round(pitch);
+    let sum = 0;
+    for (let yy = y0; yy < y0 + w; yy++) for (let xx = x0; xx < x0 + w; xx++) sum += at(xx, yy);
+    const r = pitch / 2 * Math.sqrt(Math.pow(sum / (w * w) / 255, HT_GAMMA)) * 0.98 * k;
+    if (r < 0.4) continue;
+    g.beginPath(); g.arc(x * k, y * k, r, 0, Math.PI * 2); g.fill();
+  }
+  return c;
+}
 async function ditherArt(url, name) {
   const key = url || "name:" + name;
   if (artCache[key]) return artCache[key];
-  if (url && url.startsWith("art/")) return url;  // pre-dithered by build_static.py
-  const N = 128, c = document.createElement("canvas");
+  if (url && url.startsWith("art/")) return url;  // pre-rendered by build_static.py
+  const N = ART_N, c = document.createElement("canvas");
   c.width = c.height = N;
   const g = c.getContext("2d", { willReadFrequently: true });
-  let px = null, isText = false;
+  let px = null;
   if (url) {
     try {
       const img = await loadImage(url);
@@ -440,45 +464,27 @@ async function ditherArt(url, name) {
       px = g.getImageData(0, 0, N, N);  // throws if the image host blocks it
     } catch (_) { px = null; }
   }
-  if (!px) {
-    // Station name in block letters, for stations with no usable art.
-    isText = true;
-    if (document.fonts) await document.fonts.ready;
-    g.fillStyle = "#000"; g.fillRect(0, 0, N, N);
-    g.fillStyle = "#fff"; g.strokeStyle = "#fff";
-    g.strokeRect(2.5, 2.5, N - 5, N - 5);
-    g.font = "26px VT323, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
-    const words = name.toUpperCase().split(" ");
-    const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
-    lines.forEach((l, i) => g.fillText(l, N / 2, N / 2 + (i - (lines.length - 1) / 2) * 26));
-    px = g.getImageData(0, 0, N, N);
-  }
-  const d = px.data, gray = new Float32Array(N * N);
-  for (let i = 0; i < N * N; i++) gray[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) * d[i * 4 + 3] / 255;
-  if (!isText) {
-    // Stretch contrast (ignoring the extreme 1% each end), then Floyd-Steinberg dither.
+  if (px) {
+    const d = px.data, gray = new Float32Array(N * N);
+    for (let i = 0; i < N * N; i++) gray[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) * d[i * 4 + 3] / 255;
+    // Stretch contrast, ignoring the extreme 1% each end.
     const sorted = Float32Array.from(gray).sort();
     const lo = sorted[Math.floor(N * N * 0.01)], hi = sorted[Math.floor(N * N * 0.99)];
-    for (let i = 0; i < N * N; i++) gray[i] = hi > lo ? (gray[i] - lo) * 255 / (hi - lo) : gray[i];
+    if (hi > lo) for (let i = 0; i < N * N; i++) gray[i] = Math.min(255, Math.max(0, (gray[i] - lo) * 255 / (hi - lo)));
+    return (artCache[key] = halftoneCanvas(gray).toDataURL());
   }
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const i = y * N + x, old = gray[i], v = old < 128 ? 0 : 255, err = old - v;
-    gray[i] = v;
-    if (!isText) {
-      if (x + 1 < N) gray[i + 1] += err * 7 / 16;
-      if (y + 1 < N) {
-        if (x > 0) gray[i + N - 1] += err * 3 / 16;
-        gray[i + N] += err * 5 / 16;
-        if (x + 1 < N) gray[i + N + 1] += err / 16;
-      }
-    }
-  }
-  for (let i = 0; i < N * N; i++) {
-    const lit = gray[i] > 0;
-    d[i * 4] = 255; d[i * 4 + 1] = 176; d[i * 4 + 2] = 46; d[i * 4 + 3] = lit ? 255 : 0;
-  }
-  g.putImageData(px, 0, 0);
-  return (artCache[key] = c.toDataURL());
+  // Station name in block letters, for stations with no usable art.
+  if (document.fonts) await document.fonts.ready;
+  const out = document.createElement("canvas");
+  out.width = out.height = ART_OUT;
+  const o = out.getContext("2d"), s = ART_OUT / N;
+  o.fillStyle = "#ffb02e"; o.strokeStyle = "#ffb02e"; o.lineWidth = s;
+  o.strokeRect(2.5 * s, 2.5 * s, (N - 5) * s, (N - 5) * s);
+  o.font = `${26 * s}px VT323, monospace`; o.textAlign = "center"; o.textBaseline = "middle";
+  const words = name.toUpperCase().split(" ");
+  const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
+  lines.forEach((l, i) => o.fillText(l, ART_OUT / 2, ART_OUT / 2 + (i - (lines.length - 1) / 2) * 26 * s));
+  return (artCache[key] = out.toDataURL());
 }
 function setArt(img, s) {
   if (!STATIC) { img.src = s.art; return; }
