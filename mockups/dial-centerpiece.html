@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dial Centerpiece Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* Mockup only: what "the dial as the centerpiece" would mean. Not part of the app. */
+  :root { --bg: #0b0906; --amber: #ffb02e; --mid: #d08c26; --dim: #9c6c22; --ghost: #241907; --line: #4a3616; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--mid); font-family: "VT323", monospace; padding: 24px;
+         background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px); background-size: 7px 7px; }
+  .note { max-width: 1240px; margin: 0 auto 14px; font: 600 13px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .unit { max-width: 1240px; margin: 0 auto; border: 1px solid var(--line); padding: 20px;
+          display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 24px; align-items: center; }
+  .panel { border: 1px solid var(--line); background: #070503; position: relative; padding: 26px 18px 16px; }
+  .tab { position: absolute; top: 0; right: 0; background: var(--dim); color: var(--bg); padding: 1px 8px; font: 600 11px "Saira Condensed", sans-serif; letter-spacing: .16em; }
+  .art { aspect-ratio: 1; background:
+      radial-gradient(circle, var(--amber) 38%, transparent 42%) 0 0 / 9px 9px;
+      -webkit-mask: radial-gradient(circle at 40% 45%, #000 20%, #0009 45%, transparent 70%);
+              mask: radial-gradient(circle at 40% 45%, #000 20%, #0009 45%, transparent 70%); }
+  .label { font: 600 12px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .binnacle { position: relative; border: 1px solid var(--line); border-radius: 50%; aspect-ratio: 1;
+              box-shadow: inset 0 0 0 10px #070503, inset 0 0 0 11px var(--line), inset 0 0 60px #000; }
+  .binnacle svg { width: 100%; height: 100%; display: block; }
+  .readout { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2px; }
+  .readout b { font-weight: 400; font-size: 92px; line-height: .8; color: var(--amber); text-shadow: 0 0 10px #ffb02e88; }
+  .readout span { font-size: 22px; color: var(--dim); }
+  .readout i { font-style: normal; font-size: 24px; color: var(--amber); letter-spacing: .06em; margin-top: 8px; }
+  .side { display: grid; gap: 14px; }
+  .presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .presets div { height: 48px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 22px; color: var(--mid); }
+  .presets div.on { background: var(--amber); color: var(--bg); }
+  .bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; height: 18px; }
+  .bar i { background: var(--ghost); } .bar i.on { background: var(--amber); }
+  .big { font-size: 34px; color: var(--amber); }
+  .desc { font-size: 19px; color: var(--mid); line-height: 1.15; }
+  .callout { max-width: 1240px; margin: 14px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .callout p { margin: 0; font: 15px/1.4 "IBM Plex Mono", monospace; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="note">Mockup · dial as the centerpiece · not built</div>
+<div class="unit">
+  <div class="side">
+    <div class="panel"><span class="tab">01 ART</span><div class="art"></div></div>
+    <div class="panel"><span class="tab">02 SIGNAL</span>
+      <div class="big">NTS 1 · BLACKEST EVER BLACK</div>
+      <div class="desc">Doing what they do best, connecting the dots between early industrial, doom and drone.</div>
+    </div>
+  </div>
+
+  <div class="binnacle">
+    <svg viewBox="0 0 400 400" aria-hidden="true">
+      <g id="ticks"></g>
+      <path d="M 92 308 A 152 152 0 1 1 308 308" fill="none" stroke="#4a3616" stroke-width="1"/>
+      <line id="needle" x1="200" y1="88" x2="200" y2="44" stroke="#ffb02e" stroke-width="3"/>
+    </svg>
+    <div class="readout"><span class="label">Tuned</span><b>07</b><span>/33</span><i>SLOW FOCUS</i></div>
+  </div>
+
+  <div class="side">
+    <div class="presets"><div class="on">1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div></div>
+    <div class="panel"><span class="tab">03 SPECTRUM</span><div class="label">Spectrum</div>
+      <svg viewBox="0 0 300 70" width="100%"><g id="spec"></g></svg></div>
+    <div><div class="label">Vol</div><div class="bar" id="bar"></div></div>
+  </div>
+</div>
+<div class="callout">
+  <p>What changes: the dial grows to roughly 420px, a 270° gauge with a tick for every station, numbers every five, and a needle. It sits in a recessed housing in the middle of the console.</p>
+  <p>Everything else becomes side instruments around it, like gauges flanking a car's speedometer.</p>
+  <p>The trade-off, as you suspected: it reads as one big instrument rather than a dashboard of equals, and the art and signal panels get squeezed.</p>
+</div>
+<script>
+  // 270° scale: 33 stations from -135° to +135°, a number every fifth tick, needle on station 7.
+  const N = 33, g = document.getElementById("ticks"), ns = "http://www.w3.org/2000/svg";
+  const ang = i => (-135 + i / (N - 1) * 270) * Math.PI / 180;
+  for (let i = 0; i < N; i++) {
+    const a = ang(i), major = i % 5 === 0 || i === N - 1, r1 = 168, r2 = major ? 150 : 158;
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", 200 + Math.sin(a) * r1); l.setAttribute("y1", 200 - Math.cos(a) * r1);
+    l.setAttribute("x2", 200 + Math.sin(a) * r2); l.setAttribute("y2", 200 - Math.cos(a) * r2);
+    l.setAttribute("stroke", i === 6 ? "#ffb02e" : major ? "#9c6c22" : "#4a3616"); l.setAttribute("stroke-width", i === 6 ? 3 : 2);
+    g.appendChild(l);
+    if (major) {
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", 200 + Math.sin(a) * 134); t.setAttribute("y", 206 - Math.cos(a) * 134);
+      t.setAttribute("fill", "#9c6c22"); t.setAttribute("font-family", "VT323"); t.setAttribute("font-size", "18"); t.setAttribute("text-anchor", "middle");
+      t.textContent = String(i + 1).padStart(2, "0"); g.appendChild(t);
+    }
+  }
+  const a = ang(6) * 180 / Math.PI;
+  document.getElementById("needle").setAttribute("transform", `rotate(${a} 200 200)`);
+  const spec = document.getElementById("spec");
+  for (let i = 0; i < 24; i++) for (let j = 0; j < 7; j++) {
+    const r = document.createElementNS(ns, "rect"), lit = j < Math.round((0.8 - i / 40 + Math.sin(i) * .15) * 7);
+    r.setAttribute("x", i * 12.5); r.setAttribute("y", 62 - j * 10); r.setAttribute("width", 10); r.setAttribute("height", 7);
+    r.setAttribute("fill", lit ? "#ffb02e" : "#241907"); spec.appendChild(r);
+  }
+  const bar = document.getElementById("bar");
+  for (let i = 0; i < 20; i++) { const x = document.createElement("i"); if (i < 14) x.className = "on"; bar.appendChild(x); }
+</script>
+</body>
+</html>

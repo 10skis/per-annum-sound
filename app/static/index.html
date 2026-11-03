@@ -25,6 +25,7 @@
     --dot: "VT323", ui-monospace, Menlo, monospace;
     --wide: "Michroma", "Eurostile", sans-serif;          /* the one wide display face: the brand */
     --cond: "Saira Condensed", "Arial Narrow", sans-serif; /* instrument labels */
+    --warn: #4fb4ff;  /* warnings only: no signal, sleep timer's last minute */
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }  /* class display rules would otherwise override it */
@@ -87,21 +88,31 @@
   .preset.saved { animation: blink .25s steps(1) 4; }
   .head .sleep { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; white-space: nowrap; flex-shrink: 0; }
   .head > :not(.sig) { white-space: nowrap; flex-shrink: 0; }
+  @media (max-width: 959px) {
+    .head .help-head { display: inline; }
+    .help-btn { display: none; }
+  }
   @media (max-width: 419px) {
     .head { gap: 8px; letter-spacing: .02em; }
     .head .st-word { display: none; }  /* the lit dot already says on air; room for the timers */
+    .head .clock { display: none; }     /* the phone's status bar already shows the time */
   }
   .head .sleep.on { color: var(--amber); }
-  .key, .seg button {
+  .head .sleep.warn { color: var(--warn); text-shadow: 0 0 6px #4fb4ff88; animation: blink 1s steps(1) infinite; }
+  .help-head { display: none; font: inherit; color: var(--amber); padding: 0 2px; flex-shrink: 0; }
+  .key, .seg button, .playstop > span {
     height: 48px; border: 1px solid var(--amber-dim);
     font-family: var(--dot); font-size: 24px; letter-spacing: .06em; color: var(--amber-mid);
     display: grid; place-items: center; position: relative;
     transition: background .08s, color .08s;
   }
-  .key.on, .seg button.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
+  .key.on, .seg button.on, .playstop > span.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
   .key:active, .seg button:active { background: var(--amber-mid); color: var(--bg); }
   .seg { display: grid; grid-template-columns: 1fr 1fr; }
-  .seg button + button { border-left: 0; }
+  .seg button + button, .playstop > span + span { border-left: 0; }
+  .playstop { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .playstop > span { pointer-events: none; }
+  .playstop:active > span:not(.on) { background: var(--amber-ghost); color: var(--amber); }
 
   /* Output: the radio at home, or this phone */
   .out { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
@@ -187,7 +198,9 @@
   .vis { grid-template-rows: auto 64px auto 44px; }
   .vis-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .vis-src { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .1em; }
-  .vis canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; }  /* no size feedback into the grid */
+  .vis canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; cursor: pointer; }  /* no size feedback into the grid */
+  .vis-name { cursor: pointer; }
+  .vis-idx { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .08em; }
   .map canvas { width: 100%; aspect-ratio: 2.4 / 1; display: block; cursor: crosshair; touch-action: manipulation; }
   .map .seg button { height: 24px; padding: 0 8px; font-size: 16px; }
   .map-foot { min-height: 30px; display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none;
@@ -218,22 +231,63 @@
     padding-bottom: 8px; margin: -4px 0 4px;
   }
   .cols { display: grid; gap: 14px; }
-  .group h2 {
+  .group h2, .sub-sched h2 {
     margin: 0; padding: 6px 4px; font-family: var(--dot); font-weight: 400; font-size: 18px;
     letter-spacing: .1em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
   }
+  .g-head {
+    width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline;
+    padding: 6px 4px; border-bottom: 1px dashed var(--line); text-align: left;
+    font-family: var(--dot); font-size: 19px; letter-spacing: .1em; color: var(--amber-dim);
+  }
+  .g-head:hover, .g-head:focus-visible { color: var(--amber-mid); }
+  .g-count { color: var(--amber-mid); }
+  .chev { display: inline-block; transition: transform .2s steps(3); }
+  .group.open .chev { transform: rotate(90deg); }
+  .g-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s steps(6); }
+  .group.open > .g-body { grid-template-rows: 1fr; }
+  .g-inner { overflow: hidden; min-height: 0; }
+  .group + .group { margin-top: 12px; }
+  .sub-sched { margin: 10px 0 6px; }
   .row {
     width: 100%; display: grid; grid-template-columns: 1.6ch 2.4ch minmax(0, 1fr); gap: 10px; align-items: baseline;
     text-align: left; padding: 6px 4px; font-family: var(--dot); font-size: 22px; color: var(--amber-mid);
+    position: relative; isolation: isolate;
+    /* Hover and the playing row thicken and brighten quickly; leaving runs it backwards */
+    text-shadow: 0 0 0 #ffb02e00, 0 0 0 #ffb02e00, 0 0 0 #ffb02e00;
+    transition: color .14s ease-out, text-shadow .14s ease-out;
+  }
+  .row::before {
+    content: ""; position: absolute; inset: 1px 0; z-index: -1; background: var(--amber-ghost); opacity: 0;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    transition: opacity .14s ease-out;
   }
   .row .cur { color: var(--amber); visibility: hidden; }
   .row .n { color: var(--amber-dim); }
   .row .sub { display: block; font-size: 16px; color: var(--amber-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
-  .row:hover { background: var(--amber-ghost); }
-  .row.active { color: var(--amber); text-shadow: 0 0 6px #ffb02e88; }
+  .row:hover::before, .row:focus-visible::before, .row.active::before { opacity: 1; }
+  .row:hover, .row:focus-visible, .row.active {
+    color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66;
+  }
+  .row:hover .sub { color: var(--amber-mid); }
   .row.active .cur { visibility: visible; }
   .row.active .n { color: var(--amber-mid); }
-  .row.active .sub { color: var(--amber-mid); text-shadow: none; }
+  .row.active .sub { color: var(--amber-mid); }
+
+  .ticker { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center;
+            border-top: 1px dashed var(--line); margin-top: 14px; padding-top: 10px; }
+  .ticker-win { overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+  .ticker-run { display: flex; width: max-content; animation: tick var(--dur, 60s) linear infinite; }
+  .ticker-win:hover .ticker-run { animation-play-state: paused; }
+  .ticker-run .half { display: flex; gap: 14px; padding-right: 14px; align-items: baseline; }
+  @keyframes tick { to { transform: translateX(-50%); } }
+  .tk { font-family: var(--dot); font-size: 19px; color: var(--amber-mid); white-space: nowrap; }
+  .tk .t { color: var(--amber-dim); margin-right: 6px; }
+  .tk small { font-size: 17px; color: var(--amber-dim); }
+  .tk:hover, .tk:focus-visible { color: var(--amber); }
+  .ticker .sep { color: var(--line); }
 
   /* Schedule and recently played: time column + text */
   .log { width: 100%; display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 10px; align-items: baseline;
@@ -251,8 +305,8 @@
   .empty { padding: 8px 4px; font-family: var(--dot); font-size: 18px; color: var(--amber-dim); }
 
   .note {
-    width: 100%; max-width: 420px; font-family: var(--dot); font-size: 17px; color: var(--amber-mid);
-    border: 1px dashed var(--line); padding: 6px 10px; display: none;
+    width: 100%; max-width: 420px; font-family: var(--dot); font-size: 17px; color: var(--warn);
+    border: 1px dashed #4fb4ff88; padding: 6px 10px; display: none; text-shadow: 0 0 6px #4fb4ff55;
   }
   .note.show { display: block; }
   .blink { animation: blink 1s steps(1) infinite; }
@@ -296,6 +350,24 @@
   .tab b { font-weight: 600; opacity: .6; margin-right: 6px; }
   .strip { padding-top: 22px; }
 
+  /* Art shimmer: now and then a ripple or a sweep runs across the dots */
+  @property --rip { syntax: "<length>"; inherits: false; initial-value: 0px; }
+  .shimmer {
+    position: absolute; inset: 8px; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+    -webkit-mask: var(--art) center / 100% 100% no-repeat; mask: var(--art) center / 100% 100% no-repeat;
+  }
+  .shimmer.ripple {
+    background: radial-gradient(circle at var(--rx) var(--ry), transparent calc(var(--rip) - 46px),
+      #ffe3b0 calc(var(--rip) - 14px), transparent var(--rip));
+    animation: ripple 1.8s ease-out;
+  }
+  @keyframes ripple { 0% { --rip: 0px; opacity: 1; } 75% { opacity: .9; } 100% { --rip: 620px; opacity: 0; } }
+  .shimmer.sweep {
+    background: linear-gradient(110deg, transparent 42%, #ffe3b0 50%, transparent 58%) 0 0 / 300% 100%;
+    animation: sweep 1.5s ease-in-out;
+  }
+  @keyframes sweep { 0% { background-position: 100% 0; opacity: 1; } 100% { background-position: 0 0; opacity: 1; } }
+
   /* VFD digits: an unlit 8 behind every lit numeral */
   .ghost { position: relative; isolation: isolate; }
   .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; text-shadow: none; z-index: -1; }
@@ -334,6 +406,9 @@
   .deck > :nth-child(2) { animation-delay: .42s; } .list { animation-delay: .5s; }
   @media (prefers-reduced-motion: reduce) {
     .unit > *, .list, .deck > * { animation: none; }
+    .ticker-run { animation: none; }
+    .ticker-win { overflow-x: auto; }
+    .head .sleep.warn { animation: none; }
     .tape-run { transition: none; }
   }
 
@@ -357,9 +432,10 @@
     .head { grid-area: head; }
     .mid { display: contents; }
     .art { grid-area: art; align-self: start; }
-    .strip { grid-area: info; aspect-ratio: auto; padding: 18px 24px; align-content: space-between; gap: 14px; min-width: 0; }
+    .strip { grid-area: info; aspect-ratio: auto; padding: 28px 24px 18px; align-content: start; gap: 16px; min-width: 0; }
+    .strip > div:last-child { order: -1; }  /* the station name leads; description and progress under it */
     .detail { display: grid; gap: 12px; }
-    .line.big { font-size: clamp(30px, 2.4vw, 36px); }
+    .line.big { font-size: clamp(38px, 3vw, 48px); }
     .line.small { font-size: clamp(20px, 1.6vw, 24px); }
     .top { grid-area: keys; }
     .out { grid-area: out; }
@@ -373,7 +449,7 @@
     .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 20px; align-items: start; }
   }
   @media (min-width: 1280px) {
-    .cols { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .cols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
 </style>
 </head>
@@ -388,6 +464,7 @@
     <span class="clock ghost" id="clock" data-ghost="88:88"></span>
     <span id="status">--</span>
     <button class="sleep" id="sleepBtn" hidden aria-label="Sleep timer" title="Sleep timer: tap for 15, 30, 60, 90 min, off">ZZ</button>
+    <button class="help-head" id="helpBtn2" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
   </div>
 
   <div class="out">
@@ -400,15 +477,15 @@
 
   <div class="top">
     <div class="presets" id="presets" role="group" aria-label="Presets: tap to play, hold to save the current station"></div>
-    <div class="seg" role="group" aria-label="Play or stop">
-      <button id="btnPlay" aria-label="Play">PLAY</button>
-      <button id="btnStop" aria-label="Stop">STOP</button>
-    </div>
+    <button class="playstop" id="btnPlayStop" aria-label="Play">
+      <span id="btnPlay">PLAY</span><span id="btnStop">STOP</span>
+    </button>
   </div>
 
   <div class="mid">
     <div class="screen art off cham" id="artScreen">
       <span class="tab" aria-hidden="true"><b>01</b>Art</span>
+      <span class="shimmer" id="shimmer" aria-hidden="true"></span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
     </div>
     <div class="dial-wrap">
@@ -452,10 +529,10 @@
   <div class="deck">
     <div class="screen vis cham">
       <span class="tab" aria-hidden="true"><b>03</b>Spectrum</span>
-      <div class="vis-head"><span class="label">Spectrum</span><span class="vis-src" id="visSrc"></span></div>
-      <canvas id="vis" aria-hidden="true"></canvas>
-      <div class="vis-head"><span class="label">Waterfall</span></div>
-      <canvas id="fall" aria-hidden="true"></canvas>
+      <div class="vis-head"><button class="label vis-name" id="visName0" data-slot="0">Spectrum</button><span><span class="vis-src" id="visSrc"></span> <span class="vis-idx" id="visIdx0"></span></span></div>
+      <canvas id="vis" data-slot="0" title="Click for the next display" aria-hidden="true"></canvas>
+      <div class="vis-head"><button class="label vis-name" id="visName1" data-slot="1">Waterfall</button><span class="vis-idx" id="visIdx1"></span></div>
+      <canvas id="fall" data-slot="1" title="Click for the next display" aria-hidden="true"></canvas>
     </div>
     <div class="screen map cham">
       <span class="tab" aria-hidden="true"><b>04</b>Nav</span>
@@ -481,12 +558,13 @@
 <nav class="list cham" aria-label="Stations">
   <div class="list-head"><span>STATIONS</span><span id="listCount">--</span></div>
   <div class="cols">
-    <div id="colLive"></div>
-    <div id="colMix"></div>
-    <div id="colElse"></div>
-    <div>
-      <section class="group"><h2>RECENTLY PLAYED</h2><div id="recent"></div></section>
-    </div>
+    <div id="colA"></div>
+    <div id="colB"></div>
+    <div id="colC"></div>
+  </div>
+  <div class="ticker" aria-label="Recently played">
+    <span class="label">Recently played</span>
+    <div class="ticker-win"><div class="ticker-run" id="recent"></div></div>
   </div>
 </nav>
 
@@ -502,6 +580,7 @@
       <dt>S</dt><dd>Sleep timer: 15, 30, 60, 90 min, off</dd>
       <dt>M</dt><dd>Map: world / Europe</dd>
       <dt>?</dt><dd>This panel</dd>
+      <dt>CLICK</dt><dd>A visualizer for its next display</dd>
     </dl>
     <dl>
       <dt>SWIPE</dt><dd>Art left or right to tune</dd>
@@ -618,7 +697,7 @@ const DATA = {
     else {
       ({ groups } = await (await fetch("stations.json")).json());
       for (const g of groups) for (const st of g.stations)
-        st.sub = st.kind === "radio" ? st.place || "" : st.kind === "nts_mixtape" ? (await ntsFeed.mixtape(st.id)).subtitle || "" : "";
+        st.sub = st.kind === "radio" ? [st.genre, st.place].filter(Boolean).join(" · ") : st.kind === "nts_mixtape" ? (await ntsFeed.mixtape(st.id)).subtitle || "" : "";
     }
     for (const g of groups) for (const st of g.stations) STN[st.id] = { ...st, group: g.name };
     return groups;
@@ -954,6 +1033,7 @@ function render(s) {
     ` <span class="timer" id="timer" title="Listening to this station for">${elapsed()}</span>` : "○ STANDBY";
   $("status").className = on ? "glow" : "";
   $("btnPlay").classList.toggle("on", on);
+  $("btnPlayStop").setAttribute("aria-label", on ? "Stop" : "Play");
   $("btnStop").classList.toggle("on", !on);
   $("artScreen").classList.toggle("off", !on);
   $("strip").classList.toggle("off", !on);
@@ -988,36 +1068,48 @@ function render(s) {
   document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === id));
 }
 
+/* Station board: collapsible groups (open state kept on this device), rows numbered in dial order. */
+const GROUP_COL = { "NTS Live": "colA", "Infinite Mixtapes": "colA", "Worldwide FM": "colB" };  // the rest: colC
+const openGroups = store.get("piRadioOpen", { "NTS Live": true, "Worldwide FM": true });
 function stationGroup(g, startN) {
   const sec = document.createElement("section");
-  sec.className = "group";
-  sec.innerHTML = `<h2>${esc(g.name.toUpperCase())}</h2>`;
+  sec.className = "group" + (openGroups[g.name] ? " open" : "");
+  sec.dataset.group = g.name;
+  sec.innerHTML = `<button class="g-head" aria-expanded="${!!openGroups[g.name]}"><span>${esc(g.name.toUpperCase())}</span>` +
+    `<span class="g-count ghost" data-ghost="88">${pad(g.stations.length)}</span><span class="chev" aria-hidden="true">▸</span></button>` +
+    `<div class="g-body"><div class="g-inner"></div></div>`;
+  const head = sec.querySelector(".g-head"), inner = sec.querySelector(".g-inner");
+  head.onclick = () => {
+    const open = sec.classList.toggle("open");
+    head.setAttribute("aria-expanded", open);
+    openGroups[g.name] = open;
+    store.set("piRadioOpen", openGroups);
+  };
   g.stations.forEach((st, i) => {
     order.push(st.id);
     URLS[st.id] = st.url; NAMES[st.id] = st.name;
     const b = document.createElement("button");
     b.className = "row"; b.dataset.id = st.id;
-    b.innerHTML = `<span class="cur">&gt;</span><span class="n">${pad(startN + i)}</span>` +
+    b.innerHTML = `<span class="cur">&gt;</span><span class="n ghost" data-ghost="88">${pad(startN + i)}</span>` +
       `<span>${esc(st.name.toUpperCase())}<span class="sub" data-sub="${st.id}">${esc(st.sub)}</span></span>`;
     b.onclick = () => act.play(st.id);
-    sec.appendChild(b);
+    inner.appendChild(b);
   });
   return sec;
 }
 
 async function build() {
   const groups = await DATA.stations();
-  const cols = [$("colLive"), $("colMix"), $("colElse")];
   let n = 1;
-  groups.forEach((g, i) => {
-    cols[Math.min(i, cols.length - 1)].appendChild(stationGroup(g, n));
+  groups.forEach(g => {
+    $(GROUP_COL[g.name] || "colC").appendChild(stationGroup(g, n));
     n += g.stations.length;
   });
   // NTS schedule sits under the NTS Live group.
   const sch = document.createElement("section");
-  sch.className = "group"; sch.style.marginTop = "14px";
+  sch.className = "sub-sched";
   sch.innerHTML = `<h2>NTS SCHEDULE</h2><div id="sched"></div>`;
-  $("colLive").appendChild(sch);
+  (document.querySelector('[data-group="NTS Live"] .g-inner') || $("colA")).appendChild(sch);
 
   $("dialOf").textContent = $("tuneOf").textContent = "/" + pad(order.length);
   $("listCount").textContent = pad(order.length);
@@ -1057,13 +1149,27 @@ async function loadSchedule() {
   });
 }
 
+/* Recently played: a slow ticker along the bottom of the board; hover pauses it, a tap plays that station. */
+let recentKey = "";
 async function loadRecent() {
   const d = await DATA.history();
   if (!d) return;
-  $("recent").innerHTML = d.length ? d.slice(0, 12).map(h =>
-    `<div class="log"><span class="t">${hhmm(h.at)}</span><span class="x">${esc(h.station.toUpperCase())}` +
-    (h.title ? `<br><small>${esc(h.title.toUpperCase())}</small>` : "") + `</span></div>`).join("")
-    : `<div class="empty">NOTHING YET</div>`;
+  const key = JSON.stringify(d.slice(0, 16));
+  if (key === recentKey) return;  // rewriting it would restart the scroll
+  recentKey = key;
+  const sep = `<span class="sep" aria-hidden="true">◆</span>`;
+  const items = d.slice(0, 16).map(h =>
+    `<button class="tk" data-name="${esc(h.station)}"><span class="t">${hhmm(h.at)}</span>${esc(h.station.toUpperCase())}` +
+    (h.title ? ` <small>· ${esc(h.title.toUpperCase())}</small>` : "") + `</button>`).join(sep);
+  const run = $("recent");
+  run.innerHTML = items ? `<span class="half">${items}${sep}</span><span class="half" aria-hidden="true">${items}${sep}</span>`
+                        : `<span class="half"><span class="tk">NOTHING YET</span></span>`;
+  run.style.animation = items ? "" : "none";
+  run.style.setProperty("--dur", Math.max(20, run.scrollWidth / 2 / 38) + "s");  // about 38 px a second
+  run.querySelectorAll("[data-name]").forEach(b => b.onclick = () => {
+    const id = order.find(i => NAMES[i] === b.dataset.name);
+    if (id) act.play(id);
+  });
 }
 
 /* Clock */
@@ -1082,8 +1188,7 @@ function tick() {
 }
 
 /* Keys and play/stop */
-$("btnPlay").addEventListener("click", () => { if (!S || !S.playing) act.toggle(); });
-$("btnStop").addEventListener("click", () => act.stop());
+$("btnPlayStop").addEventListener("click", () => act.toggle());
 $("outRadio").addEventListener("click", () => setMode("radio"));
 $("outPhone").addEventListener("click", () => setMode("phone"));
 
@@ -1240,6 +1345,7 @@ function cycleSleep() {
 function drawSleep() {
   $("sleepBtn").classList.toggle("on", !!sleep);
   $("sleepBtn").textContent = sleep ? "ZZ " + clockOf(sleep.until - Date.now()) : "ZZ";
+  $("sleepBtn").classList.toggle("warn", !!sleep && sleep.until - Date.now() < 60000);
 }
 function endSleep() {
   if (sleep && mode === "phone" && canSetVolume) audio.volume = local.volume / 100;  // undo any fade
@@ -1297,9 +1403,14 @@ const RANGES = {
   europe: { lon0: -22, lon1: 60, lat0: 62, lat1: 28, grid: 10 },
 };
 const CITY_CODE = { London: "LON", Bristol: "BRS", Paris: "PAR", Brussels: "BRU", Berlin: "BER", Bethlehem: "BTH",
-                    "New York": "NYC", "Los Angeles": "LAX", Seattle: "SEA" };
+                    "New York": "NYC", "Los Angeles": "LAX", Seattle: "SEA", Bologna: "BLQ", Sydney: "SYD",
+                    "Kent, Ohio": "KNT", Accra: "ACC", Hanoi: "HAN", Bangkok: "BKK", Tbilisi: "TBS",
+                    Santiago: "SCL", Athens: "ATH", Munich: "MUC", Milan: "MIL" };
 const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
+// The world range drifts east (content moving right) until the pointer is over the map.
+let mapPan = 0, mapHover = false, mapT = 0;
+const PAN_DEG_PER_S = 1.5;
 function decodeLand() {
   const W = window.WORLD;
   if (!W) return null;
@@ -1326,7 +1437,9 @@ function buildCities() {
                                          code: CITY_CODE[c.name] || c.name.slice(0, 3).toUpperCase() }));
 }
 function project(r, lat, lon, w, h) {
-  return [(lon - r.lon0) / (r.lon1 - r.lon0) * w, (r.lat0 - lat) / (r.lat0 - r.lat1) * h];
+  let fx = (lon - r.lon0) / (r.lon1 - r.lon0);
+  if (r === RANGES.world) fx = ((fx + mapPan / 360) % 1 + 1) % 1;
+  return [fx * w, (r.lat0 - lat) / (r.lat0 - r.lat1) * h];
 }
 function mapBaseLayer(c, w, h, dpr) {
   const key = [mapRange, w, h, dpr].join();
@@ -1335,22 +1448,16 @@ function mapBaseLayer(c, w, h, dpr) {
   off.width = w * dpr; off.height = h * dpr;
   const g = off.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const cols = Math.floor(w / MAP_PITCH), rows = Math.floor(h / MAP_PITCH);
-  const ox = (w - cols * MAP_PITCH) / 2 + MAP_PITCH / 2, oy = (h - rows * MAP_PITCH) / 2 + MAP_PITCH / 2;
+  const cols = Math.round(w / MAP_PITCH), rows = Math.floor(h / MAP_PITCH), px = w / cols;
+  const oy = (h - rows * MAP_PITCH) / 2 + MAP_PITCH / 2;
   for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-    const x = ox + i * MAP_PITCH, y = oy + j * MAP_PITCH;
+    const x = (i + .5) * px, y = oy + j * MAP_PITCH;
     const lon = r.lon0 + x / w * (r.lon1 - r.lon0), lat = r.lat0 - y / h * (r.lat0 - r.lat1);
     const step = (r.lon1 - r.lon0) / cols;
     const onGrid = Math.abs(((lon % r.grid) + r.grid) % r.grid) < step || Math.abs(((lat % r.grid) + r.grid) % r.grid) < step * h / w * 2.4;
     if (isLand(lat, lon)) { g.fillStyle = "#5c3e10"; g.fillRect(x - 1.5, y - 1.5, 3, 3); }
     else if (onGrid) { g.fillStyle = "#2a1d0a"; g.fillRect(x - .5, y - .5, 1.5, 1.5); }
   }
-  // Corner coordinates, like a plotter's frame
-  const fmt = (v, p, n) => Math.abs(Math.round(v)) + (v >= 0 ? p : n);
-  g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textBaseline = "top";
-  g.fillText(`${fmt(r.lat0, "N", "S")} ${fmt(r.lon0, "E", "W")}`, 2, 1);
-  g.textAlign = "right"; g.textBaseline = "bottom";
-  g.fillText(`${fmt(r.lat1, "N", "S")} ${fmt(r.lon1, "E", "W")}`, w - 2, h - 1);
   mapBase = { key, canvas: off };
   return off;
 }
@@ -1361,10 +1468,26 @@ function drawMap(t) {
   if (!w || !h) return;
   if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   const g = c.getContext("2d"), r = RANGES[mapRange];
+  if (mapRange === "world" && !mapHover && !reduceMotion && mapT) mapPan = (mapPan + (t - mapT) / 1000 * PAN_DEG_PER_S) % 360;
+  mapT = t;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
-  g.drawImage(mapBaseLayer(c, w, h, dpr), 0, 0);
+  const base = mapBaseLayer(c, w, h, dpr);
+  if (mapRange === "world") {  // two copies side by side so the world wraps
+    const off = Math.round(mapPan / 360 * w * dpr);
+    g.drawImage(base, off, 0);
+    g.drawImage(base, off - c.width, 0);
+  } else g.drawImage(base, 0, 0);
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Corner coordinates, like a plotter's frame (they follow the drift)
+  const fmt = (v, pos, neg) => Math.abs(Math.round(v)) + (v >= 0 ? pos : neg);
+  const wrap = v => ((v + 540) % 360) - 180;
+  const left = mapRange === "world" ? wrap(r.lon0 - mapPan) : r.lon0, right = mapRange === "world" ? wrap(r.lon1 - mapPan - .01) : r.lon1;
+  g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.textBaseline = "top";
+  g.fillText(`${fmt(r.lat0, "N", "S")} ${fmt(left, "E", "W")}`, 2, 1);
+  g.textAlign = "right"; g.textBaseline = "bottom";
+  g.fillText(`${fmt(r.lat1, "N", "S")} ${fmt(right, "E", "W")}`, w - 2, h - 1);
+  g.textAlign = "left";
 
   // Sweep: a slow scan line with a fading wake
   if (!reduceMotion) {
@@ -1435,6 +1558,8 @@ $("navMap").addEventListener("click", e => {
   drawMapFoot();
 });
 $("rngWorld").addEventListener("click", () => setMapRange("world"));
+$("navMap").addEventListener("pointerenter", () => { mapHover = true; });
+$("navMap").addEventListener("pointerleave", () => { mapHover = false; });
 $("rngEurope").addEventListener("click", () => setMapRange("europe"));
 function geoText(geo) {
   if (!geo) return "";
@@ -1457,27 +1582,26 @@ function drawMapFoot() {
   }
 }
 
-/* Waterfall: the spectrum's recent history, newest at the top, in four brightness steps. */
+/* Waterfall history, newest first; drawn by whichever screen shows the Waterfall. */
 let fall = [], fallLast = 0;
-const FALL_TIERS = ["#1c1407", "#3d2a0c", "#7a5419", "#c4841f", "#ffb02e"];
-function drawFall(t) {
-  if (t - fallLast > 90) { fallLast = t; fall.unshift(visLevels.slice()); if (fall.length > 60) fall.length = 60; }
-  const c = $("fall"), dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
-  if (!w || !h) return;
-  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
-  const g = c.getContext("2d");
-  g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g.clearRect(0, 0, w, h);
-  const gap = 3, bw = (w - gap * (BANDS - 1)) / BANDS, ch = 3, rows = Math.floor((h + 2) / (ch + 2));
-  for (let j = 0; j < rows; j++) {
-    const lv = fall[j];
-    for (let i = 0; i < BANDS; i++) {
-      const v = lv ? lv[i] * (1 - j / (rows * 1.6)) : 0;
-      g.fillStyle = FALL_TIERS[v < .12 ? 0 : v < .35 ? 1 : v < .6 ? 2 : v < .85 ? 3 : 4];
-      g.fillRect(i * (bw + gap), j * (ch + 2), bw, ch);
+
+/* Art shimmer: every so often a ripple from a random point, or a sweep, runs across the art's dots. */
+$("art").addEventListener("load", () => $("artScreen").style.setProperty("--art", `url("${$("art").src}")`));
+function shimmerSoon() {
+  setTimeout(() => {
+    const el = $("shimmer");
+    if (S && S.playing && !reduceMotion && !document.hidden) {
+      const ripple = Math.random() < .6;
+      el.className = "shimmer";
+      el.style.setProperty("--rx", Math.round(15 + Math.random() * 70) + "%");
+      el.style.setProperty("--ry", Math.round(15 + Math.random() * 70) + "%");
+      void el.offsetWidth;  // restart the animation
+      el.classList.add(ripple ? "ripple" : "sweep");
     }
-  }
+    shimmerSoon();
+  }, 5000 + Math.random() * 9000);
 }
+shimmerSoon();
 
 /* Keys and gestures panel */
 function toggleHelp(show) {
@@ -1486,6 +1610,7 @@ function toggleHelp(show) {
   if (open) $("helpClose").focus(); else $("helpBtn").focus({ preventScroll: true });
 }
 $("helpBtn").addEventListener("click", () => toggleHelp(true));
+$("helpBtn2").addEventListener("click", () => toggleHelp(true));
 $("helpClose").addEventListener("click", () => toggleHelp(false));
 $("help").addEventListener("click", e => { if (e.target === $("help")) toggleHelp(false); });
 
@@ -1536,22 +1661,132 @@ function simLevels(t) {
     return target > v ? target : v * 0.86;
   });
 }
-function drawVis() {
-  const c = $("vis"), dpr = window.devicePixelRatio || 1;
-  const w = c.clientWidth, h = c.clientHeight;
-  if (c.width !== w * dpr || c.height !== h * dpr) { c.width = w * dpr; c.height = h * dpr; }
+/* Two visualizer screens; clicking either steps it to its next display. Stopped, they rest on a flat
+   line with NO CARRIER. Levels are MPD's when it's there, otherwise the labelled simulation. */
+const VIS_MODES = ["Spectrum", "Waterfall", "Scope", "VU", "Polar", "Mirror"];
+let visMode = store.get("piRadioVisModes", [0, 1]), peaks = new Array(BANDS).fill(0), vu = [0, 0];
+const TIERS = ["#1c1407", "#3d2a0c", "#7a5419", "#c4841f", "#ffb02e"];
+const tier = v => TIERS[v < .12 ? 0 : v < .35 ? 1 : v < .6 ? 2 : v < .85 ? 3 : 4];
+function cycleVis(slot) {
+  visMode[slot] = (visMode[slot] + 1) % VIS_MODES.length;
+  store.set("piRadioVisModes", visMode);
+  drawVisLabels();
+}
+function drawVisLabels() {
+  [0, 1].forEach(k => {
+    $("visName" + k).textContent = VIS_MODES[visMode[k]];
+    $("visIdx" + k).textContent = `${visMode[k] + 1}/${VIS_MODES.length}`;
+  });
+}
+["vis", "fall", "visName0", "visName1"].forEach(id => $(id).addEventListener("click", e => cycleVis(+e.currentTarget.dataset.slot)));
+function fitCanvas(c) {
+  const dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return null;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   const g = c.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
-  const gap = 3, bw = (w - gap * (BANDS - 1)) / BANDS, ch = (h - gap * (CELLS - 1)) / CELLS;
+  return [g, w, h];
+}
+function drawIdle(g, w, h) {
+  g.fillStyle = "#5c3e10";
+  for (let x = 0; x < w; x += 4) g.fillRect(x, Math.round(h / 2), 2, 1);
+  g.font = "18px VT323, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+  const tw = g.measureText("NO CARRIER").width + 14;
+  g.fillStyle = "#070503"; g.fillRect(w / 2 - tw / 2, h / 2 - 10, tw, 20);
+  g.fillStyle = "#9c6c22"; g.fillText("NO CARRIER", w / 2, h / 2 + 1);
+}
+function drawBars(g, w, h) {
+  const gap = 3, cells = Math.max(6, Math.floor((h + 3) / 7)), bw = (w - gap * (BANDS - 1)) / BANDS, ch = (h - gap * (cells - 1)) / cells;
   for (let i = 0; i < BANDS; i++) {
-    const lit = Math.round(visLevels[i] * CELLS);
-    for (let j = 0; j < CELLS; j++) {
-      g.fillStyle = j < lit ? (j >= CELLS - 2 ? "#ffd27a" : "#ffb02e") : "#241907";
+    const lit = Math.round(visLevels[i] * cells);
+    for (let j = 0; j < cells; j++) {
+      g.fillStyle = j < lit ? (j >= cells - 2 ? "#ffd27a" : "#ffb02e") : "#241907";
       g.fillRect(i * (bw + gap), h - (j + 1) * ch - j * gap, bw, ch);
     }
   }
 }
+function drawWaterfall(g, w, h) {
+  const gap = 3, bw = (w - gap * (BANDS - 1)) / BANDS, ch = 3, rows = Math.floor((h + 2) / (ch + 2));
+  for (let j = 0; j < rows; j++) {
+    const lv = fall[j];
+    for (let i = 0; i < BANDS; i++) {
+      g.fillStyle = tier(lv ? lv[i] * (1 - j / (rows * 1.6)) : 0);
+      g.fillRect(i * (bw + gap), j * (ch + 2), bw, ch);
+    }
+  }
+}
+function drawScope(g, w, h, t) {
+  const pitch = 4, cols = Math.floor(w / pitch), mid = h / 2, amp = h * .44;
+  g.fillStyle = "#241907";
+  for (let x = 0; x < w; x += 8) g.fillRect(x, Math.round(mid), 2, 1);
+  let prev = null;
+  for (let i = 0; i < cols; i++) {
+    const x = i / cols;
+    let y = 0;
+    for (let k = 0; k < 6; k++) y += (visLevels[k * 5] || 0) * Math.sin(2 * Math.PI * (k + 1) * 1.5 * x + t / (260 + k * 70)) / 2.4;
+    const yy = Math.round((mid - Math.max(-1, Math.min(1, y)) * amp) / 2) * 2;
+    if (prev !== null) {  // join steep steps with dimmer dots so the trace reads as one line
+      g.fillStyle = "#7a5419";
+      for (let v = Math.min(prev, yy) + 3; v < Math.max(prev, yy); v += 3) g.fillRect(i * pitch, v, 2, 2);
+    }
+    g.fillStyle = "#ffb02e";
+    g.fillRect(i * pitch, yy, 3, 3);
+    prev = yy;
+  }
+}
+function drawVU(g, w, h) {
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const target = [avg(visLevels.slice(0, 12)), avg(visLevels.slice(12))];
+  [0, 1].forEach(k => {
+    vu[k] += (target[k] - vu[k]) * .18;  // needle ballistics
+    const cx = w * (k * 2 + 1) / 4, R = Math.min(w / 4 - 10, h * .82), cy = h / 2 + R * .52;
+    for (let i = 0; i <= 24; i++) {
+      const f = i / 24, a = -Math.PI / 2 + (f - .5) * Math.PI * .66;
+      g.fillStyle = f <= vu[k] ? (f > .8 ? "#ffd27a" : "#ffb02e") : "#3d2a0c";
+      const big = i % 6 === 0 ? 3 : 2;
+      g.fillRect(cx + Math.cos(a) * R - 1, cy + Math.sin(a) * R - 1, big, big);
+    }
+    const a = -Math.PI / 2 + (Math.min(1, vu[k]) - .5) * Math.PI * .66;
+    g.fillStyle = "#ffb02e";
+    for (let r = R * .2; r < R * .92; r += 3) g.fillRect(cx + Math.cos(a) * r - 1, cy + Math.sin(a) * r - 1, 2, 2);
+    g.font = "15px VT323, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillStyle = "#9c6c22"; g.fillText(k ? "R" : "L", cx, cy - R * .35);
+  });
+}
+function drawPolar(g, w, h, t) {
+  const cx = w / 2, cy = h / 2, base = Math.min(w, h) * .16, len = Math.min(w, h) * .32, spokes = BANDS * 2, rot = t / 5000;
+  for (let s2 = 0; s2 < spokes; s2++) {
+    const lv = visLevels[s2 < BANDS ? s2 : spokes - 1 - s2], a = rot + s2 / spokes * Math.PI * 2;
+    for (let r = 0; r < len; r += 4) {
+      const lit = r / len < lv;
+      g.fillStyle = lit ? tier(.4 + r / len * .6) : "#1c1407";
+      g.fillRect(cx + Math.cos(a) * (base + r) - 1, cy + Math.sin(a) * (base + r) - 1, 2, 2);
+    }
+  }
+}
+function drawMirror(g, w, h) {
+  const gap = 3, half = Math.max(3, Math.floor(h / 2 / 6)), bw = (w - gap * (BANDS - 1)) / BANDS, ch = (h / 2 - gap * half) / half;
+  for (let i = 0; i < BANDS; i++) {
+    peaks[i] = Math.max(visLevels[i], peaks[i] - .006);
+    const lit = Math.round(visLevels[i] * half), pk = Math.min(half - 1, Math.round(peaks[i] * half));
+    for (let j = 0; j < half; j++) {
+      g.fillStyle = j === pk && pk > 0 ? "#ffd27a" : j < lit ? tier(.4 + j / half * .6) : "#1c1407";
+      const x = i * (bw + gap), dy = j * (ch + gap) + gap / 2;
+      g.fillRect(x, h / 2 - dy - ch, bw, ch);
+      g.fillRect(x, h / 2 + dy, bw, ch);
+    }
+  }
+}
+const VIS_DRAW = { Spectrum: drawBars, Waterfall: drawWaterfall, Scope: drawScope, VU: drawVU, Polar: drawPolar, Mirror: drawMirror };
+function drawVisScreen(c, slot, t) {
+  const fit = fitCanvas(c);
+  if (!fit) return;
+  const [g, w, h] = fit;
+  if (!(S && S.playing) && Math.max(...visLevels) < .02) return drawIdle(g, w, h);
+  VIS_DRAW[VIS_MODES[visMode[slot]]](g, w, h, t);
+}
+
 async function visLoop(t) {
   const playing = S && S.playing && !document.hidden;
   if (!playing) {
@@ -1570,8 +1805,9 @@ async function visLoop(t) {
     }
   }
   $("visSrc").textContent = !playing ? "" : visSource === "mpd" && S.player !== "phone" ? "LIVE" : "SIM";
-  drawVis();
-  drawFall(t);
+  if (t - fallLast > 90) { fallLast = t; fall.unshift(visLevels.slice()); if (fall.length > 60) fall.length = 60; }
+  drawVisScreen($("vis"), 0, t);
+  drawVisScreen($("fall"), 1, t);
   drawMap(t);
   requestAnimationFrame(visLoop);
 }
@@ -1587,6 +1823,7 @@ build().then(async () => {
   LAND = decodeLand();
   buildCities();
   setMapRange(mapRange);
+  drawVisLabels();
   drawMapFoot();
   offlineNote();
   drawMode();

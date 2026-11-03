@@ -60,4 +60,4 @@ The machine at home has to be on and running `run.sh`.
 
 ## Adding a station
 
-Add an entry under "Elsewhere" in `stations.yaml` with an id, name, place, stream URL and a short `about` (find streams at radio-browser.info). If the place is new, add it under `places:` with its latitude and longitude so it shows on the map. If the station publishes what's playing in a format the app knows (`kexp`, `airtime:`, `radioco:`, `radiocult:`), add an `info:` line. Then restart `run.sh`, and rebuild with `build_static.py` for the Netlify version.
+Add an entry under "Worldwide FM" (or "Genre Radio" or "Deep Cuts") in `stations.yaml` with an id, name, place, stream URL and a short `about` (find streams at radio-browser.info). If the place is new, add it under `places:` with its latitude and longitude so it shows on the map. If the station publishes what's playing in a format the app knows (`kexp`, `airtime:`, `radioco:`, `radiocult:`), add an `info:` line. Then restart `run.sh`, and rebuild with `build_static.py` for the Netlify version.

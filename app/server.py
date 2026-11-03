@@ -157,7 +157,7 @@ def stations():
         if s["kind"] == "nts_mixtape":
             return nts.mixtape(s["id"]).get("subtitle", "")
         if s["kind"] == "radio":
-            return s.get("place", "")
+            return " · ".join(x for x in (s.get("genre"), s.get("place")) if x)
         return ""  # NTS live: the page fills this from the schedule
     keep = ("id", "name", "url", "kind", "place", "geo", "city", "info")
     return [{"name": g["name"], "stations": [{**{k: s[k] for k in keep if k in s}, "sub": sub(s)}

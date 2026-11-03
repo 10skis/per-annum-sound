@@ -5,10 +5,12 @@
 #   radio        Any other stream. Track info comes from the stream itself (ICY metadata), or
 #                in the browser from the station's own feed where it allows that (info:).
 # info: kexp | airtime:<subdomain> | radioco:<station id> | radiocult:<station slug>
+# genre: shown with the place under the station's name in the list.
 # Stream URLs checked 2026-11-02 (Kool FM, WQXR and Chillhop added the same day). Find more at https://www.radio-browser.info
 
 # Where stations broadcast from, for the map: [lat, lon], plus an optional map label.
-# Places that share a label sit on one marker. Stations take their group's place unless set.
+# Places that share a label sit on one marker. Stations take their group's place unless set;
+# a place not listed here (e.g. "Online") keeps the station off the map.
 places:
   London: [51.51, -0.13]
   Bristol: [51.45, -2.59]
@@ -21,6 +23,17 @@ places:
   New Jersey: [40.73, -74.06, New York]
   Los Angeles: [34.05, -118.24]
   Seattle: [47.61, -122.33]
+  Bologna: [44.49, 11.34]
+  Sydney: [-33.87, 151.21]
+  Kent, Ohio: [41.15, -81.36]
+  Accra: [5.60, -0.19]
+  Hanoi: [21.03, 105.85]
+  Bangkok: [13.76, 100.50]
+  Tbilisi: [41.72, 44.79]
+  Santiago: [-33.44, -70.65]
+  Athens: [37.98, 23.73]
+  Munich: [48.14, 11.58]
+  Milan: [45.46, 9.19]
 
 groups:
   - name: NTS Live
@@ -49,7 +62,7 @@ groups:
       - {id: the-pit, name: The Pit, kind: nts_mixtape, url: "https://stream-mixtape-geo.ntslive.net/mixtape34"}
       - {id: field-recordings, name: Field Recordings, kind: nts_mixtape, url: "https://stream-mixtape-geo.ntslive.net/mixtape23"}
 
-  - name: Elsewhere
+  - name: Worldwide FM
     # about: shown as the station description, since these streams carry no show info.
     stations:
       # The Lot only streams video. 14_0 is the lowest-bandwidth version (240p, ~0.4 Mbps); the player keeps the audio.
@@ -155,3 +168,151 @@ groups:
         place: Berlin
         url: "https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/"
         about: "Lo-fi hip-hop curated by the Chillhop Music label, broadcast by Berlin's FluxFM. Mellow beats for working, reading or winding down."
+
+  - name: Genre Radio
+    # One station per genre. Streams checked 2026-11-02.
+    stations:
+      - id: chante-france-60s
+        name: Chante France 60s
+        kind: radio
+        genre: Vintage chanson
+        place: Paris
+        url: "https://chantefrance60s.ice.infomaniak.ch/chantefrance60s-128.mp3"
+        about: "The 1960s channel of Chante France, a Paris station that plays only French song. Sixties chanson and variété, all day."
+      - id: italia-anni-60
+        name: Radio Italia Anni 60
+        kind: radio
+        genre: Italian oldies
+        place: Bologna
+        url: "https://ice04.fluidstream.net/ria60_bo.mp3"
+        about: "An Italian oldies network built around the songs of the 1960s, with later decades mixed in. This is its Emilia-Romagna feed."
+      - id: reprezent
+        name: Reprezent Radio
+        kind: radio
+        genre: UK rap and grime
+        place: London
+        url: "https://radio.canstream.co.uk:8022/live.mp3"
+        about: "A youth-led London station that trains young presenters and works with emerging artists. UK rap, grime and the wider London scene."
+      - id: unearthed
+        name: triple j Unearthed
+        kind: radio
+        genre: Bedroom and indie
+        place: Sydney
+        url: "https://streaming.abc-cdn.net.au/audio/hls/triplejunearthed.m3u8?source=web"
+        about: "The Australian public broadcaster ABC's channel for unsigned and emerging Australian artists. Mostly self-released, early-career music."
+      - id: yumi-co
+        name: Yumi Co. Radio
+        kind: radio
+        genre: City pop and future funk
+        place: Online
+        url: "https://yumicoradio.net/stream"
+        about: "A round-the-clock station for city pop, future funk, anime groove and nu disco. Run from France; no city given."
+      - id: folk-alley
+        name: Folk Alley
+        kind: radio
+        genre: Americana and folk
+        place: Kent, Ohio
+        url: "https://freshgrass.streamguys1.com/folkalley-128mp3"
+        about: "A member-supported folk station started by public radio WKSU in Ohio. Human-picked folk, Americana and singer-songwriters."
+      - id: christmas-vinyl
+        name: Christmas Vinyl HD
+        kind: radio
+        genre: Christmas, all year
+        place: Online
+        url: "https://icecast.walmradio.com:8443/christmas"
+        about: "WALM Radio's year-round Christmas channel. Vintage holiday records, crooners and old-time radio, in high quality."
+
+  - name: Deep Cuts
+    # Small, odd and far-flung. Streams checked 2026-11-02.
+    stations:
+      - id: resonance
+        name: Resonance FM
+        kind: radio
+        genre: Arts radio
+        place: London
+        url: "https://stream.resonance.fm/resonance"
+        about: "London's arts radio station, on 104.4 FM since 2002. Sound art, experimental music and shows you won't hear anywhere else."
+      - id: oroko
+        name: Oroko Radio
+        kind: radio
+        genre: Community radio
+        place: Accra
+        url: "https://oroko-radio.radiocult.fm/stream"
+        info: "radiocult:oroko-radio"
+        about: "A not-for-profit independent station in Accra, Ghana. Built on conversation, collaboration and the city's music community."
+      - id: hanoi
+        name: Ha Noi Community Radio
+        kind: radio
+        genre: Community radio
+        place: Hanoi
+        url: "https://ha-noi-community-radio.radiocult.fm/stream"
+        info: "radiocult:ha-noi-community-radio"
+        about: "A community station in Hanoi, Vietnam. DJ mixes and live music, from Asian artists in Vietnam and beyond to disco and house."
+      - id: bangkok
+        name: Bangkok Community Radio
+        kind: radio
+        genre: Community radio
+        place: Bangkok
+        url: "https://bcr.radiocult.fm/stream"
+        info: "radiocult:bcr"
+        about: "A community-led independent station in Bangkok. In its own words, the sounds of Siam from the heart of the city."
+      - id: mutant
+        name: Mutant Radio
+        kind: radio
+        genre: Experimental
+        place: Tbilisi
+        url: "https://listen.radioking.com/radio/282820/stream/328621"
+        about: "A Tbilisi platform for mixes, interviews, live sets and talk. Experimental, dub, krautrock and new wave."
+      - id: super45
+        name: Super45.fm
+        kind: radio
+        genre: Indie and jazz
+        place: Santiago
+        url: "https://s4.radio.co/s421105570/listen"
+        info: "radioco:s421105570"
+        about: "A collective online radio project from Santiago, Chile. Indie, experimental electronic and jazz, in themed shows."
+      - id: stegi
+        name: stegi.radio
+        kind: radio
+        genre: Underground
+        place: Athens
+        url: "https://movementathens.out.airtime.pro/movementathens_a"
+        info: "airtime:movementathens"
+        about: "An international station in Athens run by the Onassis Stegi arts centre, formerly Movement Radio. Ambient, experimental, hip-hop, jazz and world music."
+      - id: radio80000
+        name: Radio 80000
+        kind: radio
+        genre: Freeform
+        place: Munich
+        url: "https://radio80k.out.airtime.pro:8000/radio80k_a"
+        info: "airtime:radio80k"
+        about: "Freeform community radio from Munich. Resident shows plus art projects and residencies around the city."
+      - id: drummer
+        name: Give the Drummer Radio
+        kind: radio
+        genre: WFMU freeform
+        place: New Jersey
+        url: "https://stream0.wfmu.org/drummer"
+        about: "WFMU's second 24-hour channel, started in 2010 by longtime DJ Doug Schulkind. More than two dozen shows by music obsessives, broadcasting from home."
+      - id: raheem
+        name: Radio Raheem
+        kind: radio
+        genre: Cosmic and global
+        place: Milan
+        url: "https://radioraheem.out.airtime.pro/radioraheem_a"
+        info: "airtime:radioraheem"
+        about: "Cosmic perspective radio from Milan, as it describes itself. Always digging into the most interesting scenes, at home and abroad."
+      - id: sleeping-pill
+        name: Ambient Sleeping Pill
+        kind: radio
+        genre: Ambient for sleep
+        place: Online
+        url: "https://radio.stereoscenic.com/asp-h"
+        about: "Internet radio for sleep, meditation and slowing down. Ambient music around the clock."
+      - id: nightride
+        name: Nightride FM
+        kind: radio
+        genre: Synthwave
+        place: Online
+        url: "https://stream.nightride.fm/nightride.mp3"
+        about: "Synthwave in 320 kbps: retrowave, darksynth and outrun. It runs sister channels for each style."
