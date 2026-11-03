@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glyph Dial Icons</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root { --amber: #ffb02e; --dim: #9c6c22; --bg: #0e0c0a; }
+  body { margin: 0; background: var(--bg); color: var(--amber); font-family: "Saira Condensed", sans-serif; padding: 32px 16px; }
+  h1 { font: 400 18px "Michroma", sans-serif; letter-spacing: .2em; margin: 0 0 6px; }
+  p { color: var(--dim); margin: 0 0 28px; font-size: 17px; }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; max-width: 1100px; }
+  .opt h2 { font-weight: 600; font-size: 20px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; }
+  .opt .why { color: var(--dim); font-size: 16px; margin: 0 0 14px; min-height: 3em; }
+  .big { width: 100%; max-width: 300px; aspect-ratio: 1; border-radius: 22.5%; display: block; box-shadow: 0 10px 30px #0008; }
+  .homes { display: flex; gap: 14px; margin-top: 18px; }
+  .home { width: 150px; height: 120px; border-radius: 18px; display: grid; place-items: center; }
+  .home.light { background: linear-gradient(160deg, #d9dde6, #aeb6c6); }
+  .home.dark { background: linear-gradient(160deg, #1d2333, #0a0c12); }
+  .home canvas { width: 60px; height: 60px; border-radius: 13.5px; box-shadow: 0 4px 10px #0005; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>PER ANNUM SOUND · GLYPH DIAL</h1>
+<p>The dial's katakana ring on a dot-matrix plate. Each shown large and at home-screen size on light and dark wallpaper.</p>
+<div class="row" id="row"></div>
+<script>
+const OPTS = [
+  { key: "pas", name: "A · Dial and PAS", why: "Full glyph ring, the top one lit with a needle, PAS in LED dots in the middle." },
+  { key: "glyph", name: "B · Dial and one glyph", why: "Same ring, with ｦ, the dial's first glyph, in LED dots in the middle. No letters: the most icon-like." },
+  { key: "window", name: "C · Rotating window", why: "The desktop dial as it is: an arc of glyphs fading out either side of the lit one, PAS in dots below." },
+];
+const N = 1024, GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇ"], GLYPH_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Apple Symbols", sans-serif';
+const PIX = { P: ["11110","10001","10001","11110","10000","10000","10000"],
+              A: ["01110","10001","10001","11111","10001","10001","10001"],
+              S: ["01111","10000","10000","01110","00001","00001","11110"] };
+
+function plate(g) {  // dark plate, faint dot matrix brighter toward the middle, soft rim
+  g.fillStyle = "#0e0c0a"; g.fillRect(0, 0, N, N);
+  for (let y = 16; y < N; y += 32) for (let x = 16; x < N; x += 32) {
+    const f = 1 - Math.min(1, Math.hypot(x - N / 2, y - N / 2) / (N * .7));
+    g.fillStyle = `rgba(255,176,46,${(.03 + f * .06).toFixed(3)})`; g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fill();
+  }
+  const v = g.createRadialGradient(N / 2, N / 2, N * .32, N / 2, N / 2, N * .75);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.5)"); g.fillStyle = v; g.fillRect(0, 0, N, N);
+}
+function sheen(g) {
+  const s = g.createLinearGradient(0, 0, 0, N * .5);
+  s.addColorStop(0, "rgba(255,240,215,.10)"); s.addColorStop(1, "rgba(255,240,215,0)"); g.fillStyle = s; g.fillRect(0, 0, N, N * .5);
+}
+function led(g, x, y, r, on) {  // one LED: lit with glow and a glint, or unlit
+  g.save();
+  if (on) { g.shadowColor = "rgba(255,176,46,.9)"; g.shadowBlur = r * 1.6; g.fillStyle = "#ffb02e"; }
+  else g.fillStyle = "#2c200c";
+  g.beginPath(); g.arc(x, y, on ? r : r * .6, 0, Math.PI * 2); g.fill(); g.restore();
+  if (on) { g.fillStyle = "rgba(255,245,220,.5)"; g.beginPath(); g.arc(x - r * .3, y - r * .3, r * .3, 0, Math.PI * 2); g.fill(); }
+}
+function ledWord(g, word, cx, cy, pitch) {  // a word in the 5x7 LED font, with a frame of unlit dots
+  const cols = word.length * 6 - 1, rows = 7, x0 = cx - (cols - 1) * pitch / 2, y0 = cy - (rows - 1) * pitch / 2;
+  for (let row = -1; row <= rows; row++) for (let col = -1; col <= cols; col++) {
+    const L = word[Math.floor(col / 6)], c = col % 6;
+    const on = row >= 0 && row < rows && col >= 0 && col < cols && c < 5 && L && PIX[L][row][c] === "1";
+    led(g, x0 + col * pitch, y0 + row * pitch, pitch * .38, on);
+  }
+}
+function ledGlyph(g, ch, cx, cy, size, grid) {  // a glyph sampled onto an LED grid
+  const t = document.createElement("canvas"); t.width = t.height = grid;
+  const k = t.getContext("2d"); k.fillStyle = "#fff"; k.textAlign = "center"; k.textBaseline = "middle";
+  k.font = `600 ${grid * .95}px ${GLYPH_FONT}`; k.fillText(ch, grid / 2, grid / 2 + grid * .04);
+  const d = k.getImageData(0, 0, grid, grid).data, pitch = size / grid;
+  for (let y = 0; y < grid; y++) for (let x = 0; x < grid; x++)
+    led(g, cx - size / 2 + (x + .5) * pitch, cy - size / 2 + (y + .5) * pitch, pitch * .38, d[(y * grid + x) * 4 + 3] > 110);
+}
+function ring(g, cx, cy, r, count, from, to, fade) {  // glyphs round a circle; slot 0 at the top is lit
+  g.textAlign = "center"; g.textBaseline = "middle";
+  for (let i = 0; i < count; i++) {
+    const a = -Math.PI / 2 + (i / count) * Math.PI * 2, rel = i <= count / 2 ? i : count - i;
+    if (a > to || (from !== null && rel > from)) continue;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    g.save();
+    if (i === 0) { g.fillStyle = "#ffb02e"; g.shadowColor = "#ffb02e"; g.shadowBlur = 30; g.font = `700 112px ${GLYPH_FONT}`; }
+    else { g.fillStyle = `rgba(208,140,38,${fade ? Math.max(.12, 1 - rel / (from + 1)).toFixed(2) : .8})`; g.font = `600 84px ${GLYPH_FONT}`; }
+    g.translate(x, y); g.fillText(GLYPHS[i % GLYPHS.length], 0, 0); g.restore();
+  }
+}
+function needle(g, cx, y) {
+  g.save(); g.shadowColor = "#ffb02e"; g.shadowBlur = 20; g.fillStyle = "#ffb02e";
+  g.beginPath(); g.moveTo(cx - 22, y); g.lineTo(cx + 22, y); g.lineTo(cx, y + 30); g.closePath(); g.fill(); g.restore();
+}
+function dashedCircle(g, cx, cy, r) {
+  g.save(); g.setLineDash([10, 14]); g.lineWidth = 5; g.strokeStyle = "#4a3616"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke(); g.restore();
+}
+
+const DRAW = {
+  pas(g) { plate(g); const c = N / 2; ring(g, c, c, 372, 16, null, 9, false); needle(g, c, c - 492); dashedCircle(g, c, c, 268); ledWord(g, "PAS", c, c, 25); sheen(g); },
+  glyph(g) { plate(g); const c = N / 2; ring(g, c, c, 372, 16, null, 9, false); needle(g, c, c - 492); dashedCircle(g, c, c, 268); ledGlyph(g, "ｦ", c, c, 380, 13); sheen(g); },
+  window(g) { plate(g); const c = N / 2, cy = N * .78; ring(g, c, cy, 540, 20, 5, 9, true); needle(g, c, cy - 676); ledWord(g, "PAS", c, N * .62, 30); sheen(g); },
+};
+
+function render(key, size) {
+  const big = document.createElement("canvas"); big.width = big.height = N; DRAW[key](big.getContext("2d"));
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  const k = c.getContext("2d"); k.imageSmoothingQuality = "high"; k.drawImage(big, 0, 0, size, size); return c;
+}
+document.fonts.ready.then(() => {
+  for (const o of OPTS) {
+    const el = document.createElement("div"); el.className = "opt";
+    el.innerHTML = `<h2>${o.name}</h2><div class="why">${o.why}</div>`;
+    const big = render(o.key, 600); big.className = "big"; el.appendChild(big);
+    const homes = document.createElement("div"); homes.className = "homes";
+    for (const t of ["light", "dark"]) { const h = document.createElement("div"); h.className = "home " + t; h.appendChild(render(o.key, 180)); homes.appendChild(h); }
+    el.appendChild(homes); document.getElementById("row").appendChild(el);
+  }
+});
+</script>
+</body>
+</html>
