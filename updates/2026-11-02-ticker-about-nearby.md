@@ -18,3 +18,6 @@
 
 ## Next steps
 - See TODO.md.
+
+## Follow-up fix (same version)
+- The tuning tape's tick marks had turned into a solid line. Cause: the restyled recently-played entries used the class name `tk`, the same as the tape's ticks, so the ticker's padding and highlight box leaked onto every tick (16 px wide instead of 1 px). Ticker entries are now `rp`; the ticks are back to thin analog marks.

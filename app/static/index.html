@@ -346,19 +346,19 @@
   .ticker-win:hover .ticker-run { animation-play-state: paused; }
   .ticker-run .half { display: flex; gap: 14px; padding-right: 14px; align-items: baseline; }
   @keyframes tick { to { transform: translateX(-50%); } }
-  .tk { font-family: var(--dot); font-size: 19px; color: var(--amber-mid); white-space: nowrap; padding: 3px 8px;
+  .rp { font-family: var(--dot); font-size: 19px; color: var(--amber-mid); white-space: nowrap; padding: 3px 8px;
         position: relative; isolation: isolate;
         text-shadow: 0 0 0 #ffb02e00, 0 0 0 #ffb02e00, 0 0 0 #ffb02e00; transition: color .14s ease-out, text-shadow .14s ease-out; }
-  .tk::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--amber-ghost); opacity: 0;
+  .rp::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--amber-ghost); opacity: 0;
                 clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); transition: opacity .14s ease-out; }
-  .tk:hover::before, .tk:focus-visible::before { opacity: 1; }
-  .tk:hover, .tk:focus-visible { text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
+  .rp:hover::before, .rp:focus-visible::before { opacity: 1; }
+  .rp:hover, .rp:focus-visible { text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
   .row.peek::before { opacity: 1; }
   .row.peek { color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
-  .tk .t { color: var(--amber-dim); margin-right: 6px; }
-  .tk small { font-size: 17px; color: var(--amber-dim); }
-  .tk:hover, .tk:focus-visible { color: var(--amber); }
-  .tk:hover small, .tk:focus-visible small { color: var(--amber-mid); }
+  .rp .t { color: var(--amber-dim); margin-right: 6px; }
+  .rp small { font-size: 17px; color: var(--amber-dim); }
+  .rp:hover, .rp:focus-visible { color: var(--amber); }
+  .rp:hover small, .rp:focus-visible small { color: var(--amber-mid); }
   .ticker .sep { color: var(--line); }
 
   /* Schedule and recently played: time column + text */
@@ -1364,11 +1364,11 @@ async function loadRecent() {
   recentKey = key;
   const sep = `<span class="sep" aria-hidden="true">◆</span>`;
   const items = d.slice(0, 16).map(h =>
-    `<button class="tk" data-name="${esc(h.station)}"><span class="t">${hhmm(h.at)}</span>${esc(h.station.toUpperCase())}` +
+    `<button class="rp" data-name="${esc(h.station)}"><span class="t">${hhmm(h.at)}</span>${esc(h.station.toUpperCase())}` +
     (h.title ? ` <small>· ${esc(h.title.toUpperCase())}</small>` : "") + `</button>`).join(sep);
   const run = $("recent");
   run.innerHTML = items ? `<span class="half">${items}${sep}</span><span class="half" aria-hidden="true">${items}${sep}</span>`
-                        : `<span class="half"><span class="tk">NOTHING YET</span></span>`;
+                        : `<span class="half"><span class="rp">NOTHING YET</span></span>`;
   run.style.animation = items ? "" : "none";
   run.style.setProperty("--dur", Math.max(20, run.scrollWidth / 2 / 38) + "s");  // about 38 px a second
   run.querySelectorAll("[data-name]").forEach(b => {
