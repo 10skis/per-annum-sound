@@ -251,11 +251,14 @@
   }
   .g-head:hover, .g-head:focus-visible { color: var(--amber-mid); }
   .g-count { color: var(--amber-mid); }
-  .chev { display: inline-block; transition: transform .2s steps(3); }
+  .chev { display: inline-block; transition: transform .3s cubic-bezier(.3, .7, .3, 1); }
   .group.open .chev { transform: rotate(90deg); }
-  .g-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s steps(6); }
+  /* Open and close with the same easing as the dial and tape; contents fade with it */
+  .g-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .42s cubic-bezier(.3, .7, .3, 1); }
   .group.open > .g-body { grid-template-rows: 1fr; }
-  .g-inner { overflow: hidden; min-height: 0; }
+  .g-inner { overflow: hidden; min-height: 0; opacity: 0; transform: translateY(-4px);
+             transition: opacity .3s ease, transform .42s cubic-bezier(.3, .7, .3, 1); }
+  .group.open .g-inner { opacity: 1; transform: none; transition-delay: .06s; }
   .group + .group { margin-top: 12px; }
   .sub-sched { margin: 10px 0 6px; }
   .row {
@@ -426,6 +429,7 @@
   @media (prefers-reduced-motion: reduce) {
     .unit > *, .list, .deck > * { animation: none; }
     .ticker-run { animation: none; }
+    .g-body, .g-inner, .chev { transition: none; }
     .ticker-win { overflow-x: auto; }
     .head .sleep.warn { animation: none; }
     .tape-run { transition: none; }
@@ -1564,7 +1568,7 @@ const CITY_CODE = { London: "LON", Bristol: "BRS", Paris: "PAR", Brussels: "BRU"
 const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
 // The world range drifts slowly (content moving left) until the pointer is over the map.
-let mapPan = 0, mapHover = false, mapT = 0, labelSpot = {};
+let mapPan = 0, mapHover = false, mapT = 0, labelSpot = {}, labelP = {}, mapHoverKey = null;
 const PAN_DEG_PER_S = 1.5;
 function decodeLand() {
   const W = window.WORLD;
@@ -1625,6 +1629,7 @@ function drawMap(t) {
   const g = c.getContext("2d"), r = RANGES[mapRange];
   if (mapRange === "world" && !mapHover && !reduceMotion && mapT)
     mapPan = (mapPan - Math.min(100, t - mapT) / 1000 * PAN_DEG_PER_S) % 360;  // content drifts left; long gaps don't jump
+  const mdt = mapT ? Math.min(100, t - mapT) / 1000 : 0;
   mapT = t;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
@@ -1670,38 +1675,49 @@ function drawMap(t) {
     else clusters.push({ x: o.p[0], y: o.p[1], cities: [o.ci] });
   }
   mapHits = clusters;
+  // Markers first, labels on top. A city shows just its dot until the pointer is over it (or it's
+  // selected); then its label wipes out from the dot, and wipes back when the pointer leaves.
+  const MARK = "#ffe23d", MARK_HOT = "#fff59a";
+  for (const k of clusters) {
+    k.ids = k.cities.flatMap(ci => ci.ids);
+    k.key = k.cities[0].name;
+    k.live = playing && k.ids.includes(cur);
+    k.sel = k.cities.some(ci => ci.name === mapSel);
+    const x = k.x, y = k.y;  // not rounded: markers glide with the drifting dots
+    if (k.live && !reduceMotion) {
+      const ph = (t % 1600) / 1600, rad = 5 + ph * 12;
+      g.strokeStyle = `rgba(255,226,61,${(1 - ph) * .9})`; g.lineWidth = 1;
+      g.strokeRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    g.fillStyle = k.live || k.sel || k.key === mapHoverKey ? MARK_HOT : MARK;
+    g.shadowColor = "#ffd400"; g.shadowBlur = k.live ? 14 : 7;
+    g.fillRect(x - 3.5, y - 3.5, 8, 8);
+    g.shadowBlur = 0;
+  }
   const labels = [];
   g.font = "15px VT323, monospace"; g.textBaseline = "middle";
   for (const k of clusters) {
-    const ids = k.cities.flatMap(ci => ci.ids), live = playing && ids.includes(cur);
-    const sel = k.cities.some(ci => ci.name === mapSel);
-    const x = k.x, y = k.y;  // not rounded: markers and labels glide with the drifting dots
-    if (live && !reduceMotion) {
-      const ph = (t % 1600) / 1600, rad = 5 + ph * 12;
-      g.strokeStyle = `rgba(255,122,26,${(1 - ph) * .9})`; g.lineWidth = 1;
-      g.strokeRect(x - rad, y - rad, rad * 2, rad * 2);
-    }
-    // Station markers in solid orange, so they stand off the amber land
-    g.fillStyle = live || sel ? "#ff9a3c" : "#ff7a1a";
-    g.shadowColor = "#ff7a1a"; g.shadowBlur = live ? 12 : 5;
-    g.fillRect(x - 3.5, y - 3.5, 8, 8);
-    g.shadowBlur = 0;
-    const text = (k.cities.length > 1 ? k.cities[0].code + "+" : k.cities[0].code) + " " + ids.length;
+    const want = k.key === mapHoverKey || k.sel;
+    const p = labelP[k.key] = Math.max(0, Math.min(1, (labelP[k.key] || 0) + (want ? 1 : -1) * (reduceMotion ? 1 : mdt / .22)));
+    if (p <= 0) continue;
+    const ease = 1 - Math.pow(1 - p, 3), x = k.x, y = k.y;
+    const text = (k.cities.length > 1 ? k.cities[0].code + "+" : k.cities[0].code) + " " + k.ids.length;
     const tw = g.measureText(text).width + 6;
-    // Try right, left, above, below; take the first spot that doesn't hit another label or run off the edge
+    // Try right, left, above, below; keep last frame's spot while it still fits so labels don't hop
     const spots = [[x + 7, y - 8], [x - 7 - tw, y - 8], [x + 5, y + 4], [x + 5, y - 20], [x - 5 - tw, y + 4],
                    [x - 5 - tw, y - 20], [x - tw / 2, y - 24], [x - tw / 2, y + 8]];
-    // A label keeps the spot it had last frame while that still fits, so it doesn't hop around
     const fits = ([lx, ly]) => lx >= 0 && lx + tw <= w && ly >= 0 && ly + 16 <= h &&
       !labels.some(b => lx < b[0] + b[2] && lx + tw > b[0] && ly < b[1] + 16 && ly + 16 > b[1]);
     const prev = labelSpot[text];
     const si = prev !== undefined && fits(spots[prev]) ? prev : Math.max(0, spots.findIndex(fits));
     labelSpot[text] = si;
-    const spot = spots[si];
+    const spot = spots[si], rw = tw * ease;
     labels.push([spot[0], spot[1], tw]);
-    if (sel) { g.fillStyle = "#ffb02e"; g.fillRect(spot[0], spot[1], tw, 16); g.fillStyle = "#0b0906"; }
-    else g.fillStyle = live ? "#ffb02e" : "#d08c26";
-    g.fillText(text, spot[0] + 3, spot[1] + 8);
+    g.save();
+    g.beginPath(); g.rect(spot[0] >= x ? spot[0] : spot[0] + tw - rw, spot[1], rw, 16); g.clip();  // wipe out from the dot's side
+    g.fillStyle = k.sel ? MARK : "#0b0906e0"; g.fillRect(spot[0], spot[1], tw, 16);
+    g.fillStyle = k.sel ? "#0b0906" : MARK; g.fillText(text, spot[0] + 3, spot[1] + 8);
+    g.restore();
   }
 }
 function setMapRange(rng) {
@@ -1725,7 +1741,14 @@ $("navMap").addEventListener("click", e => {
 });
 $("rngWorld").addEventListener("click", () => setMapRange("world"));
 $("navMap").addEventListener("pointerenter", () => { mapHover = true; });
-$("navMap").addEventListener("pointerleave", () => { mapHover = false; });
+$("navMap").addEventListener("pointerleave", () => { mapHover = false; mapHoverKey = null; });
+$("navMap").addEventListener("pointermove", e => {
+  const b = $("navMap").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+  let best = null, bd = 14;
+  for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
+  mapHoverKey = best ? best.cities[0].name : null;
+  $("navMap").style.cursor = best ? "pointer" : "crosshair";
+});
 $("rngEurope").addEventListener("click", () => setMapRange("europe"));
 function geoText(geo) {
   if (!geo) return "";
