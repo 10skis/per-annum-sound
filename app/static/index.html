@@ -270,6 +270,16 @@
 
   /* Bottom deck: two stacked visualizers (spectrum over waterfall) beside the nav map */
   .deck { display: grid; gap: 16px; }
+  /* Phones: 03 Spectrum and 05 Level share one spot; swipe sideways between them. Native snap
+     scrolling, so it has the phone's own momentum and the page still scrolls up and down. */
+  .swipe { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+           scrollbar-width: none; margin-bottom: -8px; }
+  .swipe::-webkit-scrollbar { display: none; }
+  .swipe > .screen { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
+  .swipe .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 22px 12px 10px; gap: 6px; }
+  .swipe-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: -6px; }
+  .swipe-dots i { width: 6px; height: 6px; border: 1px solid var(--amber-dim); transition: background .2s; }
+  .swipe-dots i.on { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 6px #ffb02e88; }
   .vis, .map { padding: 22px 12px 10px; display: grid; gap: 6px; align-content: start; }
   .vis { grid-template-rows: auto 64px auto 44px; }
   .vis-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -557,6 +567,8 @@
     .dial { max-width: 176px; --ring: 82px; }  /* room for a glyph per station */
     .vol { grid-area: vol; align-self: end; }
     .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+    .swipe { display: contents; }  /* desktop: 05 sits under the art and 03 beside the map */
+    .swipe-dots { display: none; }
     .vis { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); align-content: stretch; }
     .list { border: 1px solid var(--line); padding: 16px 20px; }
     .list-head { display: flex; }
@@ -665,6 +677,7 @@
     <span class="vol-hw">USE THE PHONE'S VOLUME BUTTONS</span>
   </div>
   <div class="deck">
+    <div class="swipe" id="swipe">
     <div class="screen vis cham">
       <span class="tab" aria-hidden="true"><b>03</b>Spectrum</span>
       <div class="vis-head"><button class="label vis-name" id="visName0" data-slot="0">Spectrum</button><span><span class="vis-src" id="visSrc"></span> <span class="vis-idx" id="visIdx0"></span></span></div>
@@ -672,6 +685,8 @@
       <div class="vis-head"><button class="label vis-name" id="visName1" data-slot="1">Waterfall</button><span class="vis-idx" id="visIdx1"></span></div>
       <canvas id="fall" data-slot="1" title="Click for the next display" aria-hidden="true"></canvas>
     </div>
+    </div>
+    <div class="swipe-dots" id="swipeDots" aria-hidden="true"><i class="on"></i><i></i></div>
     <div class="screen map cham">
       <span class="tab" aria-hidden="true"><b>04</b>Nav</span>
       <div class="vis-head">
@@ -725,6 +740,7 @@
     </dl>
     <dl>
       <dt>SWIPE</dt><dd>Art left or right to tune</dd>
+      <dt>SWIPE</dt><dd>03 Spectrum sideways for 05 Level (phones)</dd>
       <dt>TAP</dt><dd>Art or title to hold its motion; again to resume</dd>
       <dt>HOLD</dt><dd>A preset key to save to it</dd>
       <dt>TAP</dt><dd>A city on the map for its stations</dd>
@@ -2275,6 +2291,19 @@ function drawLevelLabel() {
   $("lvlIdx").textContent = `${lvlMode + 1}/${LEVEL_MODES.length}`;
 }
 ["lvl", "lvlName"].forEach(x => $(x).addEventListener("click", cycleLevel));
+// Phones: the level screen moves in beside 03 Spectrum to be swiped to; desktop keeps it under the art.
+const phoneLayout = matchMedia("(max-width: 959px)"), lvlHome = document.querySelector(".artcol");
+function placeLevel() {
+  const lvl = document.querySelector(".lvl");
+  if (phoneLayout.matches) { if (lvl.parentNode !== $("swipe")) $("swipe").appendChild(lvl); }
+  else if (lvl.parentNode !== lvlHome) { lvlHome.appendChild(lvl); $("swipe").scrollLeft = 0; }
+}
+placeLevel();
+phoneLayout.addEventListener("change", placeLevel);
+$("swipe").addEventListener("scroll", () => {
+  const sw = $("swipe"), page = Math.round(sw.scrollLeft / Math.max(1, sw.clientWidth));
+  [...$("swipeDots").children].forEach((d, i) => d.classList.toggle("on", i === page));
+}, { passive: true });
 function drawLevel(t) {
   const c = $("lvl");
   if (!c || !c.clientWidth) return;
