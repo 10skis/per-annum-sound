@@ -1,13 +1,13 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.35 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.36 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.35 |
+| Version | v0.36 |
 | Owner | Robert |
 | Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
@@ -58,12 +58,13 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Patching | Edits are scripted string replacements with `assert count == 1`. Comment markers often appear twice (CSS and JS); match the longer, unique form |
 | Streams | Must be HTTPS (Netlify page). Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them |
 | Wikimedia art | Needs a descriptive user agent (`UA` in `art.py`) or it returns 429 and the build quietly drops the FIP logos. Check `web/art/` after a build |
+| Track titles | Some feeds send file names (250119_0258). `fileLike()` in the page filters them; prefer a feed's show name over its track title |
 | iPhone | Pages can't set volume; the bar becomes a "use the volume buttons" note |
 | Testing in the built-in browser | It won't register service workers; screenshots right after load can be stale or mid boot animation; a hidden pane pauses requestAnimationFrame. For visuals, freeze animations and look at the frame. "Animation running" is not "visible" |
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify for v0.35. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- Robert re-drags `app/web` to Netlify for v0.36. v0.34 was deployed and tested on the iPhone 2026-11-03.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.

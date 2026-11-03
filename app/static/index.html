@@ -744,6 +744,8 @@ async function cachedJSON(url, ttl) {
     return d;
   } catch (_) { return c ? c.data : {}; }
 }
+// A title that is really a file name: no spaces, and a run of digits or an underscore in it.
+const fileLike = (t) => !!t && !/\s/.test(t) && /\d{4}|_/.test(t);
 const decodeHTML = (t) => { const el = document.createElement("textarea"); el.innerHTML = t || ""; return el.value.trim(); };
 
 /* What's on now, from stations that publish it to browsers (stations.yaml info:).
@@ -763,9 +765,15 @@ const LIVE_INFO = {
     const d = await cachedJSON(`https://public.radio.co/stations/${id}/status`, 20000);
     return { title: (d.current_track || {}).title || "" };
   },
+  /* Radiocult gives the scheduled show's name and the file playing inside it. The show name
+     wins; between shows (a default playlist) it's artist and track. Some uploads carry only a
+     recorder's file name (250119_0258), which isn't worth showing. */
   async radiocult(slug) {
     const r = (await cachedJSON(`https://api.radiocult.fm/api/station/${slug}/schedule/live`, 30000)).result || {};
-    return { title: (r.metadata || {}).title || (r.content || {}).title || "" };
+    const m = r.metadata || {}, show = r.status === "schedule" ? (r.content || {}).title || "" : "";
+    if (show) return { title: show };
+    const artist = /^live now$/i.test(m.artist || "") ? "" : m.artist;
+    return { title: [artist, fileLike(m.title) ? "" : m.title].filter(Boolean).join(" - ") };
   },
 };
 async function addLiveInfo(now, st) {
@@ -2150,6 +2158,7 @@ function drawLevel(t) {
    recently (kept on this device). Hidden for stations with neither. */
 const trackLog = store.get("piRadioTracks", {});
 function logTrack(id, title) {
+  if (fileLike(title)) return;
   const l = trackLog[id] = trackLog[id] || [];
   if (l[0] && l[0].title === title) return;
   l.unshift({ at: new Date().toISOString(), title });
@@ -2178,8 +2187,8 @@ function drawNext() {
     }).join("");
     parts.push(`<div class="label">Coming up on ${esc(st.name)}</div><div class="ruler">${ruler}</div>` +
       `<div class="blocks">${blocks}<div class="nowline" style="left:${pct(Date.now())}%"></div></div>`);
-  } else if (st.kind === "radio" && (trackLog[id] || []).length) {
-    parts.push(`<div class="label">Recently on ${esc(st.name)}</div>` + trackLog[id].slice(0, 3).map(x =>
+  } else if (st.kind === "radio" && (trackLog[id] || []).some(x => !fileLike(x.title))) {
+    parts.push(`<div class="label">Recently on ${esc(st.name)}</div>` + trackLog[id].filter(x => !fileLike(x.title)).slice(0, 3).map(x =>
       `<div class="trk"><span>${hhmm(x.at)}</span><span>${esc(x.title.toUpperCase())}</span></div>`).join(""));
   }
   if (st.geo) parts.push(dayNight(st));
