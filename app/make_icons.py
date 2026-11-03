@@ -1,20 +1,36 @@
-"""Draws the home-screen icon: an amber dial on a dark plate. Run once after changing it."""
-import math
+"""Writes the home-screen icons: the page's own sigil with PAS in the middle.
+
+The icon is drawn by the page itself (dev/icon.js uses its sigil code and VT323 font), so it
+matches the in-app sigil exactly. To redraw it:
+  1. build web/ (build_static.py), then run this script: it serves web/ on localhost:8090
+  2. open http://localhost:8090, set window.ICON_POST = true, and run dev/icon.js in the console
+It writes static/icon-512.png and static/icon-180.png, then stops. Rebuild to copy them to web/."""
+from functools import partial
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from PIL import Image, ImageDraw
 
 HERE = Path(__file__).parent
-for size in (180, 512):
-    s = size * 4  # draw large, scale down for smooth edges
-    img = Image.new("RGB", (s, s), (14, 12, 10))
-    d = ImageDraw.Draw(img)
-    c, r = s / 2, s * 0.30
-    for i in range(24):
-        a = math.tau * i / 24
-        d.line([(c + math.cos(a) * r * 1.12, c + math.sin(a) * r * 1.12),
-                (c + math.cos(a) * r * 1.24, c + math.sin(a) * r * 1.24)], fill=(90, 84, 76), width=s // 120)
-    d.ellipse([c - r, c - r, c + r, c + r], fill=(200, 196, 188))
-    d.ellipse([c - r * .78, c - r * .78, c + r * .78, c + r * .78], fill=(160, 155, 147))
-    w = s * 0.035
-    d.rounded_rectangle([c - w / 2, c - r * .95, c + w / 2, c - r * .45], radius=w / 2, fill=(255, 176, 46))
-    img.resize((size, size), Image.LANCZOS).save(HERE / "static" / f"icon-{size}.png")
+WANT = {"/icon-512.png", "/icon-180.png"}
+got = set()
+
+
+class Handler(SimpleHTTPRequestHandler):
+    def do_POST(self):
+        if self.path not in WANT:
+            self.send_error(404); return
+        body = self.rfile.read(int(self.headers["Content-Length"]))
+        if body[:8] != b"\x89PNG\r\n\x1a\n":
+            self.send_error(400); return
+        (HERE / "static" / self.path.lstrip("/")).write_bytes(body)
+        got.add(self.path)
+        print("wrote", self.path, len(body), "bytes", flush=True)
+        self.send_response(200); self.end_headers()
+
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store")  # always the fresh build
+        super().end_headers()
+
+
+server = HTTPServer(("localhost", 8090), partial(Handler, directory=str(HERE / "web")))
+while got != WANT:
+    server.handle_request()
