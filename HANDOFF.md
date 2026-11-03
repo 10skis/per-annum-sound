@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.51 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.52 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.51 |
+| Version | v0.52 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.51 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.52 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -40,7 +40,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Tape tuner | Under the dial (desktop) and under the tuner (phones). Thin 1 px analog ticks, a number every fifth, group bands, needle. Swipe or drag left = higher stations |
 | Volume | Two-finger swipe right = louder |
 | Phones | Tuner strip instead of the dial; no clock in the header (status bar has it); ? in the header; brand shows P·A·S |
-| Goniometer | Robert prefers the first version, a random dot cloud; v0.49's phosphor trace was rejected. LO and HI clouds either side |
+| Level displays | Eight: Trace, Meter, Needle, Goniometer, Loudness, then eye candy (Phosphor, Fluid, Reels). Goniometer is the first version, a random dot cloud with LO and HI clouds; v0.49's trace lives on as Phosphor. Eye candy is welcome here; avoid repeating the spectrum screens' displays |
 | Art shimmer | Breathing, not flashing (v0.50): a 5.2 s ring or 4.6 s sweep every 7 to 16 s, dots swelling by up to about 40%, no highlight colour. Cover art and sigils (v0.51). Since v0.49 halftone art swells its own dots (read back from the image onto `#artDots`, image hidden only during the ripple); logos keep the `.shimmer` overlay |
 | Hold | Tap the art to hold shimmer and sigil rotation; tap the title to stop its scroll. Tap again resumes; remembered per device. About opens from the line under the title and the description, not the title |
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), faint dot matrix behind. Breathes with the same ripple as cover art |

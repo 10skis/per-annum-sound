@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.51: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.52: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.52 | 2026-11-03 | Phosphor, Fluid and Reels level displays | [link](updates/2026-11-03-eye-candy-levels.md) |
 | v0.51 | 2026-11-03 | Goniometer back to the dot cloud with LO and HI clouds; breathing ripple on sigils | [link](updates/2026-11-03-cloud-gonio-sigil-ripple.md) |
 | v0.50 | 2026-11-03 | Slower, softer breathing ripple; analog goniometer with LO and HI side scopes | [link](updates/2026-11-03-breathing-ripple-side-scopes.md) |
 | v0.49 | 2026-11-03 | Smoother levels, phosphor goniometer, dot-size ripple, shuffle key, haptics, phone description | [link](updates/2026-11-03-smooth-levels-dot-ripple.md) |

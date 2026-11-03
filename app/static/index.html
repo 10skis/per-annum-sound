@@ -2238,8 +2238,9 @@ if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw
 /* 05 LEVEL: click the screen or its label for the next display. Trace: the last ~30 s of left
    and right level as dotted lines. Meter: two LED bargraphs with peak hold. Needle: one analog VU.
    Goniometer: the stereo image as a cloud of dots. Loudness: a rolling bar per quarter second.
+   Then eye candy: Phosphor (a glowing scope trace), Fluid (cornstarch on a speaker) and Reels.
    Left = low bands, right = high bands (MPD's real levels when there, otherwise the simulation). */
-const LEVEL_MODES = ["Trace", "Meter", "Needle", "Goniometer", "Loudness"];
+const LEVEL_MODES = ["Trace", "Meter", "Needle", "Goniometer", "Loudness", "Phosphor", "Fluid", "Reels"];
 let lvlMode = store.get("piRadioLevelMode", 0), lvlHist = [], lvlLast = 0, lvlPeak = [0, 0], lvlNeedle = 0, loudHist = [], loudLast = 0, lvlS = [0, 0], lvlT = 0;
 function cycleLevel() {
   lvlMode = (lvlMode + 1) % LEVEL_MODES.length;
@@ -2256,7 +2257,7 @@ function drawLevel(t) {
   if (!c || !c.clientWidth) return;
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
   // Meter ballistics: fast attack, slower release, timed by the frame so every display moves smoothly
-  const dt = Math.min(.1, (t - (lvlT || t)) / 1000), ease = (cur, v) => cur + (v - cur) * (1 - Math.exp(-dt * (v > cur ? 22 : 7)));
+  const dt = Math.max(0, Math.min(.1, (t - (lvlT || t)) / 1000)), ease = (cur, v) => cur + (v - cur) * (1 - Math.exp(-dt * (v > cur ? 22 : 7)));
   lvlT = t;
   lvlS = [ease(lvlS[0], Math.min(1, avg(visLevels.slice(0, 12)) * 1.2)), ease(lvlS[1], Math.min(1, avg(visLevels.slice(12)) * 1.6))];
   const [L, R] = lvlS;
@@ -2313,6 +2314,12 @@ function drawLevel(t) {
     g.fillStyle = "#9c6c22"; g.textAlign = "center"; g.fillText("VU", cx, cy - R0 * .35);
   } else if (mode === "Goniometer") {
     drawGonio(g, w, h, L, R);
+  } else if (mode === "Phosphor") {
+    drawPhosphor(g, w, h, t, dt);
+  } else if (mode === "Fluid") {
+    drawFluid(g, w, h, t, dt, L, R);
+  } else if (mode === "Reels") {
+    drawReels(g, w, h, t, dt, L, R);
   } else {  // Loudness
     const bw = 4, off = Math.min(1, (t - loudLast) / 250) * bw, n = Math.min(loudHist.length, Math.floor(w / bw));
     const bars = loudHist.slice(loudHist.length - n).concat([(L + R) / 2]);
@@ -2346,6 +2353,136 @@ function drawGonio(g, w, h, L, R) {
     cloud(cx - s - side / 2, cy - 6, r, lo, lo * .9, 90, "LO");
     cloud(cx + s + side / 2, cy - 6, r, hi, hi * .9, 90, "HI");
   }
+}
+
+/* Phosphor: the goniometer's second version, kept as eye candy: a short window of stereo "signal" (low, mid and high partials
+   at the current band levels, the sides widening with the highs) traced as a glowing line on a
+   buffer that fades each frame, so the figure swirls and leaves trails. Mid is up, sides across,
+   L and R on the diagonals; a correlation bar runs along the bottom. */
+let phosBuf = null, phosCorr = 0;
+function drawPhosphor(g, w, h, t, dt) {
+  const dpr = window.devicePixelRatio || 1, bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+  if (!phosBuf || phosBuf.width !== bw || phosBuf.height !== bh) { phosBuf = document.createElement("canvas"); phosBuf.width = bw; phosBuf.height = bh; }
+  const b = phosBuf.getContext("2d");
+  b.setTransform(dpr, 0, 0, dpr, 0, 0);
+  b.globalCompositeOperation = "destination-out";
+  b.fillStyle = `rgba(0,0,0,${Math.min(1, dt * 9).toFixed(3)})`;  // phosphor decay, frame-rate independent
+  b.fillRect(0, 0, w, h);
+  b.globalCompositeOperation = "source-over";
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const lo = avg(visLevels.slice(0, 6)), mid = avg(visLevels.slice(6, 16)), hi = avg(visLevels.slice(16));
+  const cx = w / 2, cy = h / 2 - 5, s = Math.min(w, h - 12) * .46, width = .4 + hi * 1.6, TAU = Math.PI * 2;
+  const pts = [];
+  let sm = 0, ss = 0;
+  for (let i = 0; i < 240; i++) {
+    const tau = t / 1000 + i / 240 * .05;  // 50 ms of "audio", sliding with time
+    const m = lo * Math.sin(tau * TAU * 47) + mid * .7 * Math.sin(tau * TAU * 196 + .4) + hi * .4 * Math.sin(tau * TAU * 523);
+    const sd = width * (mid * .6 * Math.sin(tau * TAU * 151 + t / 900) + hi * .5 * Math.sin(tau * TAU * 607 + t / 400) + lo * .25 * Math.sin(tau * TAU * 31));
+    sm += m * m; ss += sd * sd;
+    pts.push([cx + Math.tanh(sd) * s * .95, cy - Math.tanh(m) * s * .95]);
+  }
+  b.strokeStyle = "#ffb02e"; b.lineWidth = 1.4; b.lineJoin = "round"; b.shadowColor = "#ffb02e"; b.shadowBlur = 8;
+  b.beginPath(); pts.forEach(([x, y], i) => i ? b.lineTo(x, y) : b.moveTo(x, y)); b.stroke();
+  b.shadowBlur = 0; b.fillStyle = "#ffe3b0";
+  for (let i = 0; i < pts.length; i += 12) b.fillRect(pts[i][0] - 1, pts[i][1] - 1, 2, 2);  // bright beads along the trace
+  // Grid: the diamond and its axes, with labels
+  g.fillStyle = "#241907";
+  for (let i = -s; i <= s; i += 5) { g.fillRect(cx + i, cy - (s - Math.abs(i)), 2, 2); g.fillRect(cx + i, cy + (s - Math.abs(i)), 2, 2); }
+  for (let i = -s; i <= s; i += 6) { g.fillRect(cx, cy + i, 1, 2); g.fillRect(cx + i, cy, 2, 1); }
+  g.fillStyle = "#9c6c22"; g.textAlign = "center";
+  g.fillText("M", cx, cy - s - 2); g.fillText("L", cx - s * .55, cy - s * .55); g.fillText("R", cx + s * .55, cy - s * .55);
+  g.drawImage(phosBuf, 0, 0, w, h);
+  // Correlation: +1 when the image is all mid (mono), toward -1 as the sides take over
+  phosCorr += ((sm - ss) / Math.max(1e-6, sm + ss) - phosCorr) * (1 - Math.exp(-dt * 4));
+  const y = h - 4, x0 = 16, x1 = w - 16;
+  g.fillStyle = "#241907"; for (let x = x0; x <= x1; x += 4) g.fillRect(x, y, 2, 2);
+  g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.fillText("-", 2, y + 3); g.textAlign = "right"; g.fillText("+", w - 2, y + 3);
+  g.fillStyle = "#ffb02e"; g.fillRect(x0 + (phosCorr + 1) / 2 * (x1 - x0) - 2, y - 3, 4, 8);
+}
+
+/* Fluid: cornstarch on a speaker cone. A puddle of dots on dim cone rings; its outline wobbles
+   slowly, and bass hits throw out fingers that shoot up fast and sag back over about a second.
+   It leans toward the louder channel. Small LO and HI puddles either side: LO swells and rolls
+   with the bass, HI quivers with fine spikes from the treble. */
+const fluid = { fingers: [], lo: 0, t: 0 };
+function drawFluid(g, w, h, t, dt, L, R) {
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length, TAU = Math.PI * 2;
+  const lo = avg(visLevels.slice(0, 6)), hi = avg(visLevels.slice(16));
+  const cx = w / 2 + (R - L) * 30, cy = h / 2, base = Math.min(w, h) * .2;
+  // A kick (bass jumping above its recent level) throws out one to three fingers
+  if (lo - fluid.lo > .1 && t - fluid.t > 260 && fluid.fingers.length < 9) {
+    fluid.t = t;
+    for (let k = 0, n = 1 + Math.floor(Math.random() * 3); k < n; k++)
+      fluid.fingers.push({ a: Math.random() * TAU, w: .1 + Math.random() * .14, h: base * (.5 + Math.random() * .9) * (.4 + lo), born: t });
+  }
+  fluid.lo += (lo - fluid.lo) * (1 - Math.exp(-dt * 6));
+  fluid.fingers = fluid.fingers.filter(f => t - f.born < 3000);
+  const angGap = (a, b) => { const d = Math.abs(((a - b) % TAU + TAU) % TAU); return Math.min(d, TAU - d); };
+  const outline = th => {
+    let r = base * (1 + .07 * Math.sin(3 * th + t / 800) + .05 * Math.sin(5 * th - t / 1100) + lo * .22);
+    for (const f of fluid.fingers) {
+      const age = (t - f.born) / 1000, grow = age < .12 ? age / .12 : Math.exp(-(age - .12) / .75);
+      const bend = Math.sin(age * 7 + f.a * 3) * .04 * grow;  // the tip wobbles as it sags
+      r += f.h * grow * Math.exp(-((angGap(th, f.a + bend) / f.w) ** 2));
+    }
+    return r;
+  };
+  // The cone: dim dashed rings
+  g.fillStyle = "#241907";
+  for (const k of [1.55, 2.1]) for (let i = 0; i < 64; i += 2) {
+    const a = i / 64 * TAU; g.fillRect(w / 2 + Math.cos(a) * base * k, cy + Math.sin(a) * base * k * .92, 2, 2);
+  }
+  const puddle = (x0, y0, fn, n) => {
+    for (let i = 0; i < n; i++) {
+      const th = Math.random() * TAU, edge = fn(th), q = Math.sqrt(Math.random());
+      g.fillStyle = q > .86 ? "#ffb02e" : i % 3 ? "#c4841f" : "#9c6c22";
+      g.fillRect(x0 + Math.cos(th) * edge * q, y0 + Math.sin(th) * edge * q, 2, 2);
+    }
+    g.fillStyle = "#ffd27a";  // the surface, lit
+    for (let i = 0; i < 72; i++) { const th = i / 72 * TAU, e = fn(th); g.fillRect(x0 + Math.cos(th) * e - 1, y0 + Math.sin(th) * e - 1, 2, 2); }
+  };
+  puddle(cx, cy, outline, 520);
+  const side = (w - base * 5) / 2, r = Math.min(side * .3, base * .55);
+  if (r >= 10) {
+    g.fillStyle = "#9c6c22"; g.textAlign = "center";
+    puddle(w / 2 - base * 2.5 - side / 2, cy - 6, th => r * (1 + lo * .35 + .12 * Math.sin(2 * th + t / 500) + .08 * Math.sin(3 * th - t / 700)), 110);
+    puddle(w / 2 + base * 2.5 + side / 2, cy - 6, th => r * (1 + hi * .3 * Math.abs(Math.sin(11 * th + t / 90)) + .05 * Math.sin(17 * th - t / 60)), 110);
+    g.fillStyle = "#9c6c22";
+    g.fillText("LO", w / 2 - base * 2.5 - side / 2, cy + r * 1.6 + 8); g.fillText("HI", w / 2 + base * 2.5 + side / 2, cy + r * 1.6 + 8);
+  }
+}
+
+/* Reels: a tape deck's two spools in dots, turning at play speed and nudged by the level. The
+   tape winds from the left spool to the right over about ten minutes, then starts again; the
+   head between them glows with the level. */
+const reels = { a: 0 };
+function drawReels(g, w, h, t, dt, L, R) {
+  const TAU = Math.PI * 2, lv = (L + R) / 2, s = Math.min(h * .42, w * .2), cy = h / 2 - 4;
+  const xL = w / 2 - s * 1.35, xR = w / 2 + s * 1.35, wound = (t / 600000) % 1;
+  reels.a += dt * (1.1 + lv * 2.2);
+  const packL = s * (.45 + .5 * (1 - wound)), packR = s * (.45 + .5 * wound);
+  const spool = (x0, pack, dir) => {
+    const a0 = reels.a * dir * (s / pack);  // the fuller spool turns slower
+    g.fillStyle = "#3d2a0c";
+    for (let i = 0; i < 48; i++) { const a = i / 48 * TAU; g.fillRect(x0 + Math.cos(a) * s, cy + Math.sin(a) * s, 2, 2); }  // flange
+    for (let rr = s * .32, k = 0; rr < pack; rr += 4, k++) {  // the tape pack, in rings, each started at a different angle
+      const n = Math.floor(rr * TAU / 5);
+      g.fillStyle = rr > pack - 5 ? "#ffb02e" : "#7a5419";
+      for (let i = 0; i < n; i++) { const a = a0 + k * 2.39996 + i / n * TAU; g.fillRect(x0 + Math.cos(a) * rr, cy + Math.sin(a) * rr, 2, 2); }
+    }
+    g.fillStyle = "#c4841f";  // hub with three spokes
+    for (let k = 0; k < 3; k++) for (let rr = 4; rr < s * .3; rr += 3) {
+      const a = a0 + k / 3 * TAU; g.fillRect(x0 + Math.cos(a) * rr - 1, cy + Math.sin(a) * rr - 1, 2, 2);
+    }
+  };
+  spool(xL, packL, 1); spool(xR, packR, 1);
+  // The tape path: from the bottom of each pack to the head in the middle
+  const hy = cy + s * .95;
+  g.fillStyle = "#9c6c22";
+  const path = (x0, y0, x1, y1) => { const n = Math.hypot(x1 - x0, y1 - y0) / 4; for (let i = 0; i <= n; i++) g.fillRect(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, 2, 2); };
+  path(xL, cy + packL, w / 2 - 10, hy); path(w / 2 + 10, hy, xR, cy + packR);
+  g.globalAlpha = .35 + lv * .65; g.fillStyle = "#ffb02e"; g.shadowColor = "#ffb02e"; g.shadowBlur = 4 + lv * 10;
+  g.fillRect(w / 2 - 10, hy - 3, 20, 6); g.shadowBlur = 0; g.globalAlpha = 1;
 }
 
 /* Up next, under the description: for NTS, the next shows on a small timeline with a needle at
