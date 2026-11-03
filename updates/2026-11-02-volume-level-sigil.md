@@ -13,3 +13,7 @@
 
 ## Next steps
 - See TODO.md.
+
+## Follow-up (same version)
+- The sigil sits on a faint dot matrix, like an unlit display, brightest at the centre and fading toward the corners (browser and server).
+- No ripple or sweep on the sigil any more; those stay on stations with real artwork. The sigil keeps its turning rings.

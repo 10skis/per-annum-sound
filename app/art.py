@@ -117,6 +117,16 @@ def placeholder(name: str, size: int = 512, city: str = "", code: str = "") -> b
     out = Image.new("L", (W, W), 0)
     d = ImageDraw.Draw(out)
     cx = cy = W / 2
+    # A faint dot matrix behind the rings, fading toward the corners
+    pitch = 11 * S
+    y = pitch / 2
+    while y < W:
+        x = pitch / 2
+        while x < W:
+            f = 1 - min(1, math.hypot(x - cx, y - cy) / (W * .72))
+            d.rectangle([x - 1.2 * S, y - 1.2 * S, x + 1.2 * S, y + 1.2 * S], fill=int(18 + f * 34))
+            x += pitch
+        y += pitch
     for ring in range(11):
         rad = (60 + ring * 15) * S
         segs = 6 + int(rng.random() * 8)

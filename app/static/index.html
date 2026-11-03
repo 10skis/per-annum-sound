@@ -923,10 +923,10 @@ async function ditherArt(url, name) {
 
 /* Art for stations with none: a sigil. Rings of dotted grooves like a record, each ring's arcs
    switched on or off by the station's name so every station gets its own mark, with the station's
-   city code and city in the middle (the number is already on the dial). In the page it's drawn
-   live: while playing, each ring turns at its own speed, alternating direction, and the shimmer's
-   ripples and sweeps run through the dots. placeholderArt() is the still version (lock screen,
-   and the image the shimmer masks); art.placeholder() is the server's. */
+   city code and city in the middle (the number is already on the dial), over a faint dot matrix.
+   In the page it's drawn live: while playing, each ring turns at its own speed, alternating
+   direction. The art shimmer is for real artwork only. placeholderArt() is the still version
+   (lock screen); art.placeholder() is the server's. */
 function sigilModel(name) {
   let seed = 2166136261;
   for (const ch of name) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
@@ -942,6 +942,13 @@ function sigilModel(name) {
 }
 function drawSigilOn(g, size, m, fx) {
   const S = size / 440, cx = size / 2, cy = size / 2;
+  // A faint dot matrix behind the rings, like an unlit display, fading toward the corners
+  const pitch = 11 * S;
+  for (let y = pitch / 2; y < size; y += pitch) for (let x = pitch / 2; x < size; x += pitch) {
+    const f = 1 - Math.min(1, Math.hypot(x - cx, y - cy) / (size * .72));
+    g.fillStyle = `rgba(156,108,34,${(.07 + f * .13).toFixed(3)})`;
+    g.fillRect(x - 1.2 * S, y - 1.2 * S, 2.4 * S, 2.4 * S);
+  }
   for (const r of m.rings) {
     const rad = (60 + r.ring * 15) * S, dots = Math.floor(rad * Math.PI * 2 / (9 * S));
     for (let d = 0; d < dots; d++) {
@@ -976,7 +983,6 @@ function useSigil(id) {
   if (!want) { sigil = null; return; }
   if (!sigil || sigil.id !== id) sigil = { id, model: sigilModel(st.name), t: 0 };
 }
-let sigilFx = null;  // { kind, t0, x, y } set by the shimmer
 function drawSigil(t) {
   if (!sigil) return;
   const c = $("sigil"), fit = fitCanvas(c);
@@ -984,18 +990,7 @@ function drawSigil(t) {
   const [g, w] = fit, dt = Math.min(100, t - (sigil.t || t)) / 1000;
   sigil.t = t;
   if (S && S.playing && !reduceMotion) for (const r of sigil.model.rings) r.rot += r.speed * dt;
-  let fx = null;
-  if (sigilFx) {
-    const age = (t - sigilFx.t0) / 1000;
-    if (sigilFx.kind === "ripple" && age < 2.4) {
-      const rad = age / 2.4 * 1.6, band = .12;
-      fx = (x, y) => { const d = Math.hypot(x - sigilFx.x, y - sigilFx.y); return d < rad && d > rad - band; };
-    } else if (sigilFx.kind === "sweep" && age < 1.9) {
-      const pos = -0.4 + age / 1.9 * 1.8;
-      fx = (x, y) => Math.abs((x + y * .36) - pos) < .07;
-    } else sigilFx = null;
-  }
-  drawSigilOn(g, w, sigil.model, fx);
+  drawSigilOn(g, w, sigil.model, null);  // no ripple or sweep on the sigil; those are for real artwork
 }
 
 function setArt(img, s) {
@@ -1999,10 +1994,7 @@ function shimmerSoon() {
       el.style.setProperty("--rx", Math.round(15 + Math.random() * 70) + "%");
       el.style.setProperty("--ry", Math.round(15 + Math.random() * 70) + "%");
       void el.offsetWidth;  // restart the animation
-      if (!sigil) el.classList.add(ripple ? "ripple" : "sweep");  // the CSS version masks a still image
-      // The live sigil draws the same effect through its own dots
-      sigilFx = { kind: ripple ? "ripple" : "sweep", t0: performance.now(),
-                  x: parseFloat(el.style.getPropertyValue("--rx")) / 100, y: parseFloat(el.style.getPropertyValue("--ry")) / 100 };
+      if (!sigil) el.classList.add(ripple ? "ripple" : "sweep");  // artwork only; the sigil turns instead
     }
     shimmerSoon();
   }, 3000 + Math.random() * 5000);  // every 3 to 8 seconds
