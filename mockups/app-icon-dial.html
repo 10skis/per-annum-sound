@@ -10,7 +10,7 @@
   body { margin: 0; background: var(--bg); color: var(--amber); font-family: "Saira Condensed", sans-serif; padding: 32px 16px; }
   h1 { font: 400 18px "Michroma", sans-serif; letter-spacing: .2em; margin: 0 0 6px; }
   p { color: var(--dim); margin: 0 0 28px; font-size: 17px; }
-  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; max-width: 1100px; }
+  .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 48px; max-width: 760px; }
   .opt h2 { font-weight: 600; font-size: 20px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; }
   .opt .why { color: var(--dim); font-size: 16px; margin: 0 0 14px; min-height: 3em; }
   .big { width: 100%; max-width: 300px; aspect-ratio: 1; border-radius: 22.5%; display: block; box-shadow: 0 10px 30px #0008; }
@@ -24,13 +24,14 @@
 </head>
 <body>
 <h1>PER ANNUM SOUND · GLYPH DIAL</h1>
-<p>The dial's katakana ring on a dot-matrix plate. Each shown large and at home-screen size on light and dark wallpaper.</p>
+<p>The dial's katakana ring on a dot-matrix plate. C and D side by side for comparison; A and B below. Each shown large and at home-screen size on light and dark wallpaper.</p>
 <div class="row" id="row"></div>
 <script>
 const OPTS = [
+  { key: "window", name: "C · Rotating window", why: "The desktop dial as it is: an arc of glyphs fading out either side of the lit one, PAS in dots below." },
+  { key: "windowGlyph", name: "D · Rotating window, glyph", why: "The same arc, with ｦ in LED dots below instead of PAS. No letters." },
   { key: "pas", name: "A · Dial and PAS", why: "Full glyph ring, the top one lit with a needle, PAS in LED dots in the middle." },
   { key: "glyph", name: "B · Dial and one glyph", why: "Same ring, with ｦ, the dial's first glyph, in LED dots in the middle. No letters: the most icon-like." },
-  { key: "window", name: "C · Rotating window", why: "The desktop dial as it is: an arc of glyphs fading out either side of the lit one, PAS in dots below." },
 ];
 const N = 1024, GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇ"], GLYPH_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Apple Symbols", sans-serif';
 const PIX = { P: ["11110","10001","10001","11110","10000","10000","10000"],
@@ -96,6 +97,7 @@ function dashedCircle(g, cx, cy, r) {
 const DRAW = {
   pas(g) { plate(g); const c = N / 2; ring(g, c, c, 372, 16, null, 9, false); needle(g, c, c - 492); dashedCircle(g, c, c, 268); ledWord(g, "PAS", c, c, 25); sheen(g); },
   glyph(g) { plate(g); const c = N / 2; ring(g, c, c, 372, 16, null, 9, false); needle(g, c, c - 492); dashedCircle(g, c, c, 268); ledGlyph(g, "ｦ", c, c, 380, 13); sheen(g); },
+  windowGlyph(g) { plate(g); const c = N / 2, cy = N * .78; ring(g, c, cy, 540, 20, 5, 9, true); needle(g, c, cy - 676); ledGlyph(g, "ｦ", c, N * .62, 400, 13); sheen(g); },
   window(g) { plate(g); const c = N / 2, cy = N * .78; ring(g, c, cy, 540, 20, 5, 9, true); needle(g, c, cy - 676); ledWord(g, "PAS", c, N * .62, 30); sheen(g); },
 };
 

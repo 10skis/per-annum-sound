@@ -16,3 +16,4 @@
 
 ## Follow-up (same version)
 - Robert still doesn't love the display window and asked about a glyph dial with dot matrix. Mockup `mockups/app-icon-dial.html`: A, full katakana ring with the top glyph lit and a needle, PAS in LED dots in the middle; B, the same ring with ｦ (the dial's first glyph) in LED dots in the middle, no letters; C, the desktop's rotating window as an arc of fading glyphs, PAS in LED dots below. Not built; the display-window icon stays in the code until he picks.
+- Added D to the same mockup: C's rotating-window arc with ｦ in LED dots below instead of PAS. C and D sit side by side at the top for comparison. Still not built.
