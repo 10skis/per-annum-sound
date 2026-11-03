@@ -1,13 +1,13 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.40 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.41 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.40 |
+| Version | v0.41 |
 | Owner | Robert |
 | Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
@@ -35,7 +35,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Colour | Amber only: `--amber #ffb02e`, `--amber-mid #d08c26`, `--amber-dim #9c6c22`, `--amber-ghost #241907`, `--line #4a3616`. Blue `#4fb4ff` for warnings only (no signal, offline, sleep's last minute). Map city dots yellow `#e8c43a` (hot `#ffe56e`). Nothing else |
 | Type | VT323 for data, Saira Condensed for labels, Michroma for the brand only |
 | Look | "Cyberpunk alien car dashboard", leaning retro-analog: chamfered panels, inverse code tabs (01 ART, 02 SIGNAL, 03 SPECTRUM, 04 NAV, 05 LEVEL, 06 ABOUT), registration brackets, unlit 88 behind numerals, dot matrix everywhere. Robert reacts badly to over-literal brand references (Braun etc.) |
-| Dial (desktop) | Rotating window: ring of katakana glyphs, about six either side of the current one, fading. Not the centerpiece (he rejected that mockup). ◀ turns the ring clockwise, ▶ anticlockwise; drag follows the hand; scroll down or right = next |
+| Dial (desktop) | No glyphs that read as a known symbol (⌘ was swapped out). Rotating window: ring of katakana glyphs, about six either side of the current one, fading. Not the centerpiece (he rejected that mockup). ◀ turns the ring clockwise, ▶ anticlockwise; drag follows the hand; scroll down or right = next |
 | Tape tuner | Under the dial (desktop) and under the tuner (phones). Thin 1 px analog ticks, a number every fifth, group bands, needle. Swipe or drag left = higher stations |
 | Volume | Two-finger swipe right = louder |
 | Phones | Tuner strip instead of the dial; no clock in the header (status bar has it); ? in the header; brand shows P·A·S |
@@ -44,7 +44,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), faint dot matrix behind, no shimmer |
 | Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. WORLD and EUROPE ranges |
 | Signal panel | Every station gets: what's on (NTS timeline or recent tracks), day and night bar, nearby and similar, your listening |
-| Board | Collapsible groups. Two columns 960–1279 px (third column under the second), three from 1280. Recently played ticker above the columns, hover lights the row |
+| Board | Collapsible groups. Columns: NTS Live and Infinite Mixtapes; Terrascan FM and Genre Radio; Deep Cuts and Talk Radio (`GROUP_COL`). Two columns 960–1279 px (third column under the second), three from 1280. Recently played ticker above the columns, hover lights the row |
 | Header readouts | City, position, local time, distance from NYC, signal. Scroll slower than the station title when too long |
 | Motion | Smooth easing (cubic-bezier(.3,.7,.3,1)), not stepped. Everything off with reduced motion |
 
@@ -65,7 +65,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify for v0.40. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- Robert re-drags `app/web` to Netlify for v0.41. v0.34 was deployed and tested on the iPhone 2026-11-03.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.
