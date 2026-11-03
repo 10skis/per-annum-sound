@@ -37,6 +37,32 @@ places:
   Milan: [45.46, 9.19]
   North Pole: [90.0, 0.0]
 
+# Time zone for each place, for the local-time readout.
+timezones:
+  London: Europe/London
+  Bristol: Europe/London
+  Paris: Europe/Paris
+  Brussels: Europe/Brussels
+  Berlin: Europe/Berlin
+  Bethlehem: Asia/Hebron
+  Brooklyn: America/New_York
+  New York: America/New_York
+  New Jersey: America/New_York
+  Los Angeles: America/Los_Angeles
+  Seattle: America/Los_Angeles
+  Bologna: Europe/Rome
+  Sydney: Australia/Sydney
+  Kent, Ohio: America/New_York
+  Accra: Africa/Accra
+  Hanoi: Asia/Ho_Chi_Minh
+  Bangkok: Asia/Bangkok
+  Tbilisi: Asia/Tbilisi
+  Santiago: America/Santiago
+  Athens: Europe/Athens
+  Munich: Europe/Berlin
+  Milan: Europe/Rome
+  North Pole: UTC
+
 groups:
   - name: NTS Live
     place: London

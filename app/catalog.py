@@ -9,9 +9,12 @@ import yaml
 def load(path: Path) -> dict:
     data = yaml.safe_load(path.read_text())
     places = data.get("places", {})
+    zones = data.get("timezones", {})
     for g in data["groups"]:
         for st in g["stations"]:
             st.setdefault("place", g.get("place", ""))
+            if st["place"] in zones:
+                st.setdefault("tz", zones[st["place"]])
             p = st.get("map") or places.get(st["place"])
             if p:
                 st["geo"] = [p[0], p[1]]

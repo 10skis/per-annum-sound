@@ -64,6 +64,40 @@
     border-bottom: 1px dashed var(--line); padding-bottom: 8px; margin: -4px 0 0;
   }
   .head .sig { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Header readouts (desktop): where the station is, its local time, distance, stream format */
+  .head .sig { text-overflow: clip; }
+  .ro-run { display: inline-flex; }
+  .ro-half { display: inline-flex; gap: 22px; padding-right: 22px; align-items: baseline; }
+  .ro-run > .ro-half:only-child { padding-right: 0; }
+  .head .sig.scroll { text-align: left;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
+  .head .sig.scroll .ro-run { animation: marquee var(--ro-dur, 30s) linear infinite; }
+  .ro { color: var(--amber-mid); white-space: nowrap; }
+  .ro i { font: 600 10px var(--cond); font-style: normal; letter-spacing: .16em; color: var(--amber-dim); margin-right: 6px; }
+
+  /* Level strip under the art (desktop): the last ~30 s of left and right level */
+  .artcol { display: contents; }
+  .lvl { display: none; }
+  .lvl canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; }
+
+  /* Up next: NTS shows on a small timeline, or the tracks recently heard on this station */
+  .next { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 10px; }
+  .next .ruler { position: relative; height: 18px; border-bottom: 1px solid var(--line); }
+  .next .ruler span { position: absolute; bottom: 3px; font: 15px/1 var(--dot); color: var(--amber-dim); transform: translateX(-50%); }
+  .next .blocks { position: relative; height: 60px; }
+  .next .blk { position: absolute; top: 0; height: 100%; border: 1px solid var(--amber-dim); padding: 5px 8px; overflow: hidden; font-family: var(--dot); }
+  .next .blk b { display: block; font-weight: 400; font-size: 19px; color: var(--amber-mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .next .blk small { font-size: 15px; color: var(--amber-dim); }
+  .next .blk.now { border-color: var(--amber); background: #ffb02e14; }
+  .next .blk.now b { color: var(--amber); }
+  .next .blk .cal { margin-left: 6px; font-size: 13px; padding: 0 4px; }
+  .next .nowline { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .next .trk { display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 10px; font: 19px/1.25 var(--dot); color: var(--amber-mid); }
+  .next .trk span:first-child { color: var(--amber-dim); }
+  .next .trk span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .next .trk:first-of-type span:last-child { color: var(--amber); }
+
   .head .clock { color: var(--amber-mid); }
   .head .timer { color: var(--amber-mid); text-shadow: none; }
   .head .clock i { font-style: normal; animation: blink 2s steps(1) infinite; }
@@ -90,6 +124,7 @@
   .head .sleep { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; white-space: nowrap; flex-shrink: 0; }
   .head > :not(.sig) { white-space: nowrap; flex-shrink: 0; }
   @media (max-width: 959px) {
+    .head .sig { display: none; }  /* phones: the header is for the timers */
     .head .help-head { display: inline; }
     .help-btn { display: none; }
   }
@@ -454,7 +489,9 @@
     }
     .head { grid-area: head; }
     .mid { display: contents; }
-    .art { grid-area: art; align-self: start; }
+    .artcol { grid-area: art; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+    .artcol .art { flex: none; }
+    .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); flex: 1; min-height: 120px; padding: 22px 12px 10px; gap: 6px; }
     .strip { grid-area: info; aspect-ratio: auto; padding: 28px 24px 18px; align-content: start; gap: 16px; min-width: 0; }
     .strip > div:last-child { order: -1; }  /* the station name leads; description and progress under it */
     .detail { display: grid; gap: 12px; }
@@ -508,10 +545,17 @@
   </div>
 
   <div class="mid">
+    <div class="artcol">
     <div class="screen art off cham" id="artScreen">
       <span class="tab" aria-hidden="true"><b>01</b>Art</span>
       <span class="shimmer" id="shimmer" aria-hidden="true"></span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+    </div>
+    <div class="screen lvl cham">
+      <span class="tab" aria-hidden="true"><b>05</b>Level</span>
+      <div class="vis-head"><span class="label">Signal level · last 30 s</span><span class="label">L / R</span></div>
+      <canvas id="lvl" aria-hidden="true"></canvas>
+    </div>
     </div>
     <div class="dial-wrap">
       <div class="dial-row">
@@ -544,6 +588,7 @@
         <span id="progEnd"></span>
       </div>
       <div class="prog-left" id="progLeft"></div>
+      <div class="next" id="next" hidden></div>
     </div>
     <div>
       <div class="line big glow" id="line1"><span class="run">—</span></div>
@@ -1073,11 +1118,46 @@ function drawVolume(v) {
   $("volRead").textContent = v === null ? "--" : pad(Math.min(v, 99));
 }
 
-function drawSignal(sig, playing) {
-  if (!playing) { $("sig").textContent = ""; return; }
-  const parts = [sig.codec, sig.kbps && sig.kbps + "K", sig.khz && sig.khz + "KHZ", sig.channels && (sig.channels > 1 ? "ST" : "MONO")];
-  $("sig").textContent = parts.filter(Boolean).join(" · ") || "";
+/* Header readouts, like a trip computer: the station's city and position, the time there, how
+   far it is from home (New York), and the stream format while playing. */
+const HOME = [40.7128, -74.006], HOME_NAME = "NYC";
+function distKm([la1, lo1], [la2, lo2]) {
+  const r = Math.PI / 180, a = Math.sin((la2 - la1) * r / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin((lo2 - lo1) * r / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(a));
 }
+function localTime(tz) {
+  try { return new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(new Date()); } catch (_) { return "--:--"; }
+}
+// When the readouts don't fit on one line they scroll like the station title, but slower
+// (about 28 px a second) so the two don't move in step. Only a real change rewrites them, so the
+// minute ticking over doesn't restart the scroll.
+let roKey = "";
+const RO_SPEED = 28;
+function drawSignal(sig, playing) {
+  const st = STN[selectedId()] || {}, cells = [];
+  const cell = (k, v) => `<span class="ro"><i>${k}</i>${v}</span>`;
+  if (st.city || st.place) cells.push(cell("City", esc((st.city || st.place).toUpperCase())));
+  if (st.geo) cells.push(cell("Pos", geoText(st.geo)));
+  if (st.tz) cells.push(cell("Local", `<b class="roTime" style="font-weight:400">--:--</b>`));
+  if (st.geo) cells.push(cell("From " + HOME_NAME, Math.round(distKm(HOME, st.geo)).toLocaleString("en-US") + " KM"));
+  const parts = [sig.codec, sig.kbps && sig.kbps + "K", sig.khz && sig.khz + "KHZ", sig.channels && (sig.channels > 1 ? "ST" : "MONO")].filter(Boolean);
+  if (playing && parts.length) cells.push(cell("Signal", parts.join(" ")));
+  const html = cells.join("");
+  if (html !== roKey) {
+    roKey = html;
+    const box = $("sig");
+    box.classList.remove("scroll");
+    box.innerHTML = `<span class="ro-run"><span class="ro-half">${html}</span></span>`;
+    const run = box.firstChild;
+    if (run.scrollWidth > box.clientWidth + 2) {
+      run.innerHTML = `<span class="ro-half">${html}</span><span class="ro-half" aria-hidden="true">${html}</span>`;
+      box.classList.add("scroll");
+      box.style.setProperty("--ro-dur", (run.scrollWidth / 2 / RO_SPEED) + "s");
+    }
+  }
+  if (st.tz) document.querySelectorAll(".roTime").forEach(e => e.textContent = localTime(st.tz));
+}
+window.addEventListener("resize", () => { roKey = ""; if (S) drawSignal(S.signal || {}, S.playing); });
 
 function drawDetail(now) {
   $("tags").innerHTML = (now.genres || []).slice(0, 5).map(g => `<span>${esc(g.toUpperCase())}</span>`).join("");
@@ -1126,6 +1206,8 @@ function render(s) {
   setLine($("line1"), title.toUpperCase());
   setLine($("line2"), (s.now.subtitle || s.station.group).toUpperCase());
   drawDetail(s.now);
+  if (on && s.now && s.now.title && (STN[id] || {}).kind === "radio") logTrack(id, s.now.title);
+  drawNext();
   drawSignal(s.signal, on);
 
   const img = $("art");
@@ -1220,6 +1302,7 @@ async function loadSchedule() {
     if (sub && shows[0]) sub.textContent = shows[0].title.toUpperCase();
   }
   $("sched").innerHTML = html || `<div class="empty">NO SCHEDULE</div>`;
+  drawNext();
   $("sched").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => act.play(b.dataset.ch));
   $("sched").querySelectorAll("[data-cal]").forEach(b => b.onclick = () => {
     const [ch, i] = b.dataset.cal.split("|");
@@ -1260,6 +1343,8 @@ function elapsed() {
 function tick() {
   const d = new Date();
   if (listen && $("timer")) $("timer").textContent = elapsed();
+  if (d.getSeconds() === 0) { const st = STN[selectedId()]; if (st && st.tz) document.querySelectorAll(".roTime").forEach(e => e.textContent = localTime(st.tz)); }
+  if (d.getSeconds() % 15 === 0) drawNext();
   if (sleep) sleepTick();
   $("clock").innerHTML = `${pad(d.getHours())}<i>:</i>${pad(d.getMinutes())}`;
   if (d.getSeconds() % 10 === 0 && S && S.now && !drag) drawProgress(S.now);
@@ -1886,6 +1971,67 @@ window.addEventListener("offline", offlineNote);
 window.addEventListener("online", () => { setNote(""); poll(); loadSchedule(); });
 if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
+/* Level strip under the art: left (low bands) and right (high bands) level over the last ~30 s,
+   newest on the right, as two dotted traces on a dB scale. Rests on NO CARRIER when stopped. */
+let lvlHist = [], lvlLast = 0;
+function drawLevel(t) {
+  const c = $("lvl");
+  if (!c || !c.clientWidth) return;
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  if (t - lvlLast > 100) { lvlLast = t; lvlHist.push([avg(visLevels.slice(0, 12)), avg(visLevels.slice(12))]); if (lvlHist.length > 300) lvlHist.shift(); }
+  const fit = fitCanvas(c);
+  if (!fit) return;
+  const [g, w, h] = fit;
+  if (!(S && S.playing) && Math.max(...visLevels) < .02) return drawIdle(g, w, h);
+  g.fillStyle = "#241907";
+  [.25, .5, .75].forEach(f => { for (let x = 0; x < w; x += 6) g.fillRect(x, Math.round(h * f), 2, 1); });
+  g.font = "13px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.textBaseline = "alphabetic";
+  ["0 dB", "-12", "-24"].forEach((l, i) => g.fillText(l, 2, h * (.25 + i * .25) - 3));
+  const n = Math.min(lvlHist.length, Math.floor(w / 3));
+  for (let i = 0; i < n; i++) {
+    const [l, r] = lvlHist[lvlHist.length - n + i], x = w - (n - i) * 3;
+    g.fillStyle = "#ffb02e"; g.fillRect(x, (1 - Math.min(1, l * 1.2)) * (h - 10) + 2, 2, 2);
+    g.fillStyle = "#c4841f"; g.fillRect(x, (1 - Math.min(1, r * 1.6)) * (h - 10) + 6, 2, 2);
+  }
+}
+
+/* Up next, under the description: for NTS, the next shows on a small timeline with a needle at
+   the current time and +CAL on each; for stations that publish what's playing, the tracks heard
+   recently (kept on this device). Hidden for stations with neither. */
+const trackLog = store.get("piRadioTracks", {});
+function logTrack(id, title) {
+  const l = trackLog[id] = trackLog[id] || [];
+  if (l[0] && l[0].title === title) return;
+  l.unshift({ at: new Date().toISOString(), title });
+  if (l.length > 6) l.length = 6;
+  store.set("piRadioTracks", trackLog);
+}
+function drawNext() {
+  const box = $("next"), id = selectedId(), st = STN[id] || {};
+  if (!box) return;
+  if (st.kind === "nts_live" && (schedule[st.name] || []).length) {
+    const shows = schedule[st.name].slice(0, 4), t0 = new Date(shows[0].start).getTime();
+    const last = shows[shows.length - 1], t1 = new Date(last.end || last.start).getTime(), span = Math.max(1, t1 - t0);
+    const pct = t => Math.max(0, Math.min(100, (t - t0) / span * 100));
+    let ruler = "";
+    for (let hr = Math.ceil(t0 / 3600e3) * 3600e3; hr <= t1; hr += 3600e3) ruler += `<span style="left:${pct(hr)}%">${hhmm(new Date(hr).toISOString())}</span>`;
+    const blocks = shows.map((s, i) => {
+      const a = new Date(s.start).getTime(), b = s.end ? new Date(s.end).getTime() : a + 3600e3;
+      const sub = i === 0 ? `NOW${s.end ? ` · ${Math.max(0, Math.round((b - Date.now()) / 60000))} MIN LEFT` : ""}`
+                          : `${hhmm(s.start)}<button class="cal" data-cal="${esc(st.name)}|${i}" aria-label="Add ${esc(s.title)} to your calendar">+CAL</button>`;
+      return `<div class="blk${i === 0 ? " now" : ""}" style="left:${pct(a)}%;width:calc(${pct(b) - pct(a)}% - 4px)"><b>${esc(s.title.toUpperCase())}</b><small>${sub}</small></div>`;
+    }).join("");
+    box.innerHTML = `<div class="label">Coming up on ${esc(st.name)}</div><div class="ruler">${ruler}</div>` +
+      `<div class="blocks">${blocks}<div class="nowline" style="left:${pct(Date.now())}%"></div></div>`;
+    box.querySelectorAll("[data-cal]").forEach(b => b.onclick = () => { const [ch, i] = b.dataset.cal.split("|"); downloadReminder(ch, schedule[ch][+i]); });
+    box.hidden = false;
+  } else if (st.kind === "radio" && (trackLog[id] || []).length) {
+    box.innerHTML = `<div class="label">Recently on ${esc(st.name)}</div>` +
+      trackLog[id].map(x => `<div class="trk"><span>${hhmm(x.at)}</span><span>${esc(x.title.toUpperCase())}</span></div>`).join("");
+    box.hidden = false;
+  } else box.hidden = true;
+}
+
 /* Volume: update the bar live, send after a short pause. */
 let volTimer;
 $("vol").addEventListener("input", e => {
@@ -2131,6 +2277,7 @@ async function visLoop(t) {
   if (t - fallLast > 90) { fallLast = t; fall.unshift(visLevels.slice()); if (fall.length > 60) fall.length = 60; }
   drawVisScreen($("vis"), 0, t);
   drawVisScreen($("fall"), 1, t);
+  drawLevel(t);
   drawMap(t);
   requestAnimationFrame(visLoop);
 }

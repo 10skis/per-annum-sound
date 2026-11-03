@@ -6,13 +6,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.25: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.26: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.26 | 2026-11-02 | Header readouts (scrolling when long), level strip under the art, up-next timeline and recent tracks | [link](updates/2026-11-02-readouts-level-upnext.md) |
 | v0.25 | 2026-11-02 | Map scrolls sideways unzoomed; mockups of four signal-panel fills | [link](updates/2026-11-02-map-scroll-fill-mockups.md) |
 | v0.24 | 2026-11-02 | Pan the zoomed map by drag or two-finger scroll, balanced two-column station board | [link](updates/2026-11-02-map-pan-columns.md) |
 | v0.23 | 2026-11-02 | Map click-to-zoom, softer city dots | [link](updates/2026-11-02-map-zoom.md) |
