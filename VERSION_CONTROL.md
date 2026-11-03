@@ -3,6 +3,7 @@
 **Status:** Active
 **Started:** 2026-11-02
 **Location:** This folder. Scope in [SCOPE.md](SCOPE.md), code in [app/](app/README.md).
+**Start here:** [HANDOFF.md](HANDOFF.md) has the design rules, traps and how to build and test.
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
