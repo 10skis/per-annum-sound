@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No-Art Options Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600&family=VT323&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+  /* Mockup only: five ways to show a station that has no artwork. Not part of the app. */
+  :root { --bg: #0b0906; --amber: #ffb02e; --mid: #d08c26; --dim: #9c6c22; --line: #4a3616; }
+  body { margin: 0; background: var(--bg); color: var(--mid); font-family: "VT323", monospace; padding: 24px;
+         background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px); background-size: 7px 7px; }
+  .note { font: 600 13px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; margin-bottom: 18px; }
+  .opt { display: grid; grid-template-columns: 260px repeat(3, 236px); gap: 20px; align-items: center; margin-bottom: 26px; }
+  .opt h2 { margin: 0; font: 400 28px/1 "VT323", monospace; color: var(--amber); }
+  .opt p { margin: 6px 0 0; font: 13px/1.45 "IBM Plex Mono", monospace; color: var(--dim); }
+  .screen { position: relative; width: 236px; height: 236px; border: 1px solid var(--line); background: #070503; padding: 8px; box-sizing: border-box;
+            clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
+  .screen canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 2px #ffb02e55); }
+  .tab { position: absolute; top: 0; right: 0; background: var(--dim); color: var(--bg); padding: 1px 8px; font: 600 11px "Saira Condensed", sans-serif; letter-spacing: .16em; }
+</style>
+</head>
+<body>
+<div class="note">Mockup · art for stations with no artwork · five options · not built</div>
+<div id="rows"></div>
+<script src="../app/static/worldmap.js"></script>
+<script>
+const PICKS = [{"name": "Christmas Vinyl HD", "num": 41, "geo": [90.0, 0.0], "city": "North Pole", "code": "NPL", "group": "Genre Radio"}, {"name": "Give the Drummer Radio", "num": 50, "geo": [40.73, -74.06], "city": "New Jersey", "code": "NYC", "group": "Deep Cuts"}, {"name": "Bangkok Community Radio", "num": 45, "geo": [13.76, 100.5], "city": "Bangkok", "code": "BKK", "group": "Deep Cuts"}];
+const GL = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"];
+const N = 128, OUT = 440, AMB = "#ffb02e";
+const seedOf = s => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
+const rng = seed => () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507); seed = Math.imul(seed ^ (seed >>> 13), 3266489909); return ((seed ^= seed >>> 16) >>> 0) / 4294967296; };
+const canvas = () => { const c = document.createElement("canvas"); c.width = c.height = OUT; return c; };
+// Text drawn at the screen's 128px resolution, read back as lit pixels
+function textPixels(lines, size, font = "VT323", y0 = null, spacing = 1) {
+  const t = document.createElement("canvas"); t.width = t.height = N;
+  const g = t.getContext("2d", { willReadFrequently: true });
+  g.font = `${size}px ${font}, monospace`; g.textBaseline = "middle"; g.fillStyle = "#fff";
+  const lh = size * .92, top = y0 ?? (N / 2 - lines.length * lh / 2);
+  lines.forEach((l, i) => {
+    const w = [...l].reduce((a, ch) => a + g.measureText(ch).width + spacing, -spacing);
+    let x = N / 2 - w / 2;
+    for (const ch of l) { g.fillText(ch, x, top + lh * (i + .5)); x += g.measureText(ch).width + spacing; }
+  });
+  return g.getImageData(0, 0, N, N).data;
+}
+function halftone(gray, cells = 40, c = canvas()) {
+  const g = c.getContext("2d"), pitch = N / cells, k = OUT / N, a = Math.PI / 4, ca = Math.cos(a), sa = Math.sin(a), span = cells;
+  g.fillStyle = AMB;
+  for (let j = -span; j < span; j++) for (let i = -span; i < span; i++) {
+    const u = (i + .5) * pitch, v = (j + .5) * pitch, x = N / 2 + u * ca - v * sa, y = N / 2 + u * sa + v * ca;
+    if (x < 0 || y < 0 || x >= N || y >= N) continue;
+    const b = gray[Math.floor(y) * N + Math.floor(x)] / 255, r = pitch / 2 * Math.sqrt(b) * .95 * k;
+    if (r > .5) { g.beginPath(); g.arc(x * k, y * k, r, 0, Math.PI * 2); g.fill(); }
+  }
+  return c;
+}
+
+// 1. LED sign: the station's initials lit on a full matrix of unlit LEDs, name along the bottom
+function ledSign(p) {
+  const c = canvas(), g = c.getContext("2d"), k = OUT / N, init = p.name.split(/\s+/).filter(w => /^[A-Z0-9]/i.test(w)).map(w => w[0]).join("").slice(0, 3).toUpperCase();
+  const big = textPixels([init], 62, "VT323", 50, 3), small = textPixels([p.name.toUpperCase()], 12, "VT323", 108, 1);
+  const pitch = 4;
+  for (let y = 0; y < N; y += pitch) for (let x = 0; x < N; x += pitch) {
+    let on = false, onS = false;
+    for (let dy = 0; dy < pitch && !on; dy++) for (let dx = 0; dx < pitch; dx++) { if (big[((y + dy) * N + x + dx) * 4 + 3] > 120) { on = true; break; } }
+    if (!on) onS = small[((y + 2) * N + x + 2) * 4 + 3] > 100 || small[((y + 1) * N + x + 1) * 4 + 3] > 100;
+    g.fillStyle = on ? AMB : onS ? "#d08c26" : "#2a1d0a";
+    g.beginPath(); g.arc((x + pitch / 2) * k, (y + pitch / 2) * k, pitch * k * .38, 0, Math.PI * 2); g.fill();
+  }
+  return c;
+}
+
+// 2. Location plate: a dot-matrix crop of the map around the station, a marker, coordinates
+function locationPlate(p, t) {
+  const c = canvas(), g = c.getContext("2d"), W = window.WORLD;
+  const land = new Uint8Array(W.w * W.h);
+  W.rows.split("/").forEach((row, y) => { let x = 0, v = 0; for (const n of row.split(",")) { const len = parseInt(n, 36); if (v) land.fill(1, y * W.w + x, y * W.w + x + len); x += len; v ^= 1; } });
+  const isLand = (lat, lon) => { lon = ((lon + 540) % 360) - 180; const x = Math.floor((lon + 180) * W.res), y = Math.floor((W.latTop - lat) * W.res); return x >= 0 && x < W.w && y >= 0 && y < W.h && land[y * W.w + x]; };
+  const [la, lo] = p.geo, clat = Math.min(la, 70), span = 60, pitch = 11;
+  for (let y = pitch / 2; y < OUT; y += pitch) for (let x = pitch / 2; x < OUT; x += pitch) {
+    const lon = lo + (x / OUT - .5) * span, lat = clat - (y / OUT - .5) * span * .8;
+    g.fillStyle = isLand(lat, lon) ? "#a8741f" : "#241907";
+    g.fillRect(x - 3, y - 3, 6, 6);
+  }
+  const mx = OUT / 2, my = OUT / 2 - (la - clat) / (span * .8) * OUT;
+  g.strokeStyle = "#ffe23d"; g.lineWidth = 2; g.strokeRect(mx - 22, Math.max(14, my) - 22, 44, 44);
+  g.fillStyle = "#ffe23d"; g.shadowColor = "#ffd400"; g.shadowBlur = 14; g.fillRect(mx - 8, Math.max(14, my) - 8, 16, 16); g.shadowBlur = 0;
+  g.fillStyle = "#070503d0"; g.fillRect(0, OUT - 62, OUT, 62);
+  g.fillStyle = AMB; g.font = "34px 'VT323', monospace"; g.fillText(`${p.code} · ${p.city.toUpperCase()}`, 16, OUT - 30);
+  g.fillStyle = "#9c6c22"; g.font = "24px 'VT323', monospace";
+  g.fillText(`${Math.abs(la).toFixed(2)}${la >= 0 ? "N" : "S"} ${Math.abs(lo).toFixed(2)}${lo >= 0 ? "E" : "W"}`, 16, OUT - 8);
+  return c;
+}
+
+// 3. Sigil: a record-like ring of dotted grooves, each arc switched on or off by the name
+function sigil(p) {
+  const c = canvas(), g = c.getContext("2d"), r = rng(seedOf(p.name)), cx = OUT / 2, cy = OUT / 2;
+  for (let ring = 0; ring < 11; ring++) {
+    const rad = 60 + ring * 15, segs = 6 + Math.floor(r() * 8), dots = Math.floor(rad * Math.PI * 2 / 9);
+    const pattern = Array.from({ length: segs }, () => r() > .38), rot = r() * Math.PI * 2;
+    for (let d = 0; d < dots; d++) {
+      const a = rot + d / dots * Math.PI * 2, on = pattern[Math.floor(d / dots * segs)];
+      g.fillStyle = on ? (ring % 4 === 0 ? "#ffd27a" : AMB) : "#2a1d0a";
+      g.beginPath(); g.arc(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, on ? 3 : 2, 0, Math.PI * 2); g.fill();
+    }
+  }
+  g.fillStyle = AMB; g.font = "64px 'VT323', monospace"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(p.num).padStart(2, "0"), cx, cy - 4);
+  g.fillStyle = "#9c6c22"; g.font = "18px 'VT323', monospace"; g.fillText(p.code, cx, cy + 30);
+  return c;
+}
+
+// 4. Big glyph: the station's dial glyph, huge, as halftone
+function bigGlyph(p) {
+  const t = document.createElement("canvas"); t.width = t.height = N;
+  const g = t.getContext("2d", { willReadFrequently: true });
+  const grad = g.createRadialGradient(N * .3, N * .3, 4, N / 2, N / 2, N * .8); grad.addColorStop(0, "#333"); grad.addColorStop(1, "#000");
+  g.fillStyle = grad; g.fillRect(0, 0, N, N);
+  g.fillStyle = "#fff"; g.font = `104px "Hiragino Sans", "MS Gothic", "Apple Symbols", sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(GL[(p.num - 1) % GL.length], N / 2, N / 2 + 4);
+  const d = g.getImageData(0, 0, N, N).data, gray = new Float32Array(N * N);
+  for (let i = 0; i < N * N; i++) gray[i] = d[i * 4];
+  const c = halftone(gray, 46), o = c.getContext("2d");
+  o.fillStyle = "#070503d0"; o.fillRect(OUT - 92, 10, 82, 40); o.fillStyle = AMB; o.font = "38px 'VT323', monospace"; o.textAlign = "right"; o.fillText(String(p.num).padStart(2, "0"), OUT - 18, 42);
+  return c;
+}
+
+// 5. Sound fingerprint: stacked ridge lines, seeded by the name, like a frozen waterfall
+function fingerprint(p) {
+  const c = canvas(), g = c.getContext("2d"), r = rng(seedOf(p.name)), rows = 22, gap = (OUT - 120) / rows;
+  const peaks = Array.from({ length: 4 }, () => [.2 + r() * .6, .04 + r() * .08, .4 + r() * .6]);
+  for (let row = 0; row < rows; row++) {
+    const base = 70 + row * gap, pts = [];
+    for (let x = 24; x <= OUT - 24; x += 5) {
+      const f = (x - 24) / (OUT - 48); let v = 0;
+      for (const [pc, w, h] of peaks) v += h * Math.exp(-((f - pc - Math.sin(row * .7 + pc * 9) * .03) ** 2) / (2 * w * w));
+      v += (r() - .5) * .08;
+      pts.push([x, base - v * gap * 3.2 * Math.sin(Math.PI * f)]);
+    }
+    g.fillStyle = "#070503"; g.beginPath(); g.moveTo(24, OUT); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(OUT - 24, OUT); g.fill();
+    g.fillStyle = row > rows - 4 ? "#ffd27a" : AMB;
+    pts.forEach(([x, y]) => g.fillRect(x, y, 3, 3));
+  }
+  g.fillStyle = "#070503"; g.fillRect(0, OUT - 48, OUT, 48);
+  g.fillStyle = AMB; g.font = "30px 'VT323', monospace"; g.textAlign = "center"; g.fillText(p.name.toUpperCase(), OUT / 2, OUT - 14);
+  return c;
+}
+
+const OPTIONS = [
+  ["1 · LED sign", "The initials lit up on a full matrix of unlit LEDs, like a destination board on a bus, with the name along the bottom in small dots. Clean and readable at any size.", ledSign],
+  ["2 · Location plate", "A dot-matrix crop of the map around the station with its marker and coordinates. Ties the art to the nav map and the header readouts.", locationPlate],
+  ["3 · Sigil", "A record-like ring of dotted grooves, each arc switched on or off by the station's name, so every station gets its own mark. Its number sits in the middle.", sigil],
+  ["4 · Big glyph", "The station's glyph from the dial, huge, in the same halftone as real cover art, with its number in the corner.", bigGlyph],
+  ["5 · Sound fingerprint", "Stacked ridge lines seeded by the name, like a frozen waterfall, with the name across the bottom.", fingerprint],
+];
+document.fonts.load("20px VT323").then(() => document.fonts.ready).then(() => {
+  const rows = document.getElementById("rows");
+  for (const [title, text, fn] of OPTIONS) {
+    const row = document.createElement("div"); row.className = "opt";
+    row.innerHTML = `<div><h2>${title}</h2><p>${text}</p></div>`;
+    for (const p of PICKS) {
+      const s = document.createElement("div"); s.className = "screen";
+      s.innerHTML = `<span class="tab">01 ART</span>`; s.appendChild(fn(p)); row.appendChild(s);
+    }
+    rows.appendChild(row);
+  }
+});
+</script>
+</body>
+</html>
