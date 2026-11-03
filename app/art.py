@@ -106,6 +106,28 @@ def dither(url: str, style: str = "halftone", size: int = 512) -> Optional[bytes
     return png
 
 
+def _line_width(s: str, font, sp: float) -> float:
+    return sum(font.getlength(ch) for ch in s) + sp * (len(s) - 1)
+
+
+def _fit_name(name: str, max_w: float = 112):
+    """Word-wrap the name at the largest size (24 down to 12 px) where every line fits and there
+    are at most three, with a little letter spacing. Mirrors the page's fitName()."""
+    words = name.upper().split()
+    for size in range(24, 11, -2):
+        font = ImageFont.load_default(size=size)
+        sp = max(1, size * .09)
+        lines = []
+        for wd in words:
+            if lines and _line_width(lines[-1] + " " + wd, font, sp) <= max_w:
+                lines[-1] += " " + wd
+            else:
+                lines.append(wd)
+        if len(lines) <= 3 and all(_line_width(l, font, sp) <= max_w for l in lines):
+            break
+    return font, sp, lines
+
+
 def placeholder(name: str, size: int = 512) -> bytes:
     """Art for stations with none: ripples from two or three points meeting, seeded by the name,
     as a fine halftone, with the name cut out of the dots as empty space (dense field behind it
@@ -114,9 +136,8 @@ def placeholder(name: str, size: int = 512) -> bytes:
     yy, xx = np.mgrid[0:N, 0:N]
     srcs = [(rng.random() * N, rng.random() * N, 4 + rng.random() * 7) for _ in range(2 + int(rng.random() * 2))]
     f = .5 + .5 * sum(np.sin(np.hypot(xx - sx, yy - sy) / wl) for sx, sy, wl in srcs) / len(srcs)
-    words = name.upper().split()
-    lines = words if len(words) <= 3 else [" ".join(words[:2]), " ".join(words[2:])]
-    lh = 24
+    font, sp, lines = _fit_name(name)
+    lh = round(font.size * .9)
     top = N / 2 - len(lines) * lh / 2
     bot = top + len(lines) * lh
     # Under the name the field is kept dense, fading back to the open pattern over ~14px
@@ -124,13 +145,14 @@ def placeholder(name: str, size: int = 512) -> bytes:
     wgt = np.clip(1 - dist / 14, 0, 1)
     gray = (170 + f * 85) * wgt + f ** 1.4 * 235 * (1 - wgt)
     mask = halftone(Image.fromarray(gray.astype("uint8"), "L"), size, cells=64)
-    # Type the name at 128px, thickened a little, then erase those pixels
+    # Set the name letter by letter at 128px, thickened a little, then erase those pixels
     t = Image.new("L", (N, N), 0)
     td = ImageDraw.Draw(t)
-    font = ImageFont.load_default(size=22)
     for i, line in enumerate(lines):
-        w = td.textlength(line, font=font)
-        td.text(((N - w) / 2, top + lh * i + 1), line, fill=255, font=font, stroke_width=1, stroke_fill=255)
+        x = (N - _line_width(line, font, sp)) / 2
+        for ch in line:
+            td.text((x, top + lh * i + 1), ch, fill=255, font=font, stroke_width=1, stroke_fill=255)
+            x += font.getlength(ch) + sp
     k = size / N
     d = ImageDraw.Draw(mask)
     px = t.load()

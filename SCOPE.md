@@ -122,7 +122,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Keyboard | Space play/stop, left/right tune, 1-6 presets, shift+1-6 save, S sleep, M map range, ? help panel |
 | Nav map | Dot-matrix world map (Natural Earth land data) with a marker per city; WORLD and EUROPE ranges; the world view drifts east until hovered; tap a city to list its stations |
 | Station board | Collapsible groups (NTS Live with the schedule, Infinite Mixtapes, Worldwide FM, Genre Radio, Deep Cuts); recently played as a ticker along the bottom |
-| Visualizers | Two stacked screens, each cycling on click through Spectrum, Waterfall, Scope, VU, Polar and Mirror; NO CARRIER on a flat line when stopped |
+| Visualizers | Two stacked screens, each cycling on click through 11 displays (Spectrum, Waterfall, Scope, VU, Polar, Mirror, Ridges, Glyph Rain, Lissajous, Starfield, Tunnel); NO CARRIER on a flat line when stopped |
 | Track info | Now-playing from stations that publish it to browsers: KEXP (with DJ notes), Dublab, Kiosk, Cashmere, Refuge, Noods, and seven of the Deep Cuts |
 | Show reminders | +CAL on upcoming NTS shows downloads a calendar event with a 5-minute alert |
 | Offline | The no-server version keeps its shell cached and says NO SIGNAL when the connection drops |

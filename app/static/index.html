@@ -151,9 +151,13 @@
   .dial i {
     position: absolute; left: 50%; top: 50%; width: 10px; height: 12px; margin: -6px -5px;
     font: 12px/12px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace;
-    font-style: normal; text-align: center; color: #6e4c17; transition: color .15s;
+    font-style: normal; text-align: center; color: var(--amber-dim);
+    transition: transform .35s cubic-bezier(.3, .7, .3, 1), opacity .35s, color .15s;
   }
-  .dial i.lit { color: var(--amber); text-shadow: 0 0 6px var(--amber), 0 0 1px var(--amber); }
+  .dial::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed var(--line); pointer-events: none; }
+  .dial::after { content: ""; position: absolute; left: 50%; top: -6px; margin-left: -5px; pointer-events: none;
+                 border: 5px solid transparent; border-top: 7px solid var(--amber); }
+  .dial i.lit { color: var(--amber); font-size: 15px; text-shadow: 0 0 6px var(--amber), 0 0 1px var(--amber); }
   .dial i.near { color: var(--amber-dim); }
   .dial-read {
     position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
@@ -377,17 +381,27 @@
   .ghost { position: relative; isolation: isolate; }
   .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; text-shadow: none; z-index: -1; }
 
-  /* Tuning tape: one tick per station, a number every fifth, a fixed caret in the middle */
-  .tape { position: relative; height: 26px; width: 100%; overflow: hidden; cursor: ew-resize; touch-action: pan-y;
-          -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
-                  mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent); }
-  .tape::after { content: ""; position: absolute; left: 50%; top: 0; width: 0; height: 0; margin-left: -4px;
-                 border: 4px solid transparent; border-top: 5px solid var(--amber); }
-  .tape-run { position: absolute; left: 50%; top: 6px; display: flex; transition: transform .25s steps(4); }
-  .tape-run i { width: 10px; height: 16px; flex: none; border-left: 1px solid var(--line); margin-left: -5px; margin-right: 5px;
-                font: 11px/1 var(--dot); font-style: normal; color: var(--amber-dim); padding: 7px 0 0 2px; height: 16px; }
-  .tape-run i.maj { border-left-color: var(--amber-dim); }
-  .tape-run i.cur { border-left: 2px solid var(--amber); }
+  /* Tape tuner: a band that slides under a fixed needle, like an old car radio's frequency strip.
+     A glyph and tick per station, a number every fifth, and the groups marked underneath like
+     MW / FM bands, the current one lit. */
+  .tape { position: relative; height: 74px; width: 100%; overflow: hidden; cursor: ew-resize; touch-action: pan-y;
+          border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+                  mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); }
+  .tape::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px;
+                 background: var(--amber); box-shadow: 0 0 8px var(--amber); opacity: .85; }
+  .tape-run { position: absolute; left: 50%; top: 0; height: 100%; transition: transform .35s cubic-bezier(.3, .7, .3, 1); }
+  .tape-run .t { position: absolute; top: 0; width: 16px; margin-left: -8px; height: 100%; text-align: center; }
+  .tape-run .gl { display: block; margin-top: 6px; height: 15px; font: 13px/15px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace; color: var(--amber-dim); }
+  .tape-run .tk { display: block; margin: 3px auto 0; width: 1px; height: 11px; background: var(--line); }
+  .tape-run .maj .tk { height: 17px; background: var(--amber-dim); }
+  .tape-run .n { display: block; font: 12px/1 var(--dot); color: var(--amber-dim); margin-top: 1px; }
+  .tape-run .cur .gl { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+  .tape-run .cur .tk { background: var(--amber); width: 2px; }
+  .tape-run .seg { position: absolute; bottom: 3px; height: 13px; border-top: 2px solid var(--line); padding-left: 3px; overflow: hidden;
+                   white-space: nowrap; font: 600 10px/11px var(--cond); letter-spacing: .14em; color: var(--amber-dim); text-transform: uppercase; }
+  .tape-run .seg.on { border-top-color: var(--amber); color: var(--amber); }
+  .tuner-tape { height: 64px; }
 
   /* Help */
   .help-btn {
@@ -501,7 +515,7 @@
         </div>
         <button class="key cham" id="dialNext" aria-label="Next station">▶</button>
       </div>
-      <div class="tape" aria-hidden="true"><div class="tape-run"></div></div>
+      <div class="tape" title="Tap or drag to tune"><div class="tape-run" aria-hidden="true"></div></div>
       <span class="label">Turn · Press</span>
     </div>
     <div class="tuner">
@@ -509,7 +523,7 @@
       <button class="tuner-read cham" id="tuneRead" aria-label="Play or stop"><b class="glow ghost" id="tuneNum" data-ghost="88">--</b><span id="tuneOf">/--</span></button>
       <button class="key cham" id="tuneNext" aria-label="Next station">▶</button>
     </div>
-    <div class="tape tuner-tape" aria-hidden="true"><div class="tape-run"></div></div>
+    <div class="tape tuner-tape" title="Tap or drag to tune"><div class="tape-run" aria-hidden="true"></div></div>
     <span class="label tuner-hint">Swipe art to tune</span>
   </div>
 
@@ -815,15 +829,40 @@ async function ditherArt(url, name) {
    empty space; behind the name the field is kept dense enough for the letters to read.
    Mirrors art.placeholder(). */
 const PH_CELLS = 64;
+/* Fit a station name to the art: word-wrap at the largest size (28 down to 14 px at the screen's
+   128 px) where every line fits and there are at most three, with a little letter spacing so the
+   knocked-out letters don't run together. */
+function fitName(name, maxW = 112) {
+  const m = document.createElement("canvas").getContext("2d");
+  const words = name.toUpperCase().split(/\s+/).filter(Boolean);
+  let fit = null;
+  for (let size = 28; size >= 14; size -= 2) {
+    m.font = `${size}px VT323, monospace`;
+    const sp = Math.max(1, size * .09);
+    const width = s => [...s].reduce((a, ch) => a + m.measureText(ch).width + sp, -sp);
+    const lines = [];
+    for (const wd of words) {
+      const last = lines[lines.length - 1];
+      if (last && width(last + " " + wd) <= maxW) lines[lines.length - 1] = last + " " + wd;
+      else lines.push(wd);
+    }
+    fit = { size, sp, lines, width };
+    if (lines.length <= 3 && lines.every(l => width(l) <= maxW)) break;
+  }
+  return fit;
+}
+/* Art for stations with none: ripples from two or three points meeting, seeded by the station's
+   name so each keeps its own pattern, as a fine halftone. The name is cut out of the dots as
+   empty space; behind the name the field is kept dense enough for the letters to read.
+   Mirrors art.placeholder(). */
 function placeholderArt(name) {
   const N = ART_N, gray = new Float32Array(N * N);
   let seed = 2166136261;
   for (const ch of name) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
   const rnd = () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507); seed = Math.imul(seed ^ (seed >>> 13), 3266489909); return ((seed ^= seed >>> 16) >>> 0) / 4294967296; };
   const srcs = Array.from({ length: 2 + Math.floor(rnd() * 2) }, () => [rnd() * N, rnd() * N, 4 + rnd() * 7]);
-  const words = name.toUpperCase().split(" ");
-  const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
-  const lh = 24, top = N / 2 - (lines.length * lh) / 2, bot = top + lines.length * lh;
+  const fit = fitName(name), lines = fit.lines, lh = Math.round(fit.size * .9);
+  const top = N / 2 - (lines.length * lh) / 2, bot = top + lines.length * lh;
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     let v = 0;
     for (const [sx, sy, wl] of srcs) v += Math.sin(Math.hypot(x - sx, y - sy) / wl);
@@ -833,13 +872,17 @@ function placeholderArt(name) {
     gray[y * N + x] = (170 + f * 85) * wgt + Math.pow(f, 1.4) * 235 * (1 - wgt);
   }
   const out = halftoneCanvas(gray, PH_CELLS), o = out.getContext("2d"), k = ART_OUT / N;
-  // Type the name at the screen's own resolution, thickened a little, then erase those pixels
+  // Set the name letter by letter at the screen's own resolution, thickened a little, then erase those pixels
   const t = document.createElement("canvas");
   t.width = t.height = N;
   const tg = t.getContext("2d", { willReadFrequently: true });
-  tg.font = "28px VT323, monospace"; tg.textAlign = "center"; tg.textBaseline = "middle";
-  tg.fillStyle = tg.strokeStyle = "#fff"; tg.lineWidth = 1.2;
-  lines.forEach((l, i) => { tg.fillText(l, N / 2, top + lh * (i + .5)); tg.strokeText(l, N / 2, top + lh * (i + .5)); });
+  tg.font = `${fit.size}px VT323, monospace`; tg.textAlign = "left"; tg.textBaseline = "middle";
+  tg.fillStyle = tg.strokeStyle = "#fff"; tg.lineWidth = fit.size / 24;
+  lines.forEach((l, i) => {
+    let x = N / 2 - fit.width(l) / 2;
+    const y = top + lh * (i + .5);
+    for (const ch of l) { tg.fillText(ch, x, y); tg.strokeText(ch, x, y); x += tg.measureText(ch).width + fit.sp; }
+  });
   const px = tg.getImageData(0, 0, N, N).data;
   o.globalCompositeOperation = "destination-out";
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++)
@@ -1086,10 +1129,7 @@ function render(s) {
   $("dialNum").textContent = $("tuneNum").textContent = idx >= 0 ? pad(idx + 1) : "--";
   if (idx >= 0) drawTapes(idx);
   if (!mapSel) drawMapFoot();
-  [...$("dial").querySelectorAll("i")].forEach((d, i) => {
-    const dist = Math.min(Math.abs(i - idx), order.length - Math.abs(i - idx));
-    d.className = i === idx ? "lit" : dist === 1 ? "near" : "";
-  });
+  if (idx >= 0) drawRing(idx);
 
   if (!volDragging) {
     $("vol").disabled = s.volume === null;
@@ -1147,12 +1187,9 @@ async function build() {
   $("dialOf").textContent = $("tuneOf").textContent = "/" + pad(order.length);
   $("listCount").textContent = pad(order.length);
 
-  // One square per station around the dial, like an LED ring.
-  const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"];
+  // One glyph per station around the dial; drawRing() turns the ring to the current one.
   order.forEach((_, i) => {
     const d = document.createElement("i");
-    const a = (i / order.length) * 360 - 90;
-    d.style.transform = `rotate(${a}deg) translateX(var(--ring, min(72px, 21vw))) rotate(${-a}deg)`;
     d.textContent = DIAL_GLYPHS[i % DIAL_GLYPHS.length];
     $("dial").appendChild(d);
   });
@@ -1242,10 +1279,8 @@ function currentIndex() {
 }
 function previewDial(idx) {
   $("dialNum").textContent = $("tuneNum").textContent = pad(idx + 1);
-  [...$("dial").querySelectorAll("i")].forEach((d, i) => {
-    const dist = Math.min(Math.abs(i - idx), order.length - Math.abs(i - idx));
-    d.className = i === idx ? "lit" : dist === 1 ? "near" : "";
-  });
+  drawRing(idx);
+  drawTapes(idx);
   setLine($("line1"), (NAMES[order[idx]] || order[idx]).toUpperCase());
   setLine($("line2"), "RELEASE TO TUNE");
 }
@@ -1417,11 +1452,25 @@ document.addEventListener("keydown", e => {
   else if (e.key === "Escape") toggleHelp(false);
 });
 
-/* Tuning tape under the dial and the tuner: slides so the current station sits at the caret. */
-const TAPE_STEP = 10;
+/* Tape tuner under the dial and the phone tuner: slides so the current station sits at the needle. */
+const TAPE_STEP = 16;
+const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"];
+let tapeSegs = [];
 function buildTapes() {
+  // Group bands: where each group starts and ends in dial order
+  tapeSegs = [];
+  order.forEach((id, i) => {
+    const grp = (STN[id] || {}).group || "";
+    if (!tapeSegs.length || tapeSegs[tapeSegs.length - 1].name !== grp) tapeSegs.push({ name: grp, from: i, to: i + 1 });
+    else tapeSegs[tapeSegs.length - 1].to = i + 1;
+  });
   document.querySelectorAll(".tape-run").forEach(run => {
-    run.innerHTML = order.map((_, i) => (i + 1) % 5 === 0 || i === 0 ? `<i class="maj">${i + 1}</i>` : "<i></i>").join("");
+    run.innerHTML = order.map((_, i) => {
+      const maj = (i + 1) % 5 === 0 || i === 0;
+      return `<div class="t${maj ? " maj" : ""}" style="left:${i * TAPE_STEP}px"><span class="gl">${DIAL_GLYPHS[i % DIAL_GLYPHS.length]}</span>` +
+        `<span class="tk"></span>${maj ? `<span class="n">${pad(i + 1)}</span>` : ""}</div>`;
+    }).join("") + tapeSegs.map(g =>
+      `<div class="seg" style="left:${g.from * TAPE_STEP - 6}px;width:${(g.to - g.from) * TAPE_STEP - 4}px">${esc(g.name)}</div>`).join("");
   });
 }
 var tapeDrag = null;  // var: render() checks it
@@ -1455,9 +1504,27 @@ document.querySelectorAll(".tape").forEach(tape => {
   tape.addEventListener("pointercancel", () => { tapeDrag = null; if (S) render(S); });
 });
 function drawTapes(idx) {
+  const grp = tapeSegs.findIndex(g => idx >= g.from && idx < g.to);
   document.querySelectorAll(".tape-run").forEach(run => {
     run.style.transform = `translateX(${-idx * TAPE_STEP}px)`;
-    [...run.children].forEach((t, i) => t.classList.toggle("cur", i === idx));
+    run.querySelectorAll(".t").forEach((t, i) => t.classList.toggle("cur", i === idx));
+    run.querySelectorAll(".seg").forEach((s, i) => s.classList.toggle("on", i === grp));
+  });
+}
+
+/* Rotating-window dial: the glyph ring turns so the current station sits under the caret at the
+   top; only the six either side show, fading with distance, so it reads the same at any count. */
+const RING_STEP = 21, RING_SHOW = 6;
+function drawRing(idx) {
+  const n = order.length;
+  [...$("dial").querySelectorAll("i")].forEach((d, i) => {
+    let off = i - idx;
+    if (off > n / 2) off -= n;
+    if (off < -n / 2) off += n;  // the nearest way round
+    const a = off * RING_STEP;
+    d.style.transform = `rotate(${a}deg) translateY(calc(-1 * var(--ring, 72px))) rotate(${-a}deg)`;
+    d.style.opacity = Math.abs(off) > RING_SHOW ? 0 : 1 - Math.abs(off) / (RING_SHOW + 1) * .85;
+    d.className = off === 0 ? "lit" : "";
   });
 }
 
@@ -1739,7 +1806,7 @@ function simLevels(t) {
 }
 /* Two visualizer screens; clicking either steps it to its next display. Stopped, they rest on a flat
    line with NO CARRIER. Levels are MPD's when it's there, otherwise the labelled simulation. */
-const VIS_MODES = ["Spectrum", "Waterfall", "Scope", "VU", "Polar", "Mirror"];
+const VIS_MODES = ["Spectrum", "Waterfall", "Scope", "VU", "Polar", "Mirror", "Ridges", "Glyph Rain", "Lissajous", "Starfield", "Tunnel"];
 let visMode = store.get("piRadioVisModes", [0, 1]), peaks = new Array(BANDS).fill(0), vu = [0, 0];
 const TIERS = ["#1c1407", "#3d2a0c", "#7a5419", "#c4841f", "#ffb02e"];
 const tier = v => TIERS[v < .12 ? 0 : v < .35 ? 1 : v < .6 ? 2 : v < .85 ? 3 : 4];
@@ -1854,13 +1921,89 @@ function drawMirror(g, w, h) {
     }
   }
 }
-const VIS_DRAW = { Spectrum: drawBars, Waterfall: drawWaterfall, Scope: drawScope, VU: drawVU, Polar: drawPolar, Mirror: drawMirror };
+/* Five more displays. Ridges: the recent history as stacked lines, front ones hiding those behind.
+   Glyph Rain: the dial's glyphs falling, faster where that part of the spectrum is loud. Lissajous:
+   low against high as a looping figure. Starfield: dots streaming out, faster with the level.
+   Tunnel: nested squares pulsing outward on the bass. The moving ones keep state per screen. */
+const visState = [{}, {}];
+const avgOf = a => a.reduce((x, y) => x + y, 0) / (a.length || 1);
+function tickState(st, t) { const dt = Math.min(100, t - (st.t || t)) / 1000; st.t = t; return dt; }
+function drawRidges(g, w, h) {
+  const rows = Math.min(14, fall.length), gap = (h - 8) / 15;
+  for (let r = rows - 1; r >= 0; r--) {  // oldest at the back, newest in front at the bottom
+    const lv = fall[r], base = h - 4 - r * gap, pts = [];
+    for (let x = 0; x <= w; x += 3) {
+      const f = x / w * (BANDS - 1), i0 = Math.floor(f), v = lv[i0] + ((lv[i0 + 1] ?? lv[i0]) - lv[i0]) * (f - i0);
+      pts.push([x, base - v * Math.pow(Math.sin(Math.PI * x / w), 1.5) * gap * 3.4]);
+    }
+    g.fillStyle = "#070503";
+    g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(w, h); g.closePath(); g.fill();
+    g.fillStyle = tier(1 - r / rows * .75);
+    pts.forEach(([x, y]) => g.fillRect(x, y, 2, 2));
+  }
+}
+function drawRain(g, w, h, t, slot) {
+  const st = visState[slot], dt = tickState(st, t), cw = 12, rh = 13, cols = Math.floor(w / cw), rows = Math.ceil(h / rh);
+  if (!st.rain || st.rain.length !== cols) st.rain = Array.from({ length: cols }, () => ({ y: Math.random() * rows }));
+  g.font = `${rh - 1}px "Hiragino Sans", "MS Gothic", "Apple Symbols", monospace`; g.textAlign = "center"; g.textBaseline = "top";
+  st.rain.forEach((d, i) => {
+    d.y += dt * (2 + (visLevels[Math.floor(i / cols * BANDS)] || 0) * 24);
+    if (d.y - 10 > rows) d.y = -Math.random() * 8;
+    const head = Math.floor(d.y);
+    for (let k = 0; k < 10; k++) {
+      const row = head - k;
+      if (row < 0 || row >= rows) continue;
+      g.fillStyle = k === 0 ? "#ffe3b0" : tier(1 - k / 10);
+      g.fillText(DIAL_GLYPHS[(i * 7 + row * 13 + (k === 0 ? Math.floor(t / 300) : 0)) % DIAL_GLYPHS.length], i * cw + cw / 2, row * rh);
+    }
+  });
+}
+function drawLissajous(g, w, h, t) {
+  const cx = w / 2, cy = h / 2, low = avgOf(visLevels.slice(0, 8)), high = avgOf(visLevels.slice(16));
+  const ax = (w / 2 - 8) * (.25 + low * .75), ay = (h / 2 - 6) * (.25 + high * .75);
+  const ratio = [2, 4, 5, 7][Math.floor((Math.sin(t / 9000) + 1) * 1.999)];  // shape changes slowly; never 3:3 (a plain ellipse)
+  g.fillStyle = "#241907";
+  for (let x = 0; x < w; x += 6) g.fillRect(x, Math.round(cy), 2, 1);
+  for (let y = 0; y < h; y += 6) g.fillRect(Math.round(cx), y, 1, 2);
+  for (let i = 0; i < 260; i++) {
+    const th = i / 260 * Math.PI * 2;
+    g.fillStyle = i % 3 ? "#c4841f" : "#ffb02e";
+    g.fillRect(Math.round(cx + Math.sin(3 * th + t / 1300) * ax), Math.round(cy + Math.sin(ratio * th) * ay), 2, 2);
+  }
+}
+function drawStars(g, w, h, t, slot) {
+  const st = visState[slot], dt = tickState(st, t);
+  const fresh = () => [(Math.random() - .5) * 2, (Math.random() - .5) * 2, 1];
+  if (!st.stars) st.stars = Array.from({ length: 150 }, () => { const s = fresh(); s[2] = Math.random(); return s; });
+  const speed = .12 + avgOf(visLevels) * 1.8;
+  for (const s of st.stars) {
+    s[2] -= dt * speed;
+    const x = w / 2 + s[0] / Math.max(s[2], .01) * w * .22, y = h / 2 + s[1] / Math.max(s[2], .01) * h * .22;
+    if (s[2] <= .02 || x < 0 || x > w || y < 0 || y > h) { s.splice(0, 3, ...fresh()); continue; }
+    const z = 1 - s[2];
+    g.fillStyle = tier(.2 + z * .8);
+    g.fillRect(x, y, z > .75 ? 3 : 2, z > .75 ? 3 : 2);
+  }
+}
+function drawTunnel(g, w, h, t, slot) {
+  const st = visState[slot], dt = tickState(st, t);
+  st.ph = ((st.ph || 0) + dt * (.12 + avgOf(visLevels.slice(0, 6)) * 1.1)) % 1;
+  const rings = 9, cx = w / 2, cy = h / 2;
+  for (let k = 0; k < rings; k++) {
+    const f = (k + st.ph) / rings, s = f * f, hw = s * w / 2, hh = s * h / 2;
+    g.fillStyle = tier(.15 + f * .5 + (visLevels[Math.floor(f * (BANDS - 1))] || 0) * .4);
+    for (let x = cx - hw; x <= cx + hw; x += 4) { g.fillRect(x, cy - hh, 2, 2); g.fillRect(x, cy + hh, 2, 2); }
+    for (let y = cy - hh; y <= cy + hh; y += 4) { g.fillRect(cx - hw, y, 2, 2); g.fillRect(cx + hw, y, 2, 2); }
+  }
+}
+const VIS_DRAW = { Spectrum: drawBars, Waterfall: drawWaterfall, Scope: drawScope, VU: drawVU, Polar: drawPolar, Mirror: drawMirror,
+                   Ridges: drawRidges, "Glyph Rain": drawRain, Lissajous: drawLissajous, Starfield: drawStars, Tunnel: drawTunnel };
 function drawVisScreen(c, slot, t) {
   const fit = fitCanvas(c);
   if (!fit) return;
   const [g, w, h] = fit;
   if (!(S && S.playing) && Math.max(...visLevels) < .02) return drawIdle(g, w, h);
-  VIS_DRAW[VIS_MODES[visMode[slot]]](g, w, h, t);
+  VIS_DRAW[VIS_MODES[visMode[slot]]](g, w, h, t, slot);
 }
 
 async function visLoop(t) {
