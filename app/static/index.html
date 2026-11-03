@@ -421,7 +421,7 @@
 
   /* Instrument tabs: an inverse code plate in each screen's square corner */
   .tab {
-    position: absolute; top: 0; right: 0; z-index: 1; padding: 1px 8px 2px;
+    position: absolute; top: 0; right: 0; z-index: 2; padding: 1px 8px 2px;
     background: var(--amber-dim); color: var(--bg);
     font-family: var(--cond); font-weight: 600; font-size: 11px; letter-spacing: .16em; line-height: 1.2; text-transform: uppercase;
   }
@@ -431,7 +431,8 @@
   /* Art shimmer: now and then a ripple or a sweep runs across the dots */
   @property --rip { syntax: "<length>"; inherits: false; initial-value: 0px; }
   .shimmer {
-    position: absolute; inset: 8px; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+    /* z-index: the art image's glow filter paints it as its own layer, which would otherwise cover this */
+    position: absolute; inset: 8px; z-index: 1; pointer-events: none; opacity: 0; mix-blend-mode: screen;
     -webkit-mask: var(--art) center / 100% 100% no-repeat; mask: var(--art) center / 100% 100% no-repeat;
   }
   /* Same as v0.25: a single ring and a narrow sweep */
