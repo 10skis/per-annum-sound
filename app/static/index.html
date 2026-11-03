@@ -378,7 +378,7 @@
   .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; text-shadow: none; z-index: -1; }
 
   /* Tuning tape: one tick per station, a number every fifth, a fixed caret in the middle */
-  .tape { position: relative; height: 22px; width: 100%; overflow: hidden;
+  .tape { position: relative; height: 26px; width: 100%; overflow: hidden; cursor: ew-resize; touch-action: pan-y;
           -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
                   mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent); }
   .tape::after { content: ""; position: absolute; left: 50%; top: 0; width: 0; height: 0; margin-left: -4px;
@@ -531,6 +531,12 @@
     </div>
   </div>
 
+  <div class="vol">
+    <span class="label">Vol</span>
+    <div class="bar" id="bar"><input type="range" id="vol" min="0" max="100" step="5" aria-label="Volume"></div>
+    <span class="vol-read glow ghost" id="volRead" data-ghost="88">--</span>
+    <span class="vol-hw">USE THE PHONE'S VOLUME BUTTONS</span>
+  </div>
   <div class="deck">
     <div class="screen vis cham">
       <span class="tab" aria-hidden="true"><b>03</b>Spectrum</span>
@@ -552,12 +558,6 @@
     </div>
   </div>
 
-  <div class="vol">
-    <span class="label">Vol</span>
-    <div class="bar" id="bar"><input type="range" id="vol" min="0" max="100" step="5" aria-label="Volume"></div>
-    <span class="vol-read glow ghost" id="volRead" data-ghost="88">--</span>
-    <span class="vol-hw">USE THE PHONE'S VOLUME BUTTONS</span>
-  </div>
 </main>
 
 <nav class="list cham" aria-label="Stations">
@@ -761,11 +761,11 @@ function loadImage(url) {
    (midtones eased darker so highlights stay separate dots). Station names with no usable art
    become block letters. Same treatment as art.py, so both versions match. */
 const ART_N = 128, ART_OUT = 512, HT_CELLS = 32, HT_ANGLE = 45, HT_GAMMA = 1.2;
-function halftoneCanvas(gray) {
+function halftoneCanvas(gray, cells = HT_CELLS) {
   const N = ART_N, c = document.createElement("canvas");
   c.width = c.height = ART_OUT;
-  const g = c.getContext("2d"), pitch = N / HT_CELLS, k = ART_OUT / N;
-  const a = HT_ANGLE * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), span = Math.ceil(HT_CELLS * 0.75) + 1;
+  const g = c.getContext("2d"), pitch = N / cells, k = ART_OUT / N;
+  const a = HT_ANGLE * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), span = Math.ceil(cells * 0.75) + 1;
   const at = (x, y) => gray[Math.min(N - 1, Math.max(0, y)) * N + Math.min(N - 1, Math.max(0, x))];
   g.fillStyle = "#ffb02e";
   for (let j = -span; j < span; j++) for (let i = -span; i < span; i++) {
@@ -811,38 +811,40 @@ async function ditherArt(url, name) {
 }
 
 /* Art for stations with none: ripples from two or three points meeting, seeded by the station's
-   name so each one keeps its own pattern, drawn as a dim halftone. The name sits on a dark band
-   in dot-matrix letters, one lit dot per pixel of the type. Mirrors art.placeholder(). */
+   name so each keeps its own pattern, as a fine halftone. The name is cut out of the dots as
+   empty space; behind the name the field is kept dense enough for the letters to read.
+   Mirrors art.placeholder(). */
+const PH_CELLS = 64;
 function placeholderArt(name) {
   const N = ART_N, gray = new Float32Array(N * N);
   let seed = 2166136261;
   for (const ch of name) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
   const rnd = () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507); seed = Math.imul(seed ^ (seed >>> 13), 3266489909); return ((seed ^= seed >>> 16) >>> 0) / 4294967296; };
   const srcs = Array.from({ length: 2 + Math.floor(rnd() * 2) }, () => [rnd() * N, rnd() * N, 4 + rnd() * 7]);
+  const words = name.toUpperCase().split(" ");
+  const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
+  const lh = 24, top = N / 2 - (lines.length * lh) / 2, bot = top + lines.length * lh;
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     let v = 0;
     for (const [sx, sy, wl] of srcs) v += Math.sin(Math.hypot(x - sx, y - sy) / wl);
-    gray[y * N + x] = Math.pow(.5 + .5 * v / srcs.length, 1.6) * 150;  // dim, so the name reads
+    const f = .5 + .5 * v / srcs.length;
+    // Under the name the field is kept dense, fading back to the open pattern over ~14px
+    const dist = y < top ? top - y : y > bot ? y - bot : 0, wgt = Math.max(0, 1 - dist / 14);
+    gray[y * N + x] = (170 + f * 85) * wgt + Math.pow(f, 1.4) * 235 * (1 - wgt);
   }
-  const out = halftoneCanvas(gray), o = out.getContext("2d"), k = ART_OUT / N;
-  // Type the name at the screen's own resolution, then redraw each lit pixel as a dot
+  const out = halftoneCanvas(gray, PH_CELLS), o = out.getContext("2d"), k = ART_OUT / N;
+  // Type the name at the screen's own resolution, thickened a little, then erase those pixels
   const t = document.createElement("canvas");
   t.width = t.height = N;
   const tg = t.getContext("2d", { willReadFrequently: true });
-  tg.font = "22px VT323, monospace"; tg.textAlign = "center"; tg.textBaseline = "middle"; tg.fillStyle = "#fff";
-  const words = name.toUpperCase().split(" ");
-  const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
-  const lh = 20, top = N / 2 - (lines.length * lh) / 2;
-  lines.forEach((l, i) => tg.fillText(l, N / 2, top + lh * (i + .5)));
-  o.clearRect(0, (top - 6) * k, ART_OUT, (lines.length * lh + 12) * k);
-  o.fillStyle = "#9c6c22";
-  for (let x = 2; x < N; x += 3) { o.fillRect(x * k, (top - 6) * k, k * .9, k * .9); o.fillRect(x * k, (top + lines.length * lh + 5) * k, k * .9, k * .9); }
+  tg.font = "28px VT323, monospace"; tg.textAlign = "center"; tg.textBaseline = "middle";
+  tg.fillStyle = tg.strokeStyle = "#fff"; tg.lineWidth = 1.2;
+  lines.forEach((l, i) => { tg.fillText(l, N / 2, top + lh * (i + .5)); tg.strokeText(l, N / 2, top + lh * (i + .5)); });
   const px = tg.getImageData(0, 0, N, N).data;
-  o.fillStyle = "#ffb02e";
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    if (px[(y * N + x) * 4 + 3] < 110) continue;
-    o.beginPath(); o.arc((x + .5) * k, (y + .5) * k, k * .46, 0, Math.PI * 2); o.fill();
-  }
+  o.globalCompositeOperation = "destination-out";
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++)
+    if (px[(y * N + x) * 4 + 3] > 90) o.fillRect(x * k, y * k, k, k);
+  o.globalCompositeOperation = "source-over";
   return out;
 }
 function setArt(img, s) {
@@ -1052,7 +1054,7 @@ function drawProgress(now) {
 function render(s) {
   if (!s) return;
   S = s;
-  if (drag) return;  // mid-turn on the dial; release repaints
+  if (drag || tapeDrag) return;  // mid-turn on the dial or tape; release repaints
   if (s.player !== "phone") setNote(s.player === "mock" ? "MOCK PLAYER: NO SOUND. START MPD OR RUN ON THE PI." : "");
   mediaMeta(s);
 
@@ -1239,7 +1241,7 @@ function currentIndex() {
   return order.indexOf((mode === "phone" && local.id) || (S && S.station.id));
 }
 function previewDial(idx) {
-  $("dialNum").textContent = pad(idx + 1);
+  $("dialNum").textContent = $("tuneNum").textContent = pad(idx + 1);
   [...$("dial").querySelectorAll("i")].forEach((d, i) => {
     const dist = Math.min(Math.abs(i - idx), order.length - Math.abs(i - idx));
     d.className = i === idx ? "lit" : dist === 1 ? "near" : "";
@@ -1422,6 +1424,36 @@ function buildTapes() {
     run.innerHTML = order.map((_, i) => (i + 1) % 5 === 0 || i === 0 ? `<i class="maj">${i + 1}</i>` : "<i></i>").join("");
   });
 }
+var tapeDrag = null;  // var: render() checks it
+document.querySelectorAll(".tape").forEach(tape => {
+  tape.addEventListener("pointerdown", e => {
+    if (e.button > 0) return;
+    const i = currentIndex();
+    tapeDrag = { x: e.clientX, start: i < 0 ? 0 : i, idx: i < 0 ? 0 : i, moved: false };
+    try { tape.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  tape.addEventListener("pointermove", e => {
+    if (!tapeDrag) return;
+    const dx = e.clientX - tapeDrag.x;
+    if (Math.abs(dx) > 4) tapeDrag.moved = true;
+    if (!tapeDrag.moved) return;
+    const idx = Math.max(0, Math.min(order.length - 1, tapeDrag.start - Math.round(dx / TAPE_STEP)));  // drag left = higher
+    if (idx !== tapeDrag.idx) { tapeDrag.idx = idx; drawTapes(idx); previewDial(idx); }
+  });
+  tape.addEventListener("pointerup", e => {
+    if (!tapeDrag) return;
+    const d = tapeDrag;
+    tapeDrag = null;
+    let idx = d.idx;
+    if (!d.moved) {  // a tap: tune to the tick under the pointer
+      const b = tape.getBoundingClientRect();
+      idx = Math.max(0, Math.min(order.length - 1, d.start + Math.round((e.clientX - (b.left + b.width / 2)) / TAPE_STEP)));
+    }
+    if (idx !== d.start) act.play(order[idx]);
+    else if (S) render(S);
+  });
+  tape.addEventListener("pointercancel", () => { tapeDrag = null; if (S) render(S); });
+});
 function drawTapes(idx) {
   document.querySelectorAll(".tape-run").forEach(run => {
     run.style.transform = `translateX(${-idx * TAPE_STEP}px)`;
@@ -1443,7 +1475,7 @@ const CITY_CODE = { London: "LON", Bristol: "BRS", Paris: "PAR", Brussels: "BRU"
 const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
 // The world range drifts slowly (content moving left) until the pointer is over the map.
-let mapPan = 0, mapHover = false, mapT = 0;
+let mapPan = 0, mapHover = false, mapT = 0, labelSpot = {};
 const PAN_DEG_PER_S = 1.5;
 function decodeLand() {
   const W = window.WORLD;
@@ -1554,7 +1586,7 @@ function drawMap(t) {
   for (const k of clusters) {
     const ids = k.cities.flatMap(ci => ci.ids), live = playing && ids.includes(cur);
     const sel = k.cities.some(ci => ci.name === mapSel);
-    const x = Math.round(k.x), y = Math.round(k.y);
+    const x = k.x, y = k.y;  // not rounded: markers and labels glide with the drifting dots
     if (live && !reduceMotion) {
       const ph = (t % 1600) / 1600, rad = 5 + ph * 12;
       g.strokeStyle = `rgba(255,176,46,${(1 - ph) * .8})`; g.lineWidth = 1;
@@ -1569,8 +1601,13 @@ function drawMap(t) {
     // Try right, left, above, below; take the first spot that doesn't hit another label or run off the edge
     const spots = [[x + 7, y - 8], [x - 7 - tw, y - 8], [x + 5, y + 4], [x + 5, y - 20], [x - 5 - tw, y + 4],
                    [x - 5 - tw, y - 20], [x - tw / 2, y - 24], [x - tw / 2, y + 8]];
-    const spot = spots.find(([lx, ly]) => lx >= 0 && lx + tw <= w && ly >= 0 && ly + 16 <= h &&
-      !labels.some(b => lx < b[0] + b[2] && lx + tw > b[0] && ly < b[1] + 16 && ly + 16 > b[1])) || spots[0];
+    // A label keeps the spot it had last frame while that still fits, so it doesn't hop around
+    const fits = ([lx, ly]) => lx >= 0 && lx + tw <= w && ly >= 0 && ly + 16 <= h &&
+      !labels.some(b => lx < b[0] + b[2] && lx + tw > b[0] && ly < b[1] + 16 && ly + 16 > b[1]);
+    const prev = labelSpot[text];
+    const si = prev !== undefined && fits(spots[prev]) ? prev : Math.max(0, spots.findIndex(fits));
+    labelSpot[text] = si;
+    const spot = spots[si];
     labels.push([spot[0], spot[1], tw]);
     if (sel) { g.fillStyle = "#ffb02e"; g.fillRect(spot[0], spot[1], tw, 16); g.fillStyle = "#0b0906"; }
     else g.fillStyle = live ? "#ffb02e" : "#d08c26";

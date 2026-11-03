@@ -55,17 +55,17 @@ def _gray(url: str) -> Optional[Image.Image]:
     return ImageOps.autocontrast(img, cutoff=1)
 
 
-def halftone(gray: Image.Image, size: int = 512) -> Image.Image:
+def halftone(gray: Image.Image, size: int = 512, cells: int = CELLS) -> Image.Image:
     crisp = size <= N
     ss = 1 if crisp else 2                  # draw at 2x and scale down for smooth dot edges
     canvas = size * ss
     out = Image.new("L", (canvas, canvas), 0)
     d = ImageDraw.Draw(out)
     px = gray.load()
-    pitch, k = N / CELLS, canvas / N
+    pitch, k = N / cells, canvas / N
     a = math.radians(ANGLE)
     ca, sa = math.cos(a), math.sin(a)
-    span = math.ceil(CELLS * 0.75) + 1
+    span = math.ceil(cells * 0.75) + 1
     w = round(pitch)
     for j in range(-span, span):
         for i in range(-span, span):
@@ -108,35 +108,34 @@ def dither(url: str, style: str = "halftone", size: int = 512) -> Optional[bytes
 
 def placeholder(name: str, size: int = 512) -> bytes:
     """Art for stations with none: ripples from two or three points meeting, seeded by the name,
-    as a dim halftone, with the name in dot-matrix letters on a dark band. Mirrors the page's
-    placeholderArt()."""
+    as a fine halftone, with the name cut out of the dots as empty space (dense field behind it
+    so it reads). Mirrors the page's placeholderArt()."""
     rng = np.random.default_rng(zlib.crc32(name.encode()))
     yy, xx = np.mgrid[0:N, 0:N]
     srcs = [(rng.random() * N, rng.random() * N, 4 + rng.random() * 7) for _ in range(2 + int(rng.random() * 2))]
-    v = sum(np.sin(np.hypot(xx - sx, yy - sy) / wl) for sx, sy, wl in srcs) / len(srcs)
-    gray = Image.fromarray(((.5 + .5 * v) ** 1.6 * 150).astype("uint8"), "L")
-    mask = halftone(gray, size)
-    k = size / N
-    d = ImageDraw.Draw(mask)
+    f = .5 + .5 * sum(np.sin(np.hypot(xx - sx, yy - sy) / wl) for sx, sy, wl in srcs) / len(srcs)
     words = name.upper().split()
     lines = words if len(words) <= 3 else [" ".join(words[:2]), " ".join(words[2:])]
-    lh, top = 20, N / 2 - len(lines) * 20 / 2
-    d.rectangle([0, (top - 6) * k, size, (top + len(lines) * lh + 6) * k], fill=0)
-    for x in range(2, N, 3):
-        for yb in (top - 6, top + len(lines) * lh + 5):
-            d.rectangle([x * k, yb * k, (x + .9) * k, (yb + .9) * k], fill=150)
-    # Type the name at 128px, then draw each lit pixel as a dot
+    lh = 24
+    top = N / 2 - len(lines) * lh / 2
+    bot = top + len(lines) * lh
+    # Under the name the field is kept dense, fading back to the open pattern over ~14px
+    dist = np.where(yy < top, top - yy, np.where(yy > bot, yy - bot, 0))
+    wgt = np.clip(1 - dist / 14, 0, 1)
+    gray = (170 + f * 85) * wgt + f ** 1.4 * 235 * (1 - wgt)
+    mask = halftone(Image.fromarray(gray.astype("uint8"), "L"), size, cells=64)
+    # Type the name at 128px, thickened a little, then erase those pixels
     t = Image.new("L", (N, N), 0)
     td = ImageDraw.Draw(t)
-    font = ImageFont.load_default(size=18)
+    font = ImageFont.load_default(size=22)
     for i, line in enumerate(lines):
         w = td.textlength(line, font=font)
-        td.text(((N - w) / 2, top + lh * i + 1), line, fill=255, font=font)
+        td.text(((N - w) / 2, top + lh * i + 1), line, fill=255, font=font, stroke_width=1, stroke_fill=255)
+    k = size / N
+    d = ImageDraw.Draw(mask)
     px = t.load()
-    r = k * .46
     for y in range(N):
         for x in range(N):
-            if px[x, y] > 110:
-                cx, cy = (x + .5) * k, (y + .5) * k
-                d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+            if px[x, y] > 90:
+                d.rectangle([x * k, y * k, (x + 1) * k - 1, (y + 1) * k - 1], fill=0)
     return _to_png(mask)
