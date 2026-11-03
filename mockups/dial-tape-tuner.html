@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tape Tuner Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* Mockup only, not part of the app. Arrow keys, the ◀ ▶ keys, scrolling or dragging change station. */
+  :root { --bg: #0b0906; --amber: #ffb02e; --mid: #d08c26; --dim: #9c6c22; --ghost: #241907; --line: #4a3616; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--mid); font-family: "VT323", monospace; padding: 28px 16px;
+         display: grid; justify-items: center; align-content: start; gap: 16px;
+         background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px); background-size: 7px 7px; }
+  .note { width: 100%; max-width: 460px; font: 600 13px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .col { width: 100%; max-width: 460px; border: 1px solid var(--line); padding: 18px; display: grid; gap: 14px; position: relative;
+         clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px); }
+  .label { font: 600 12px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .presets div { height: 46px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 22px; color: var(--mid); }
+  .presets div.on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .ps { display: grid; grid-template-columns: 1fr 1fr; }
+  .ps div { height: 46px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 24px; }
+  .ps div + div { border-left: 0; }
+  .ps .on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .key { width: 44px; height: 44px; border: 1px solid var(--dim); background: none; color: var(--mid); font: 20px "VT323", monospace; cursor: pointer; }
+  .key:hover { color: var(--amber); border-color: var(--amber); }
+  .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+  .bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; height: 20px; }
+  .bar i { background: var(--ghost); } .bar i.on { background: var(--amber); }
+  .glyph { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace; }
+  .caption { width: 100%; max-width: 460px; font: 14px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--dim); }
+  .readout { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: end; }
+  .readout b { font-weight: 400; font-size: 64px; line-height: .8; color: var(--amber); text-shadow: 0 0 8px #ffb02e88; }
+  .readout .nm { font-size: 26px; color: var(--amber); letter-spacing: .05em; line-height: 1; }
+  .tunerow { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; }
+  .band { position: relative; height: 92px; overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+          cursor: ew-resize; touch-action: pan-y;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+                  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
+  .run { position: absolute; left: 50%; top: 0; height: 100%; transition: transform .35s cubic-bezier(.3,.7,.3,1); }
+  .t { position: absolute; top: 0; width: 16px; margin-left: -8px; height: 100%; text-align: center; }
+  .t .gl { display: block; margin-top: 8px; font-size: 13px; color: var(--dim); height: 16px; }
+  .t .tk { display: block; margin: 4px auto 0; width: 1px; height: 14px; background: var(--line); }
+  .t.maj .tk { height: 22px; background: var(--dim); }
+  .t .n { display: block; font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .t.cur .gl { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+  .t.cur .tk { background: var(--amber); width: 2px; }
+  .seg { position: absolute; bottom: 4px; height: 14px; border-top: 2px solid var(--line); font: 600 10px "Saira Condensed", sans-serif;
+         letter-spacing: .14em; color: var(--dim); text-transform: uppercase; padding-left: 4px; white-space: nowrap; overflow: hidden; }
+  .seg.on { border-top-color: var(--amber); color: var(--amber); }
+  .needle { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--amber); box-shadow: 0 0 8px var(--amber); opacity: .85; }
+</style>
+</head>
+<body>
+<div class="note">Mockup · tape tuner · not built</div>
+<div class="col">
+  <div class="presets"><div class="on">1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div></div>
+  <div class="ps"><div class="on">PLAY</div><div>STOP</div></div>
+  <div class="readout"><b id="num">07</b><div><div class="label" id="grp"></div><div class="nm" id="stn"></div></div></div>
+  <div class="tunerow">
+    <button class="key" onclick="step(-1)">◀</button>
+    <div class="band" id="band"><div class="run" id="run"></div><div class="needle"></div></div>
+    <button class="key" onclick="step(1)">▶</button>
+  </div>
+  <div class="vol"><span class="label">Vol</span><div class="bar" id="bar"></div><span style="font-size:26px;color:var(--amber)">70</span></div>
+</div>
+<p class="caption">Tape tuner. The ring goes; a wide band takes its place, like the frequency strip on an old car radio. One glyph and tick per station, a number every fifth, and the five groups marked underneath like MW and FM bands, with the current group lit. A fixed needle in the middle; drag, scroll or use the arrows to move the band under it.</p>
+<script>
+const ST = [["NTS 1", "NTS Live"], ["NTS 2", "NTS Live"], ["Poolside", "Infinite Mixtapes"], ["Slow Focus", "Infinite Mixtapes"], ["Low Key", "Infinite Mixtapes"], ["Memory Lane", "Infinite Mixtapes"], ["4 To The Floor", "Infinite Mixtapes"], ["Island Time", "Infinite Mixtapes"], ["The Tube", "Infinite Mixtapes"], ["Sheet Music", "Infinite Mixtapes"], ["Feelings", "Infinite Mixtapes"], ["Expansions", "Infinite Mixtapes"], ["Rap House", "Infinite Mixtapes"], ["Labyrinth", "Infinite Mixtapes"], ["Sweat", "Infinite Mixtapes"], ["Otaku", "Infinite Mixtapes"], ["The Pit", "Infinite Mixtapes"], ["Field Recordings", "Infinite Mixtapes"], ["The Lot Radio", "Terrascan FM"], ["Dublab", "Terrascan FM"], ["Refuge Worldwide", "Terrascan FM"], ["Kiosk Radio", "Terrascan FM"], ["Cashmere Radio", "Terrascan FM"], ["Noods Radio", "Terrascan FM"], ["Radio alHara", "Terrascan FM"], ["Rinse FM", "Terrascan FM"], ["Kool FM", "Terrascan FM"], ["Worldwide FM", "Terrascan FM"], ["WFMU", "Terrascan FM"], ["KEXP", "Terrascan FM"], ["FIP", "Terrascan FM"], ["FIP Jazz", "Terrascan FM"], ["WQXR", "Terrascan FM"], ["Chillhop Radio", "Terrascan FM"], ["Chante France 60s", "Genre Radio"], ["Radio Italia Anni 60", "Genre Radio"], ["Reprezent Radio", "Genre Radio"], ["triple j Unearthed", "Genre Radio"], ["Yumi Co. Radio", "Genre Radio"], ["Folk Alley", "Genre Radio"], ["Christmas Vinyl HD", "Genre Radio"], ["Resonance FM", "Deep Cuts"], ["Oroko Radio", "Deep Cuts"], ["Ha Noi Community Radio", "Deep Cuts"], ["Bangkok Community Radio", "Deep Cuts"], ["Mutant Radio", "Deep Cuts"], ["Super45.fm", "Deep Cuts"], ["stegi.radio", "Deep Cuts"], ["Radio 80000", "Deep Cuts"], ["Give the Drummer Radio", "Deep Cuts"], ["Radio Raheem", "Deep Cuts"], ["Ambient Sleeping Pill", "Deep Cuts"], ["Nightride FM", "Deep Cuts"]];
+const GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"];
+const N = ST.length, pad = n => String(n).padStart(2, "0");
+let idx = 6;
+const bar = document.getElementById("bar");
+for (let i = 0; i < 20; i++) { const x = document.createElement("i"); if (i < 14) x.className = "on"; bar.appendChild(x); }
+function step(d) { idx = (idx + d + N) % N; draw(); }
+document.addEventListener("keydown", e => { if (e.key === "ArrowRight") step(1); if (e.key === "ArrowLeft") step(-1); });
+const W = 16, run = document.getElementById("run"), band = document.getElementById("band");
+const ticks = ST.map((s, i) => {
+  const t = document.createElement("div");
+  t.className = "t" + ((i + 1) % 5 === 0 || i === 0 ? " maj" : "");
+  t.style.left = i * W + "px";
+  t.innerHTML = `<span class="gl glyph">${GLYPHS[i % GLYPHS.length]}</span><span class="tk"></span>` +
+    ((i + 1) % 5 === 0 || i === 0 ? `<span class="n">${pad(i + 1)}</span>` : "");
+  run.appendChild(t); return t;
+});
+// Group bands under the ticks, like MW / FM markings on an old radio dial
+const segs = [];
+ST.forEach((s, i) => {
+  if (i === 0 || ST[i - 1][1] !== s[1]) {
+    const e = document.createElement("div");
+    e.className = "seg"; e.textContent = s[1]; e.style.left = (i * W - 6) + "px";
+    run.appendChild(e); segs.push({ e, from: i, name: s[1] });
+  }
+});
+segs.forEach((g, k) => { const to = k + 1 < segs.length ? segs[k + 1].from : N; g.e.style.width = ((to - g.from) * W - 4) + "px"; g.to = to; });
+function draw() {
+  run.style.transform = `translateX(${-idx * W}px)`;
+  ticks.forEach((t, i) => t.classList.toggle("cur", i === idx));
+  segs.forEach(g => g.e.classList.toggle("on", idx >= g.from && idx < g.to));
+  document.getElementById("num").textContent = pad(idx + 1);
+  document.getElementById("stn").textContent = ST[idx][0].toUpperCase();
+  document.getElementById("grp").textContent = ST[idx][1];
+}
+let drag = null;
+band.addEventListener("pointerdown", e => { drag = { x: e.clientX, i: idx }; band.setPointerCapture(e.pointerId); run.style.transition = "none"; });
+band.addEventListener("pointermove", e => { if (!drag) return; idx = Math.max(0, Math.min(N - 1, drag.i - Math.round((e.clientX - drag.x) / W))); draw(); });
+band.addEventListener("pointerup", () => { drag = null; run.style.transition = ""; });
+band.addEventListener("wheel", e => { e.preventDefault(); step((e.deltaY || e.deltaX) > 0 ? 1 : -1); }, { passive: false });
+draw();
+</script>
+</body>
+</html>

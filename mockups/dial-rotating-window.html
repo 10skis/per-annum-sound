@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotating Window Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* Mockup only, not part of the app. Arrow keys, the ◀ ▶ keys, scrolling or dragging change station. */
+  :root { --bg: #0b0906; --amber: #ffb02e; --mid: #d08c26; --dim: #9c6c22; --ghost: #241907; --line: #4a3616; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--mid); font-family: "VT323", monospace; padding: 28px 16px;
+         display: grid; justify-items: center; align-content: start; gap: 16px;
+         background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px); background-size: 7px 7px; }
+  .note { width: 100%; max-width: 460px; font: 600 13px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .col { width: 100%; max-width: 460px; border: 1px solid var(--line); padding: 18px; display: grid; gap: 14px; position: relative;
+         clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px); }
+  .label { font: 600 12px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .presets div { height: 46px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 22px; color: var(--mid); }
+  .presets div.on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .ps { display: grid; grid-template-columns: 1fr 1fr; }
+  .ps div { height: 46px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 24px; }
+  .ps div + div { border-left: 0; }
+  .ps .on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .key { width: 44px; height: 44px; border: 1px solid var(--dim); background: none; color: var(--mid); font: 20px "VT323", monospace; cursor: pointer; }
+  .key:hover { color: var(--amber); border-color: var(--amber); }
+  .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+  .bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; height: 20px; }
+  .bar i { background: var(--ghost); } .bar i.on { background: var(--amber); }
+  .glyph { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace; }
+  .caption { width: 100%; max-width: 460px; font: 14px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--dim); }
+  .dialrow { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; justify-items: center; }
+  .wdial { position: relative; width: 230px; aspect-ratio: 1; border-radius: 50%; cursor: grab; touch-action: none; }
+  .wdial::before { content: ""; position: absolute; inset: 26px; border-radius: 50%; border: 1px dashed var(--line); }
+  .g { position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px; text-align: center; line-height: 20px;
+       font-size: 15px; color: var(--dim); transition: transform .35s cubic-bezier(.3,.7,.3,1), opacity .35s, color .2s; }
+  .g.cur { color: var(--amber); font-size: 19px; text-shadow: 0 0 8px var(--amber); }
+  .g small { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); font: 13px "VT323", monospace; color: var(--dim); }
+  .caret { position: absolute; left: 50%; top: 2px; margin-left: -5px; border: 5px solid transparent; border-top: 7px solid var(--amber); }
+  .read { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+  .read b { font-weight: 400; font-size: 64px; line-height: .8; color: var(--amber); text-shadow: 0 0 8px #ffb02e88; }
+  .read span { font-size: 18px; color: var(--dim); }
+  .stn { text-align: center; font-size: 24px; color: var(--amber); letter-spacing: .06em; min-height: 26px; }
+  .grp { text-align: center; margin-top: -10px; }
+</style>
+</head>
+<body>
+<div class="note">Mockup · rotating window dial · not built</div>
+<div class="col">
+  <div class="presets"><div class="on">1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div></div>
+  <div class="ps"><div class="on">PLAY</div><div>STOP</div></div>
+  <div class="dialrow">
+    <button class="key" onclick="step(-1)">◀</button>
+    <div class="wdial" id="dial"><div class="caret"></div><div class="read"><b id="num">07</b><span>/53</span></div></div>
+    <button class="key" onclick="step(1)">▶</button>
+  </div>
+  <div class="stn" id="stn"></div>
+  <div class="label grp" id="grp"></div>
+  <div class="vol"><span class="label">Vol</span><div class="bar" id="bar"></div><span style="font-size:26px;color:var(--amber)">70</span></div>
+</div>
+<p class="caption">Rotating window. The ring turns so the tuned station sits under the caret at the top. Only the six stations either side show, fading out with distance, so it reads the same at 53 stations or 200. The station's name and group sit under the dial. Try the arrows, arrow keys, scrolling or dragging.</p>
+<script>
+const ST = [["NTS 1", "NTS Live"], ["NTS 2", "NTS Live"], ["Poolside", "Infinite Mixtapes"], ["Slow Focus", "Infinite Mixtapes"], ["Low Key", "Infinite Mixtapes"], ["Memory Lane", "Infinite Mixtapes"], ["4 To The Floor", "Infinite Mixtapes"], ["Island Time", "Infinite Mixtapes"], ["The Tube", "Infinite Mixtapes"], ["Sheet Music", "Infinite Mixtapes"], ["Feelings", "Infinite Mixtapes"], ["Expansions", "Infinite Mixtapes"], ["Rap House", "Infinite Mixtapes"], ["Labyrinth", "Infinite Mixtapes"], ["Sweat", "Infinite Mixtapes"], ["Otaku", "Infinite Mixtapes"], ["The Pit", "Infinite Mixtapes"], ["Field Recordings", "Infinite Mixtapes"], ["The Lot Radio", "Terrascan FM"], ["Dublab", "Terrascan FM"], ["Refuge Worldwide", "Terrascan FM"], ["Kiosk Radio", "Terrascan FM"], ["Cashmere Radio", "Terrascan FM"], ["Noods Radio", "Terrascan FM"], ["Radio alHara", "Terrascan FM"], ["Rinse FM", "Terrascan FM"], ["Kool FM", "Terrascan FM"], ["Worldwide FM", "Terrascan FM"], ["WFMU", "Terrascan FM"], ["KEXP", "Terrascan FM"], ["FIP", "Terrascan FM"], ["FIP Jazz", "Terrascan FM"], ["WQXR", "Terrascan FM"], ["Chillhop Radio", "Terrascan FM"], ["Chante France 60s", "Genre Radio"], ["Radio Italia Anni 60", "Genre Radio"], ["Reprezent Radio", "Genre Radio"], ["triple j Unearthed", "Genre Radio"], ["Yumi Co. Radio", "Genre Radio"], ["Folk Alley", "Genre Radio"], ["Christmas Vinyl HD", "Genre Radio"], ["Resonance FM", "Deep Cuts"], ["Oroko Radio", "Deep Cuts"], ["Ha Noi Community Radio", "Deep Cuts"], ["Bangkok Community Radio", "Deep Cuts"], ["Mutant Radio", "Deep Cuts"], ["Super45.fm", "Deep Cuts"], ["stegi.radio", "Deep Cuts"], ["Radio 80000", "Deep Cuts"], ["Give the Drummer Radio", "Deep Cuts"], ["Radio Raheem", "Deep Cuts"], ["Ambient Sleeping Pill", "Deep Cuts"], ["Nightride FM", "Deep Cuts"]];
+const GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"];
+const N = ST.length, pad = n => String(n).padStart(2, "0");
+let idx = 6;
+const bar = document.getElementById("bar");
+for (let i = 0; i < 20; i++) { const x = document.createElement("i"); if (i < 14) x.className = "on"; bar.appendChild(x); }
+function step(d) { idx = (idx + d + N) % N; draw(); }
+document.addEventListener("keydown", e => { if (e.key === "ArrowRight") step(1); if (e.key === "ArrowLeft") step(-1); });
+const STEP = 21, SHOW = 6, R = 98, dial = document.getElementById("dial");
+const els = ST.map((s, i) => {
+  const e = document.createElement("div");
+  e.className = "g glyph"; e.innerHTML = GLYPHS[i % GLYPHS.length];
+  dial.appendChild(e); return e;
+});
+function draw() {
+  els.forEach((e, i) => {
+    let off = i - idx;
+    if (off > N / 2) off -= N; if (off < -N / 2) off += N;   // nearest way round
+    const a = off * STEP;
+    e.style.transform = `rotate(${a}deg) translateY(-${R}px) rotate(${-a}deg)`;
+    e.style.opacity = Math.abs(off) > SHOW ? 0 : 1 - Math.abs(off) / (SHOW + 1) * .85;
+    e.classList.toggle("cur", off === 0);
+  });
+  document.getElementById("num").textContent = pad(idx + 1);
+  document.getElementById("stn").textContent = ST[idx][0].toUpperCase();
+  document.getElementById("grp").textContent = ST[idx][1];
+}
+// Drag round the ring or scroll to turn
+let last = null;
+dial.addEventListener("pointerdown", e => { last = e.clientX; dial.setPointerCapture(e.pointerId); });
+dial.addEventListener("pointermove", e => { if (last === null) return; const d = e.clientX - last; if (Math.abs(d) > 18) { step(d > 0 ? -1 : 1); last = e.clientX; } });
+dial.addEventListener("pointerup", () => { last = null; });
+dial.addEventListener("wheel", e => { e.preventDefault(); step(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+draw();
+</script>
+</body>
+</html>
