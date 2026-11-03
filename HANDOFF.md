@@ -67,6 +67,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 ## Open items
 
 - Robert re-drags `app/web` to Netlify for v0.43, then remove and re-add the home-screen shortcut so iOS picks up the new icon. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- App icon: the PAS sigil icon is live in the code but Robert wants an iOS 26/27 glass-style icon instead. Three options in `mockups/app-icon-options.html`; waiting on his pick.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.

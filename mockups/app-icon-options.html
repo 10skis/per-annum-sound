@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Icon Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root { --amber: #ffb02e; --dim: #9c6c22; --bg: #0e0c0a; }
+  body { margin: 0; background: var(--bg); color: var(--amber); font-family: "Saira Condensed", sans-serif; padding: 32px 16px; }
+  h1 { font: 400 18px "Michroma", sans-serif; letter-spacing: .2em; margin: 0 0 6px; }
+  p { color: var(--dim); margin: 0 0 28px; font-size: 17px; }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; max-width: 1100px; }
+  .opt h2 { font-weight: 600; font-size: 20px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; }
+  .opt .why { color: var(--dim); font-size: 16px; margin: 0 0 14px; min-height: 3em; }
+  .big { width: 100%; max-width: 300px; aspect-ratio: 1; border-radius: 22.5%; display: block; box-shadow: 0 10px 30px #0008; }
+  .homes { display: flex; gap: 14px; margin-top: 18px; }
+  .home { width: 150px; height: 120px; border-radius: 18px; display: grid; place-items: center; }
+  .home.light { background: linear-gradient(160deg, #d9dde6, #aeb6c6); }
+  .home.dark { background: linear-gradient(160deg, #1d2333, #0a0c12); }
+  .home canvas { width: 60px; height: 60px; border-radius: 13.5px; box-shadow: 0 4px 10px #0005; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>PER ANNUM SOUND · APP ICON</h1>
+<p>Three directions in the iOS 26/27 glass style: one bold shape, depth, a soft top highlight, amber only. Each shown large and at home-screen size on light and dark wallpaper.</p>
+<div class="row" id="row"></div>
+<script>
+const OPTS = [
+  { key: "dial", name: "1 · Dial", why: "A tuning gauge: one thick glass arc open at the bottom, a lit marker on it and PAS inside. The sigil reduced to one ring." },
+  { key: "window", name: "2 · Display window", why: "Amber plate with a dark chamfered display, PAS glowing in the dot font. Echoes the console panels and inverse tabs." },
+  { key: "matrix", name: "3 · Dot matrix", why: "PAS spelled in big LED dots on a dark glass plate, unlit dots filling the grid. Keeps the dot language without the rings." },
+];
+const N = 1024;
+
+function glassSheen(g) {  // the soft top highlight every glass icon gets
+  const s = g.createLinearGradient(0, 0, 0, N * .55);
+  s.addColorStop(0, "rgba(255,255,255,.16)"); s.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = s; g.fillRect(0, 0, N, N * .55);
+}
+function darkPlate(g) {
+  const b = g.createRadialGradient(N / 2, N * .38, 40, N / 2, N / 2, N * .75);
+  b.addColorStop(0, "#33230b"); b.addColorStop(1, "#0b0804");
+  g.fillStyle = b; g.fillRect(0, 0, N, N);
+}
+function amberFill(g, y0, y1) {
+  const f = g.createLinearGradient(0, y0, 0, y1);
+  f.addColorStop(0, "#ffd27a"); f.addColorStop(.55, "#ffb02e"); f.addColorStop(1, "#c98222");
+  return f;
+}
+
+const DRAW = {
+  dial(g) {
+    darkPlate(g);
+    const c = N / 2, cy = N / 2 + 20, r = 320, w = 80, a0 = Math.PI * .75, a1 = Math.PI * 2.25;  // open at the bottom
+    // unlit track, then the lit part of the arc up to the marker
+    g.lineCap = "round"; g.lineWidth = w; g.strokeStyle = "#3a2a10";
+    g.beginPath(); g.arc(c, cy, r, a0, a1); g.stroke();
+    const am = Math.PI * 1.78;
+    g.save(); g.shadowColor = "rgba(255,160,40,.5)"; g.shadowBlur = 60; g.strokeStyle = amberFill(g, cy - r, cy + r);
+    g.beginPath(); g.arc(c, cy, r, a0, am); g.stroke(); g.restore();
+    g.lineWidth = 6; g.strokeStyle = "rgba(255,248,230,.5)";
+    g.beginPath(); g.arc(c, cy, r + w / 2 - 6, Math.PI * 1.02, am - .05); g.stroke();
+    // marker: a bright dot riding the arc
+    const mx = c + Math.cos(am) * r, my = cy + Math.sin(am) * r;
+    g.save(); g.shadowColor = "rgba(255,220,150,.95)"; g.shadowBlur = 40; g.fillStyle = "#fff1cf";
+    g.beginPath(); g.arc(mx, my, w * .62, 0, Math.PI * 2); g.fill(); g.restore();
+    // tick marks inside the arc
+    g.strokeStyle = "rgba(255,176,46,.45)"; g.lineWidth = 8;
+    for (let i = 0; i <= 10; i++) { const a = a0 + (a1 - a0) * i / 10, r1 = r - w / 2 - 34, r2 = r1 - (i % 5 ? 22 : 44);
+      g.beginPath(); g.moveTo(c + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.lineTo(c + Math.cos(a) * r2, cy + Math.sin(a) * r2); g.stroke(); }
+    g.fillStyle = amberFill(g, cy - 80, cy + 80); g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = '400 128px "Michroma"'; g.fillText("PAS", c, cy + 6);
+    glassSheen(g);
+  },
+  window(g) {
+    const b = g.createLinearGradient(0, 0, 0, N);
+    b.addColorStop(0, "#ffc95a"); b.addColorStop(1, "#d98a1c");
+    g.fillStyle = b; g.fillRect(0, 0, N, N);
+    const x = 150, y = 300, w = N - 300, h = 424, k = 56;  // chamfered display
+    const path = () => { g.beginPath(); g.moveTo(x + k, y); g.lineTo(x + w, y); g.lineTo(x + w, y + h - k);
+      g.lineTo(x + w - k, y + h); g.lineTo(x, y + h); g.lineTo(x, y + k); g.closePath(); };
+    g.save(); g.shadowColor = "rgba(90,45,0,.55)"; g.shadowBlur = 50; g.shadowOffsetY = 18;
+    path(); g.fillStyle = "#120c05"; g.fill(); g.restore();
+    g.save(); path(); g.clip();
+    for (let yy = y + 14; yy < y + h; yy += 22) for (let xx = x + 14; xx < x + w; xx += 22) {
+      g.fillStyle = "rgba(255,176,46,.09)"; g.fillRect(xx - 3, yy - 3, 6, 6);
+    }
+    g.textAlign = "center"; g.textBaseline = "middle"; g.font = '400 330px "VT323"';
+    g.shadowColor = "#ffb02e"; g.shadowBlur = 40; g.fillStyle = "#ffb02e"; g.fillText("PAS", N / 2, y + h / 2 + 10);
+    g.shadowBlur = 0; g.fillText("PAS", N / 2, y + h / 2 + 10);
+    const s = g.createLinearGradient(0, y, 0, y + h * .5);
+    s.addColorStop(0, "rgba(255,255,255,.14)"); s.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = s; g.fillRect(x, y, w, h * .5);
+    g.restore();
+    g.lineWidth = 5; g.strokeStyle = "rgba(255,240,210,.5)"; path(); g.stroke();
+    glassSheen(g);
+  },
+  matrix(g) {
+    darkPlate(g);
+    const F = { P: ["11110","10001","10001","11110","10000","10000","10000"],
+                A: ["01110","10001","10001","11111","10001","10001","10001"],
+                S: ["01111","10000","10000","01110","00001","00001","11110"] };
+    const cols = 17, rows = 7, pitch = 40, r = 15;  // 3 letters x 5 + 2 gaps
+    const x0 = N / 2 - (cols - 1) * pitch / 2, y0 = N / 2 - (rows - 1) * pitch / 2;
+    const grid = [];
+    for (let row = 0; row < rows; row++) {
+      let line = "";
+      ["P", "A", "S"].forEach((L, i) => { line += F[L][row] + (i < 2 ? "0" : ""); });
+      grid.push(line);
+    }
+    // faint frame of unlit dots around the word, like a display window
+    for (let row = -1; row < rows + 1; row++) for (let col = -1; col < cols + 1; col++) {
+      const on = row >= 0 && row < rows && col >= 0 && col < cols && grid[row][col] === "1";
+      const x = x0 + col * pitch, y = y0 + row * pitch;
+      g.save();
+      if (on) { g.shadowColor = "rgba(255,176,46,.9)"; g.shadowBlur = 26; g.fillStyle = amberFill(g, y - r, y + r); }
+      else g.fillStyle = "#3a2a10";
+      g.beginPath(); g.arc(x, y, on ? r : r * .62, 0, Math.PI * 2); g.fill(); g.restore();
+      if (on) { g.fillStyle = "rgba(255,250,235,.55)"; g.beginPath(); g.arc(x - r * .3, y - r * .35, r * .3, 0, Math.PI * 2); g.fill(); }
+    }
+    glassSheen(g);
+  },
+};
+
+function render(key, size) {
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  const big = document.createElement("canvas"); big.width = big.height = N;
+  DRAW[key](big.getContext("2d"));
+  const k = c.getContext("2d"); k.imageSmoothingQuality = "high"; k.drawImage(big, 0, 0, size, size);
+  return c;
+}
+
+document.fonts.ready.then(async () => {
+  await Promise.all([document.fonts.load('150px "Michroma"'), document.fonts.load('330px "VT323"')]);
+  for (const o of OPTS) {
+    const el = document.createElement("div"); el.className = "opt";
+    el.innerHTML = `<h2>${o.name}</h2><div class="why">${o.why}</div>`;
+    const big = render(o.key, 600); big.className = "big"; el.appendChild(big);
+    const homes = document.createElement("div"); homes.className = "homes";
+    for (const t of ["light", "dark"]) {
+      const h = document.createElement("div"); h.className = "home " + t; h.appendChild(render(o.key, 180)); homes.appendChild(h);
+    }
+    el.appendChild(homes); document.getElementById("row").appendChild(el);
+  }
+});
+</script>
+</body>
+</html>
