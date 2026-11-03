@@ -1482,6 +1482,32 @@ $("dial").addEventListener("pointerup", () => {
 });
 $("dial").addEventListener("pointercancel", () => { drag = null; if (S) render(S); });
 
+/* Scrolling over the dial (mouse wheel or trackpad, either direction) steps through stations: down or
+   right for the next, up or left for the previous. It previews as it goes and tunes once the
+   scrolling settles, like the tape. */
+let dialWheelAcc = 0, dialWheelTimer = null;
+$("dial").addEventListener("wheel", e => {
+  e.preventDefault();
+  const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  if (!tapeDrag) { const i = currentIndex(); tapeDrag = { wheel: true, start: i < 0 ? 0 : i, idx: i < 0 ? 0 : i }; }
+  // A mouse wheel notch (line mode, or a big jump) is one station; a trackpad needs ~40px per station
+  dialWheelAcc += e.deltaMode === 1 || Math.abs(d) >= 80 ? Math.sign(d) * 40 : d;
+  while (Math.abs(dialWheelAcc) >= 40) {
+    const dir = dialWheelAcc > 0 ? 1 : -1;
+    dialWheelAcc -= dir * 40;
+    tapeDrag.idx = (tapeDrag.idx + dir + order.length) % order.length;
+    if (navigator.vibrate) navigator.vibrate(6);
+    drawTapes(tapeDrag.idx); previewDial(tapeDrag.idx);
+  }
+  clearTimeout(dialWheelTimer);
+  dialWheelTimer = setTimeout(() => {
+    const t = tapeDrag;
+    tapeDrag = null; dialWheelAcc = 0;
+    if (!t || !t.wheel) return;
+    if (t.idx !== t.start) act.play(order[t.idx]); else if (S) render(S);
+  }, 380);
+}, { passive: false });
+
 /* Tuner (phones): arrows and swipes step one station and play it straight away, inside the tap,
    which iPhones need before they'll start audio. */
 function stepPlay(dir) {
