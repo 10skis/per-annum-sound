@@ -1,7 +1,7 @@
-"""Writes the home-screen icons: the page's own sigil with PAS in the middle.
+"""Writes the home-screen icons: a site-style display window with PAS in it.
 
-The icon is drawn by the page itself (dev/icon.js uses its sigil code and VT323 font), so it
-matches the in-app sigil exactly. To redraw it:
+The icon is drawn by the page itself (dev/icon.js, in the page so it has the VT323 font), so it
+matches the site. To redraw it:
   1. build web/ (build_static.py), then run this script: it serves web/ on localhost:8090
   2. open http://localhost:8090, set window.ICON_POST = true, and run dev/icon.js in the console
 It writes static/icon-512.png and static/icon-180.png, then stops. Rebuild to copy them to web/."""
