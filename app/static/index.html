@@ -916,71 +916,34 @@ async function ditherArt(url, name) {
   return (artCache[key] = placeholderArt(name).toDataURL());
 }
 
-/* Art for stations with none: ripples from two or three points meeting, seeded by the station's
-   name so each keeps its own pattern, as a fine halftone. The name is cut out of the dots as
-   empty space; behind the name the field is kept dense enough for the letters to read.
-   Mirrors art.placeholder(). */
-const PH_CELLS = 64;
-/* Fit a station name to the art: word-wrap at the largest size (28 down to 14 px at the screen's
-   128 px) where every line fits and there are at most three, with a little letter spacing so the
-   knocked-out letters don't run together. */
-function fitName(name, maxW = 112) {
-  const m = document.createElement("canvas").getContext("2d");
-  const words = name.toUpperCase().split(/\s+/).filter(Boolean);
-  let fit = null;
-  for (let size = 28; size >= 14; size -= 2) {
-    m.font = `${size}px VT323, monospace`;
-    const sp = Math.max(1, size * .09);
-    const width = s => [...s].reduce((a, ch) => a + m.measureText(ch).width + sp, -sp);
-    const lines = [];
-    for (const wd of words) {
-      const last = lines[lines.length - 1];
-      if (last && width(last + " " + wd) <= maxW) lines[lines.length - 1] = last + " " + wd;
-      else lines.push(wd);
-    }
-    fit = { size, sp, lines, width };
-    if (lines.length <= 3 && lines.every(l => width(l) <= maxW)) break;
-  }
-  return fit;
-}
-/* Art for stations with none: ripples from two or three points meeting, seeded by the station's
-   name so each keeps its own pattern, as a fine halftone. The name is cut out of the dots as
-   empty space; behind the name the field is kept dense enough for the letters to read.
-   Mirrors art.placeholder(). */
+/* Art for stations with none: a sigil. Rings of dotted grooves like a record, each ring's arcs
+   switched on or off by the station's name, so every station gets its own mark; the station
+   number and city code sit in the middle. Unlit dots stay faintly visible. Mirrors art.placeholder(). */
 function placeholderArt(name) {
-  const N = ART_N, gray = new Float32Array(N * N);
+  const c = document.createElement("canvas");
+  c.width = c.height = ART_OUT;
+  const g = c.getContext("2d"), cx = ART_OUT / 2, cy = ART_OUT / 2, S = ART_OUT / 440;
   let seed = 2166136261;
   for (const ch of name) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
   const rnd = () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507); seed = Math.imul(seed ^ (seed >>> 13), 3266489909); return ((seed ^= seed >>> 16) >>> 0) / 4294967296; };
-  const srcs = Array.from({ length: 2 + Math.floor(rnd() * 2) }, () => [rnd() * N, rnd() * N, 4 + rnd() * 7]);
-  const fit = fitName(name), lines = fit.lines, lh = Math.round(fit.size * .9);
-  const top = N / 2 - (lines.length * lh) / 2, bot = top + lines.length * lh;
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    let v = 0;
-    for (const [sx, sy, wl] of srcs) v += Math.sin(Math.hypot(x - sx, y - sy) / wl);
-    const f = .5 + .5 * v / srcs.length;
-    // Under the name the field is kept dense, fading back to the open pattern over ~14px
-    const dist = y < top ? top - y : y > bot ? y - bot : 0, wgt = Math.max(0, 1 - dist / 14);
-    gray[y * N + x] = (170 + f * 85) * wgt + Math.pow(f, 1.4) * 235 * (1 - wgt);
+  for (let ring = 0; ring < 11; ring++) {
+    const rad = (60 + ring * 15) * S, segs = 6 + Math.floor(rnd() * 8), dots = Math.floor(rad * Math.PI * 2 / (9 * S));
+    const pattern = Array.from({ length: segs }, () => rnd() > .38), rot = rnd() * Math.PI * 2;
+    for (let d = 0; d < dots; d++) {
+      const a = rot + d / dots * Math.PI * 2, on = pattern[Math.floor(d / dots * segs)];
+      g.fillStyle = on ? (ring % 4 === 0 ? "#ffd27a" : "#ffb02e") : "#3a2a10";
+      g.beginPath(); g.arc(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, (on ? 3 : 2) * S, 0, Math.PI * 2); g.fill();
+    }
   }
-  const out = halftoneCanvas(gray, PH_CELLS), o = out.getContext("2d"), k = ART_OUT / N;
-  // Set the name letter by letter at the screen's own resolution, thickened a little, then erase those pixels
-  const t = document.createElement("canvas");
-  t.width = t.height = N;
-  const tg = t.getContext("2d", { willReadFrequently: true });
-  tg.font = `${fit.size}px VT323, monospace`; tg.textAlign = "left"; tg.textBaseline = "middle";
-  tg.fillStyle = tg.strokeStyle = "#fff"; tg.lineWidth = fit.size / 24;
-  lines.forEach((l, i) => {
-    let x = N / 2 - fit.width(l) / 2;
-    const y = top + lh * (i + .5);
-    for (const ch of l) { tg.fillText(ch, x, y); tg.strokeText(ch, x, y); x += tg.measureText(ch).width + fit.sp; }
-  });
-  const px = tg.getImageData(0, 0, N, N).data;
-  o.globalCompositeOperation = "destination-out";
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++)
-    if (px[(y * N + x) * 4 + 3] > 90) o.fillRect(x * k, y * k, k, k);
-  o.globalCompositeOperation = "source-over";
-  return out;
+  const id = order.find(i => NAMES[i] === name), st = STN[id] || {};
+  const city = st.city || st.place || "";
+  const code = CITY_CODE[city] || city.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase();
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillStyle = "#ffb02e"; g.font = `${Math.round(64 * S)}px "VT323", monospace`;
+  if (id) g.fillText(pad(order.indexOf(id) + 1), cx, cy - 4 * S);
+  g.fillStyle = "#9c6c22"; g.font = `${Math.round(20 * S)}px "VT323", monospace`;
+  g.fillText(code, cx, cy + 30 * S);
+  return c;
 }
 function setArt(img, s) {
   if (!STATIC) { img.src = s.art; return; }

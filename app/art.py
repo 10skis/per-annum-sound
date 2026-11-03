@@ -106,58 +106,34 @@ def dither(url: str, style: str = "halftone", size: int = 512) -> Optional[bytes
     return png
 
 
-def _line_width(s: str, font, sp: float) -> float:
-    return sum(font.getlength(ch) for ch in s) + sp * (len(s) - 1)
-
-
-def _fit_name(name: str, max_w: float = 112):
-    """Word-wrap the name at the largest size (24 down to 12 px) where every line fits and there
-    are at most three, with a little letter spacing. Mirrors the page's fitName()."""
-    words = name.upper().split()
-    for size in range(24, 11, -2):
-        font = ImageFont.load_default(size=size)
-        sp = max(1, size * .09)
-        lines = []
-        for wd in words:
-            if lines and _line_width(lines[-1] + " " + wd, font, sp) <= max_w:
-                lines[-1] += " " + wd
-            else:
-                lines.append(wd)
-        if len(lines) <= 3 and all(_line_width(l, font, sp) <= max_w for l in lines):
-            break
-    return font, sp, lines
-
-
-def placeholder(name: str, size: int = 512) -> bytes:
-    """Art for stations with none: ripples from two or three points meeting, seeded by the name,
-    as a fine halftone, with the name cut out of the dots as empty space (dense field behind it
-    so it reads). Mirrors the page's placeholderArt()."""
+def placeholder(name: str, size: int = 512, num: Optional[int] = None, code: str = "") -> bytes:
+    """Art for stations with none: a sigil. Rings of dotted grooves like a record, each ring's arcs
+    switched on or off by the station's name; the station number and city code in the middle.
+    Mirrors the page's placeholderArt() (same layout, its own random sequence)."""
     rng = np.random.default_rng(zlib.crc32(name.encode()))
-    yy, xx = np.mgrid[0:N, 0:N]
-    srcs = [(rng.random() * N, rng.random() * N, 4 + rng.random() * 7) for _ in range(2 + int(rng.random() * 2))]
-    f = .5 + .5 * sum(np.sin(np.hypot(xx - sx, yy - sy) / wl) for sx, sy, wl in srcs) / len(srcs)
-    font, sp, lines = _fit_name(name)
-    lh = round(font.size * .9)
-    top = N / 2 - len(lines) * lh / 2
-    bot = top + len(lines) * lh
-    # Under the name the field is kept dense, fading back to the open pattern over ~14px
-    dist = np.where(yy < top, top - yy, np.where(yy > bot, yy - bot, 0))
-    wgt = np.clip(1 - dist / 14, 0, 1)
-    gray = (170 + f * 85) * wgt + f ** 1.4 * 235 * (1 - wgt)
-    mask = halftone(Image.fromarray(gray.astype("uint8"), "L"), size, cells=64)
-    # Set the name letter by letter at 128px, thickened a little, then erase those pixels
-    t = Image.new("L", (N, N), 0)
-    td = ImageDraw.Draw(t)
-    for i, line in enumerate(lines):
-        x = (N - _line_width(line, font, sp)) / 2
-        for ch in line:
-            td.text((x, top + lh * i + 1), ch, fill=255, font=font, stroke_width=1, stroke_fill=255)
-            x += font.getlength(ch) + sp
-    k = size / N
-    d = ImageDraw.Draw(mask)
-    px = t.load()
-    for y in range(N):
-        for x in range(N):
-            if px[x, y] > 90:
-                d.rectangle([x * k, y * k, (x + 1) * k - 1, (y + 1) * k - 1], fill=0)
-    return _to_png(mask)
+    ss = 2                                   # draw at 2x and scale down for smooth dots
+    W = size * ss
+    S = W / 440
+    out = Image.new("L", (W, W), 0)
+    d = ImageDraw.Draw(out)
+    cx = cy = W / 2
+    for ring in range(11):
+        rad = (60 + ring * 15) * S
+        segs = 6 + int(rng.random() * 8)
+        dots = int(rad * math.pi * 2 / (9 * S))
+        pattern = [rng.random() > .38 for _ in range(segs)]
+        rot = rng.random() * math.pi * 2
+        for k in range(dots):
+            a = rot + k / dots * math.pi * 2
+            on = pattern[int(k / dots * segs)]
+            r = (3 if on else 2) * S
+            x, y = cx + math.cos(a) * rad, cy + math.sin(a) * rad
+            d.ellipse([x - r, y - r, x + r, y + r], fill=255 if on else 60)
+    if num is not None:
+        font = ImageFont.load_default(size=round(56 * S))
+        t = f"{num:02d}"
+        d.text((cx - d.textlength(t, font=font) / 2, cy - 40 * S), t, fill=255, font=font)
+    if code:
+        font = ImageFont.load_default(size=round(18 * S))
+        d.text((cx - d.textlength(code, font=font) / 2, cy + 22 * S), code, fill=150, font=font)
+    return _to_png(out.resize((size, size), Image.LANCZOS))
