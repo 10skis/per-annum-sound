@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pi Radio</title>
+<title>Per Annum Sound</title>
 <meta name="theme-color" content="#0b0906">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pi Radio">
+<meta name="apple-mobile-web-app-title" content="Per Annum">
 <link rel="apple-touch-icon" href="/static/icon-180.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,6 +69,7 @@
   .head .clock i { font-style: normal; animation: blink 2s steps(1) infinite; }
   .label { font-family: var(--cond); font-weight: 600; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--amber-dim); }
   .head .brand { font-family: var(--wide); font-size: 12px; letter-spacing: .28em; color: var(--amber-mid); }
+  .head .brand .short { display: none; }
 
   /* Keys row */
   .top { display: grid; gap: 10px; }
@@ -96,6 +97,8 @@
     .head { gap: 8px; letter-spacing: .02em; }
     .head .st-word { display: none; }  /* the lit dot already says on air; room for the timers */
     .head .clock { display: none; }     /* the phone's status bar already shows the time */
+    .head .brand .full { display: none; }  /* the full name doesn't fit beside the timers */
+    .head .brand .short { display: inline; }
   }
   .head .sleep.on { color: var(--amber); }
   .head .sleep.warn { color: var(--warn); text-shadow: 0 0 6px #4fb4ff88; animation: blink 1s steps(1) infinite; }
@@ -144,12 +147,14 @@
   }
   .dial:active { cursor: grabbing; }
   .dial:focus-visible { box-shadow: 0 0 0 1px var(--amber-dim); }
+  /* Ring of glyphs, one per station, like characters on an alien instrument */
   .dial i {
-    position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px;
-    background: var(--amber-ghost);
+    position: absolute; left: 50%; top: 50%; width: 10px; height: 12px; margin: -6px -5px;
+    font: 12px/12px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace;
+    font-style: normal; text-align: center; color: #6e4c17; transition: color .15s;
   }
-  .dial i.lit { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
-  .dial i.near { background: var(--amber-dim); }
+  .dial i.lit { color: var(--amber); text-shadow: 0 0 6px var(--amber), 0 0 1px var(--amber); }
+  .dial i.near { color: var(--amber-dim); }
   .dial-read {
     position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
     font-family: var(--dot); pointer-events: none;
@@ -440,7 +445,7 @@
     .top { grid-area: keys; }
     .out { grid-area: out; }
     .dial-wrap { grid-area: dial; }
-    .dial { max-width: 150px; }
+    .dial { max-width: 176px; --ring: 82px; }  /* room for a glyph per station */
     .vol { grid-area: vol; align-self: end; }
     .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
     .vis { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); align-content: stretch; }
@@ -459,7 +464,7 @@
 
 <main class="unit cham" aria-label="Radio controls">
   <div class="head">
-    <span class="brand">PI RADIO</span>
+    <span class="brand"><span class="full">PER ANNUM SOUND</span><span class="short" aria-hidden="true">P·A·S</span></span>
     <span class="sig" id="sig"></span>
     <span class="clock ghost" id="clock" data-ghost="88:88"></span>
     <span id="status">--</span>
@@ -801,18 +806,44 @@ async function ditherArt(url, name) {
     if (hi > lo) for (let i = 0; i < N * N; i++) gray[i] = Math.min(255, Math.max(0, (gray[i] - lo) * 255 / (hi - lo)));
     return (artCache[key] = halftoneCanvas(gray).toDataURL());
   }
-  // Station name in block letters, for stations with no usable art.
   if (document.fonts) await document.fonts.ready;
-  const out = document.createElement("canvas");
-  out.width = out.height = ART_OUT;
-  const o = out.getContext("2d"), s = ART_OUT / N;
-  o.fillStyle = "#ffb02e"; o.strokeStyle = "#ffb02e"; o.lineWidth = s;
-  o.strokeRect(2.5 * s, 2.5 * s, (N - 5) * s, (N - 5) * s);
-  o.font = `${26 * s}px VT323, monospace`; o.textAlign = "center"; o.textBaseline = "middle";
+  return (artCache[key] = placeholderArt(name).toDataURL());
+}
+
+/* Art for stations with none: ripples from two or three points meeting, seeded by the station's
+   name so each one keeps its own pattern, drawn as a dim halftone. The name sits on a dark band
+   in dot-matrix letters, one lit dot per pixel of the type. Mirrors art.placeholder(). */
+function placeholderArt(name) {
+  const N = ART_N, gray = new Float32Array(N * N);
+  let seed = 2166136261;
+  for (const ch of name) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
+  const rnd = () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507); seed = Math.imul(seed ^ (seed >>> 13), 3266489909); return ((seed ^= seed >>> 16) >>> 0) / 4294967296; };
+  const srcs = Array.from({ length: 2 + Math.floor(rnd() * 2) }, () => [rnd() * N, rnd() * N, 4 + rnd() * 7]);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    let v = 0;
+    for (const [sx, sy, wl] of srcs) v += Math.sin(Math.hypot(x - sx, y - sy) / wl);
+    gray[y * N + x] = Math.pow(.5 + .5 * v / srcs.length, 1.6) * 150;  // dim, so the name reads
+  }
+  const out = halftoneCanvas(gray), o = out.getContext("2d"), k = ART_OUT / N;
+  // Type the name at the screen's own resolution, then redraw each lit pixel as a dot
+  const t = document.createElement("canvas");
+  t.width = t.height = N;
+  const tg = t.getContext("2d", { willReadFrequently: true });
+  tg.font = "22px VT323, monospace"; tg.textAlign = "center"; tg.textBaseline = "middle"; tg.fillStyle = "#fff";
   const words = name.toUpperCase().split(" ");
   const lines = words.length <= 3 ? words : [words.slice(0, 2).join(" "), words.slice(2).join(" ")];
-  lines.forEach((l, i) => o.fillText(l, ART_OUT / 2, ART_OUT / 2 + (i - (lines.length - 1) / 2) * 26 * s));
-  return (artCache[key] = out.toDataURL());
+  const lh = 20, top = N / 2 - (lines.length * lh) / 2;
+  lines.forEach((l, i) => tg.fillText(l, N / 2, top + lh * (i + .5)));
+  o.clearRect(0, (top - 6) * k, ART_OUT, (lines.length * lh + 12) * k);
+  o.fillStyle = "#9c6c22";
+  for (let x = 2; x < N; x += 3) { o.fillRect(x * k, (top - 6) * k, k * .9, k * .9); o.fillRect(x * k, (top + lines.length * lh + 5) * k, k * .9, k * .9); }
+  const px = tg.getImageData(0, 0, N, N).data;
+  o.fillStyle = "#ffb02e";
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (px[(y * N + x) * 4 + 3] < 110) continue;
+    o.beginPath(); o.arc((x + .5) * k, (y + .5) * k, k * .46, 0, Math.PI * 2); o.fill();
+  }
+  return out;
 }
 function setArt(img, s) {
   if (!STATIC) { img.src = s.art; return; }
@@ -927,7 +958,7 @@ if ("mediaSession" in navigator) {
 function mediaMeta(s) {
   if (!("mediaSession" in navigator) || s.player !== "phone") return;
   navigator.mediaSession.metadata = new MediaMetadata({
-    title: s.now.title || s.station.name, artist: s.station.name, album: "Pi Radio",
+    title: s.now.title || s.station.name, artist: s.station.name, album: "Per Annum Sound",
     artwork: STATIC ? (s.artSrc ? [{ src: s.artSrc, sizes: "400x400" }] : [])
       : [{ src: new URL(s.art, location.href).href, sizes: "128x128", type: "image/png" }],
   });
@@ -1069,8 +1100,8 @@ function render(s) {
 }
 
 /* Station board: collapsible groups (open state kept on this device), rows numbered in dial order. */
-const GROUP_COL = { "NTS Live": "colA", "Infinite Mixtapes": "colA", "Worldwide FM": "colB" };  // the rest: colC
-const openGroups = store.get("piRadioOpen", { "NTS Live": true, "Worldwide FM": true });
+const GROUP_COL = { "NTS Live": "colA", "Infinite Mixtapes": "colA", "Terrascan FM": "colB" };  // the rest: colC
+const openGroups = store.get("piRadioOpen", { "NTS Live": true, "Terrascan FM": true });
 function stationGroup(g, startN) {
   const sec = document.createElement("section");
   sec.className = "group" + (openGroups[g.name] ? " open" : "");
@@ -1115,10 +1146,12 @@ async function build() {
   $("listCount").textContent = pad(order.length);
 
   // One square per station around the dial, like an LED ring.
+  const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"];
   order.forEach((_, i) => {
     const d = document.createElement("i");
     const a = (i / order.length) * 360 - 90;
-    d.style.transform = `rotate(${a}deg) translateX(min(72px, 21vw)) rotate(${-a}deg)`;
+    d.style.transform = `rotate(${a}deg) translateX(var(--ring, min(72px, 21vw))) rotate(${-a}deg)`;
+    d.textContent = DIAL_GLYPHS[i % DIAL_GLYPHS.length];
     $("dial").appendChild(d);
   });
   for (let i = 0; i < 20; i++) $("bar").insertBefore(document.createElement("i"), $("vol"));
@@ -1405,10 +1438,11 @@ const RANGES = {
 const CITY_CODE = { London: "LON", Bristol: "BRS", Paris: "PAR", Brussels: "BRU", Berlin: "BER", Bethlehem: "BTH",
                     "New York": "NYC", "Los Angeles": "LAX", Seattle: "SEA", Bologna: "BLQ", Sydney: "SYD",
                     "Kent, Ohio": "KNT", Accra: "ACC", Hanoi: "HAN", Bangkok: "BKK", Tbilisi: "TBS",
-                    Santiago: "SCL", Athens: "ATH", Munich: "MUC", Milan: "MIL" };
+                    Santiago: "SCL", Athens: "ATH", Munich: "MUC", Milan: "MIL", "North Pole": "NPL",
+                    "North Pacific": "NPC", "Mid-Pacific": "MPC", "Point Nemo": "NMO" };
 const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
-// The world range drifts east (content moving right) until the pointer is over the map.
+// The world range drifts slowly (content moving left) until the pointer is over the map.
 let mapPan = 0, mapHover = false, mapT = 0;
 const PAN_DEG_PER_S = 1.5;
 function decodeLand() {
@@ -1455,8 +1489,8 @@ function mapBaseLayer(c, w, h, dpr) {
     const lon = r.lon0 + x / w * (r.lon1 - r.lon0), lat = r.lat0 - y / h * (r.lat0 - r.lat1);
     const step = (r.lon1 - r.lon0) / cols;
     const onGrid = Math.abs(((lon % r.grid) + r.grid) % r.grid) < step || Math.abs(((lat % r.grid) + r.grid) % r.grid) < step * h / w * 2.4;
-    if (isLand(lat, lon)) { g.fillStyle = "#5c3e10"; g.fillRect(x - 1.5, y - 1.5, 3, 3); }
-    else if (onGrid) { g.fillStyle = "#2a1d0a"; g.fillRect(x - .5, y - .5, 1.5, 1.5); }
+    if (isLand(lat, lon)) { g.fillStyle = "#86601f"; g.fillRect(x - 1.5, y - 1.5, 3, 3); }
+    else if (onGrid) { g.fillStyle = "#3a2a10"; g.fillRect(x - .5, y - .5, 1.5, 1.5); }
   }
   mapBase = { key, canvas: off };
   return off;
@@ -1468,13 +1502,14 @@ function drawMap(t) {
   if (!w || !h) return;
   if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   const g = c.getContext("2d"), r = RANGES[mapRange];
-  if (mapRange === "world" && !mapHover && !reduceMotion && mapT) mapPan = (mapPan + (t - mapT) / 1000 * PAN_DEG_PER_S) % 360;
+  if (mapRange === "world" && !mapHover && !reduceMotion && mapT)
+    mapPan = (mapPan - Math.min(100, t - mapT) / 1000 * PAN_DEG_PER_S) % 360;  // content drifts left; long gaps don't jump
   mapT = t;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
   const base = mapBaseLayer(c, w, h, dpr);
   if (mapRange === "world") {  // two copies side by side so the world wraps
-    const off = Math.round(mapPan / 360 * w * dpr);
+    const off = (((mapPan / 360) % 1) + 1) % 1 * c.width;  // fractional, so the drift is smooth
     g.drawImage(base, off, 0);
     g.drawImage(base, off - c.width, 0);
   } else g.drawImage(base, 0, 0);
@@ -1500,7 +1535,11 @@ function drawMap(t) {
 
   // Cities, clustered where they'd overlap at this range
   const cur = selectedId(), playing = S && S.playing;
-  const pts = CITIES.map(ci => ({ ci, p: project(r, ci.lat, ci.lon, w, h) }))
+  const pts = CITIES.map(ci => {
+      const p = project(r, ci.lat, ci.lon, w, h);
+      if (mapRange === "world") p[1] = Math.max(6, Math.min(h - 6, p[1]));
+      return { ci, p };
+    })
     .filter(o => o.p[0] >= -4 && o.p[0] <= w + 4 && o.p[1] >= -4 && o.p[1] <= h + 4)
     .sort((a, b) => b.ci.ids.length - a.ci.ids.length);
   const clusters = [];
@@ -1620,8 +1659,8 @@ function downloadReminder(ch, show) {
   const when = d => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const txt = v => String(v || "").replace(/\\/g, "\\\\").replace(/([,;])/g, "\\$1").replace(/\n/g, "\\n");
   const end = show.end || new Date(new Date(show.start).getTime() + 3600e3).toISOString();
-  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Pi Radio//EN", "BEGIN:VEVENT",
-    `UID:${when(show.start)}-${ch.replace(/\W/g, "")}@pi-radio`, `DTSTAMP:${when(Date.now())}`,
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Per Annum Sound//EN", "BEGIN:VEVENT",
+    `UID:${when(show.start)}-${ch.replace(/\W/g, "")}@per-annum-sound`, `DTSTAMP:${when(Date.now())}`,
     `DTSTART:${when(show.start)}`, `DTEND:${when(end)}`, `SUMMARY:${txt(ch + ": " + show.title)}`,
     `DESCRIPTION:${txt((show.description || "").slice(0, 400))}`, "URL:https://www.nts.live",
     "BEGIN:VALARM", "TRIGGER:-PT5M", "ACTION:DISPLAY", `DESCRIPTION:${txt(show.title + " on " + ch)}`, "END:VALARM",

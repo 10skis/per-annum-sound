@@ -1,4 +1,6 @@
-# Pi Radio: Scope
+# Per Annum Sound: Scope
+
+Per Annum Sound is the product name (renamed from Pi Radio on 2026-11-02); the project folder stays `pi-radio`.
 
 A DIY take on the Atonemo NTS Radio Player ($179). It's a dedicated box on the Edifier speakers that plays NTS and other internet radio when you switch it on, with no phone required. AirPlay covers Apple Music and podcasts. An iPhone/Mac web app is a second remote for the same box.
 

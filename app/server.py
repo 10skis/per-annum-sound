@@ -1,4 +1,4 @@
-"""Pi Radio control service. One source of truth for what's playing; the web app and,
+"""Per Annum Sound control service (the Pi Radio project). One source of truth for what's playing; the web app and,
 later, the physical controls both drive it through these endpoints.
 
 Run:  .venv/bin/uvicorn server:app --host 0.0.0.0 --port 8080
@@ -148,7 +148,7 @@ def _log_history():
 threading.Thread(target=_log_history, daemon=True).start()
 
 
-app = FastAPI(title="Pi Radio")
+app = FastAPI(title="Per Annum Sound")
 
 
 @app.get("/api/stations")

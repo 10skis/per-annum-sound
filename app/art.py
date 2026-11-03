@@ -11,10 +11,12 @@ size=512 is for the web app (anti-aliased dots). size=128 is for the device's 1-
 import io
 import logging
 import math
+import zlib
 from collections import OrderedDict
 from typing import Optional
 
 import httpx
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 log = logging.getLogger("pi-radio")
@@ -105,17 +107,36 @@ def dither(url: str, style: str = "halftone", size: int = 512) -> Optional[bytes
 
 
 def placeholder(name: str, size: int = 512) -> bytes:
-    """Station name in block letters, for stations with no art."""
-    img = Image.new("L", (N, N), 0)
-    d = ImageDraw.Draw(img)
+    """Art for stations with none: ripples from two or three points meeting, seeded by the name,
+    as a dim halftone, with the name in dot-matrix letters on a dark band. Mirrors the page's
+    placeholderArt()."""
+    rng = np.random.default_rng(zlib.crc32(name.encode()))
+    yy, xx = np.mgrid[0:N, 0:N]
+    srcs = [(rng.random() * N, rng.random() * N, 4 + rng.random() * 7) for _ in range(2 + int(rng.random() * 2))]
+    v = sum(np.sin(np.hypot(xx - sx, yy - sy) / wl) for sx, sy, wl in srcs) / len(srcs)
+    gray = Image.fromarray(((.5 + .5 * v) ** 1.6 * 150).astype("uint8"), "L")
+    mask = halftone(gray, size)
+    k = size / N
+    d = ImageDraw.Draw(mask)
     words = name.upper().split()
-    font = ImageFont.load_default(size=22)
     lines = words if len(words) <= 3 else [" ".join(words[:2]), " ".join(words[2:])]
-    h = 26 * len(lines)
-    y = (N - h) // 2
-    for line in lines:
-        w = d.textlength(line, font=font)
-        d.text(((N - w) / 2, y), line, fill=255, font=font)
-        y += 26
-    d.rectangle([2, 2, N - 3, N - 3], outline=255)
-    return _to_png(img.resize((size, size), Image.NEAREST))
+    lh, top = 20, N / 2 - len(lines) * 20 / 2
+    d.rectangle([0, (top - 6) * k, size, (top + len(lines) * lh + 6) * k], fill=0)
+    for x in range(2, N, 3):
+        for yb in (top - 6, top + len(lines) * lh + 5):
+            d.rectangle([x * k, yb * k, (x + .9) * k, (yb + .9) * k], fill=150)
+    # Type the name at 128px, then draw each lit pixel as a dot
+    t = Image.new("L", (N, N), 0)
+    td = ImageDraw.Draw(t)
+    font = ImageFont.load_default(size=18)
+    for i, line in enumerate(lines):
+        w = td.textlength(line, font=font)
+        td.text(((N - w) / 2, top + lh * i + 1), line, fill=255, font=font)
+    px = t.load()
+    r = k * .46
+    for y in range(N):
+        for x in range(N):
+            if px[x, y] > 110:
+                cx, cy = (x + .5) * k, (y + .5) * k
+                d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+    return _to_png(mask)

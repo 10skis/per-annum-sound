@@ -1,6 +1,6 @@
-# Pi Radio app
+# Per Annum Sound app
 
-Control service and web app for Pi Radio. See `../SCOPE.md` for the full design.
+Control service and web app for Per Annum Sound (the Pi Radio project; renamed 2026-11-02). See `../SCOPE.md` for the full design.
 
 | File | What it does |
 |---|---|

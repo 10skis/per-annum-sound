@@ -1,4 +1,4 @@
-# Pi Radio: Version Control
+# Per Annum Sound: Version Control
 
 **Status:** Active
 **Started:** 2026-11-02
@@ -6,13 +6,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.17: Web app with 52 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.18: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.18 | 2026-11-02 | Renamed Per Annum Sound, smoother map drift, glyph dial, dot-matrix no-art design, Terrascan FM with Worldwide FM | [link](updates/2026-11-02-per-annum-sound.md) |
 | v0.17 | 2026-11-02 | Collapsible board, recent ticker, art shimmer, visualizer modes, map drift, 19 new stations | [link](updates/2026-11-02-board-and-motion.md) |
 | v0.16 | 2026-11-02 | Console look, nav map, waterfall, track info, reminders, offline, help panel | [link](updates/2026-11-02-console.md) |
 | v0.15 | 2026-11-02 | Presets 1-6, sleep timer, keyboard shortcuts | [link](updates/2026-11-02-presets-sleep-keys.md) |

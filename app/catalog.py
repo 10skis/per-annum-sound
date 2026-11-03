@@ -12,7 +12,7 @@ def load(path: Path) -> dict:
     for g in data["groups"]:
         for st in g["stations"]:
             st.setdefault("place", g.get("place", ""))
-            p = places.get(st["place"])
+            p = st.get("map") or places.get(st["place"])
             if p:
                 st["geo"] = [p[0], p[1]]
                 st["city"] = p[2] if len(p) > 2 else st["place"]
