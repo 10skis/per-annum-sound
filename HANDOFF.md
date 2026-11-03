@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.47 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.48 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.47 |
+| Version | v0.48 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.47 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.48 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
