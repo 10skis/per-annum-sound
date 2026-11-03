@@ -159,7 +159,7 @@ def stations():
         if s["kind"] == "radio":
             return " · ".join(x for x in (s.get("genre"), s.get("place")) if x)
         return ""  # NTS live: the page fills this from the schedule
-    keep = ("id", "name", "url", "kind", "place", "geo", "city", "info", "tz", "group", "genre", "about",
+    keep = ("id", "name", "url", "kind", "place", "geo", "city", "info", "tz", "group", "genre", "about", "art",
             "profile", "founded", "notable", "site")
     return [{"name": g["name"], "stations": [{**{k: s[k] for k in keep if k in s}, "sub": sub(s)}
                                              for s in g["stations"]]}
@@ -262,7 +262,7 @@ def station_art(sid: str):
     style = "logo" if station["kind"] == "radio" else "halftone"  # radio stations' art is their logo
     city = station.get("city") or station.get("place") or ""
     png = (art.dither(url, style) if url else None) or art.placeholder(
-        station["name"], num=STATIONS.index(station) + 1, code="".join(ch for ch in city if ch.isalpha())[:3].upper())
+        station["name"], city=city, code="".join(ch for ch in city if ch.isalpha())[:3].upper())
     return Response(png, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 

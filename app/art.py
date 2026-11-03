@@ -106,9 +106,9 @@ def dither(url: str, style: str = "halftone", size: int = 512) -> Optional[bytes
     return png
 
 
-def placeholder(name: str, size: int = 512, num: Optional[int] = None, code: str = "") -> bytes:
+def placeholder(name: str, size: int = 512, city: str = "", code: str = "") -> bytes:
     """Art for stations with none: a sigil. Rings of dotted grooves like a record, each ring's arcs
-    switched on or off by the station's name; the station number and city code in the middle.
+    switched on or off by the station's name; the city code and city name in the middle.
     Mirrors the page's placeholderArt() (same layout, its own random sequence)."""
     rng = np.random.default_rng(zlib.crc32(name.encode()))
     ss = 2                                   # draw at 2x and scale down for smooth dots
@@ -129,11 +129,11 @@ def placeholder(name: str, size: int = 512, num: Optional[int] = None, code: str
             r = (3 if on else 2) * S
             x, y = cx + math.cos(a) * rad, cy + math.sin(a) * rad
             d.ellipse([x - r, y - r, x + r, y + r], fill=255 if on else 60)
-    if num is not None:
-        font = ImageFont.load_default(size=round(56 * S))
-        t = f"{num:02d}"
-        d.text((cx - d.textlength(t, font=font) / 2, cy - 40 * S), t, fill=255, font=font)
     if code:
-        font = ImageFont.load_default(size=round(18 * S))
-        d.text((cx - d.textlength(code, font=font) / 2, cy + 22 * S), code, fill=150, font=font)
+        font = ImageFont.load_default(size=round(46 * S))
+        d.text((cx - d.textlength(code, font=font) / 2, cy - 34 * S), code, fill=255, font=font)
+    if city:
+        font = ImageFont.load_default(size=round(15 * S))
+        t = city.upper()
+        d.text((cx - d.textlength(t, font=font) / 2, cy + 20 * S), t, fill=150, font=font)
     return _to_png(out.resize((size, size), Image.LANCZOS))

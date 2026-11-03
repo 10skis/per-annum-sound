@@ -444,6 +444,10 @@
   }
   @keyframes sweep { 0% { background-position: 100% 0; opacity: 1; } 100% { background-position: 0 0; opacity: 1; } }
 
+  .sigil { position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px); contain: size;
+           filter: drop-shadow(0 0 2px #ffb02e66); }
+  .off .sigil { opacity: .2; }
+
   /* VFD digits: an unlit 8 behind every lit numeral */
   .ghost { position: relative; isolation: isolate; }
   .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; text-shadow: none; z-index: -1; }
@@ -583,11 +587,12 @@
       <span class="tab" aria-hidden="true"><b>01</b>Art</span>
       <span class="shimmer" id="shimmer" aria-hidden="true"></span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+      <canvas id="sigil" class="sigil" hidden aria-hidden="true"></canvas>
     </div>
     <div class="screen lvl cham">
       <span class="tab" aria-hidden="true"><b>05</b>Level</span>
-      <div class="vis-head"><span class="label">Signal level · last 30 s</span><span class="label">L / R</span></div>
-      <canvas id="lvl" aria-hidden="true"></canvas>
+      <div class="vis-head"><button class="label vis-name" id="lvlName">Trace</button><span class="vis-idx" id="lvlIdx"></span></div>
+      <canvas id="lvl" title="Click for the next display" aria-hidden="true" style="cursor:pointer"></canvas>
     </div>
     </div>
     <div class="dial-wrap">
@@ -917,34 +922,82 @@ async function ditherArt(url, name) {
 }
 
 /* Art for stations with none: a sigil. Rings of dotted grooves like a record, each ring's arcs
-   switched on or off by the station's name, so every station gets its own mark; the station
-   number and city code sit in the middle. Unlit dots stay faintly visible. Mirrors art.placeholder(). */
-function placeholderArt(name) {
-  const c = document.createElement("canvas");
-  c.width = c.height = ART_OUT;
-  const g = c.getContext("2d"), cx = ART_OUT / 2, cy = ART_OUT / 2, S = ART_OUT / 440;
+   switched on or off by the station's name so every station gets its own mark, with the station's
+   city code and city in the middle (the number is already on the dial). In the page it's drawn
+   live: while playing, each ring turns at its own speed, alternating direction, and the shimmer's
+   ripples and sweeps run through the dots. placeholderArt() is the still version (lock screen,
+   and the image the shimmer masks); art.placeholder() is the server's. */
+function sigilModel(name) {
   let seed = 2166136261;
   for (const ch of name) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
   const rnd = () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507); seed = Math.imul(seed ^ (seed >>> 13), 3266489909); return ((seed ^= seed >>> 16) >>> 0) / 4294967296; };
+  const rings = [];
   for (let ring = 0; ring < 11; ring++) {
-    const rad = (60 + ring * 15) * S, segs = 6 + Math.floor(rnd() * 8), dots = Math.floor(rad * Math.PI * 2 / (9 * S));
-    const pattern = Array.from({ length: segs }, () => rnd() > .38), rot = rnd() * Math.PI * 2;
-    for (let d = 0; d < dots; d++) {
-      const a = rot + d / dots * Math.PI * 2, on = pattern[Math.floor(d / dots * segs)];
-      g.fillStyle = on ? (ring % 4 === 0 ? "#ffd27a" : "#ffb02e") : "#3a2a10";
-      g.beginPath(); g.arc(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, (on ? 3 : 2) * S, 0, Math.PI * 2); g.fill();
-    }
+    const segs = 6 + Math.floor(rnd() * 8), pattern = Array.from({ length: segs }, () => rnd() > .38), rot = rnd() * Math.PI * 2;
+    rings.push({ ring, segs, pattern, rot, speed: (ring % 2 ? -1 : 1) * (.04 + rnd() * .1) });  // radians a second
   }
   const id = order.find(i => NAMES[i] === name), st = STN[id] || {};
   const city = st.city || st.place || "";
-  const code = CITY_CODE[city] || city.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase();
+  return { rings, city, code: CITY_CODE[city] || city.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() };
+}
+function drawSigilOn(g, size, m, fx) {
+  const S = size / 440, cx = size / 2, cy = size / 2;
+  for (const r of m.rings) {
+    const rad = (60 + r.ring * 15) * S, dots = Math.floor(rad * Math.PI * 2 / (9 * S));
+    for (let d = 0; d < dots; d++) {
+      const a = r.rot + d / dots * Math.PI * 2, on = r.pattern[Math.floor(d / dots * r.segs)];
+      const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad;
+      let col = on ? (r.ring % 4 === 0 ? "#ffd27a" : "#ffb02e") : "#3a2a10";
+      if (fx && fx(x / size, y / size) && on) col = "#fff4dc";
+      else if (fx && fx(x / size, y / size)) col = "#7a5419";
+      g.fillStyle = col;
+      g.beginPath(); g.arc(x, y, (on ? 3 : 2) * S, 0, Math.PI * 2); g.fill();
+    }
+  }
   g.textAlign = "center"; g.textBaseline = "middle";
-  g.fillStyle = "#ffb02e"; g.font = `${Math.round(64 * S)}px "VT323", monospace`;
-  if (id) g.fillText(pad(order.indexOf(id) + 1), cx, cy - 4 * S);
-  g.fillStyle = "#9c6c22"; g.font = `${Math.round(20 * S)}px "VT323", monospace`;
-  g.fillText(code, cx, cy + 30 * S);
+  g.fillStyle = "#ffb02e"; g.font = `${Math.round(54 * S)}px "VT323", monospace`;
+  g.fillText(m.code, cx, cy - 8 * S);
+  g.fillStyle = "#9c6c22"; g.font = `${Math.round(17 * S)}px "VT323", monospace`;
+  g.fillText(m.city.toUpperCase(), cx, cy + 26 * S);
+}
+function placeholderArt(name) {
+  const c = document.createElement("canvas");
+  c.width = c.height = ART_OUT;
+  drawSigilOn(c.getContext("2d"), ART_OUT, sigilModel(name), null);
   return c;
 }
+// Live sigil for the art screen
+let sigil = null;  // { id, model, t }
+function useSigil(id) {
+  const st = STN[id] || {};
+  const want = st.kind === "radio" && !st.art;  // radio stations with no logo
+  $("sigil").hidden = !want;
+  $("art").style.visibility = want ? "hidden" : "";
+  if (!want) { sigil = null; return; }
+  if (!sigil || sigil.id !== id) sigil = { id, model: sigilModel(st.name), t: 0 };
+}
+let sigilFx = null;  // { kind, t0, x, y } set by the shimmer
+function drawSigil(t) {
+  if (!sigil) return;
+  const c = $("sigil"), fit = fitCanvas(c);
+  if (!fit) return;
+  const [g, w] = fit, dt = Math.min(100, t - (sigil.t || t)) / 1000;
+  sigil.t = t;
+  if (S && S.playing && !reduceMotion) for (const r of sigil.model.rings) r.rot += r.speed * dt;
+  let fx = null;
+  if (sigilFx) {
+    const age = (t - sigilFx.t0) / 1000;
+    if (sigilFx.kind === "ripple" && age < 2.4) {
+      const rad = age / 2.4 * 1.6, band = .12;
+      fx = (x, y) => { const d = Math.hypot(x - sigilFx.x, y - sigilFx.y); return d < rad && d > rad - band; };
+    } else if (sigilFx.kind === "sweep" && age < 1.9) {
+      const pos = -0.4 + age / 1.9 * 1.8;
+      fx = (x, y) => Math.abs((x + y * .36) - pos) < .07;
+    } else sigilFx = null;
+  }
+  drawSigilOn(g, w, sigil.model, fx);
+}
+
 function setArt(img, s) {
   if (!STATIC) { img.src = s.art; return; }
   const key = s.art;
@@ -1221,6 +1274,7 @@ function render(s) {
   drawNext();
   drawSignal(s.signal, on);
 
+  useSigil(id);
   const img = $("art");
   if (img.dataset.src !== s.art) { img.dataset.src = s.art; setArt(img, s); }
 
@@ -1945,7 +1999,10 @@ function shimmerSoon() {
       el.style.setProperty("--rx", Math.round(15 + Math.random() * 70) + "%");
       el.style.setProperty("--ry", Math.round(15 + Math.random() * 70) + "%");
       void el.offsetWidth;  // restart the animation
-      el.classList.add(ripple ? "ripple" : "sweep");
+      if (!sigil) el.classList.add(ripple ? "ripple" : "sweep");  // the CSS version masks a still image
+      // The live sigil draws the same effect through its own dots
+      sigilFx = { kind: ripple ? "ripple" : "sweep", t0: performance.now(),
+                  x: parseFloat(el.style.getPropertyValue("--rx")) / 100, y: parseFloat(el.style.getPropertyValue("--ry")) / 100 };
     }
     shimmerSoon();
   }, 3000 + Math.random() * 5000);  // every 3 to 8 seconds
@@ -1988,27 +2045,86 @@ window.addEventListener("offline", offlineNote);
 window.addEventListener("online", () => { setNote(""); poll(); loadSchedule(); });
 if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
-/* Level strip under the art: left (low bands) and right (high bands) level over the last ~30 s,
-   newest on the right, as two dotted traces on a dB scale. Rests on NO CARRIER when stopped. */
-let lvlHist = [], lvlLast = 0;
+/* 05 LEVEL: click the screen or its label for the next display. Trace: the last ~30 s of left
+   and right level as dotted lines. Meter: two LED bargraphs with peak hold. Needle: one analog VU.
+   Goniometer: the stereo image as a cloud of dots. Loudness: a rolling bar per quarter second.
+   Left = low bands, right = high bands (MPD's real levels when there, otherwise the simulation). */
+const LEVEL_MODES = ["Trace", "Meter", "Needle", "Goniometer", "Loudness"];
+let lvlMode = store.get("piRadioLevelMode", 0), lvlHist = [], lvlLast = 0, lvlPeak = [0, 0], lvlNeedle = 0, loudHist = [], loudLast = 0;
+function cycleLevel() {
+  lvlMode = (lvlMode + 1) % LEVEL_MODES.length;
+  store.set("piRadioLevelMode", lvlMode);
+  drawLevelLabel();
+}
+function drawLevelLabel() {
+  $("lvlName").textContent = LEVEL_MODES[lvlMode];
+  $("lvlIdx").textContent = `${lvlMode + 1}/${LEVEL_MODES.length}`;
+}
+["lvl", "lvlName"].forEach(x => $(x).addEventListener("click", cycleLevel));
 function drawLevel(t) {
   const c = $("lvl");
   if (!c || !c.clientWidth) return;
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
-  if (t - lvlLast > 100) { lvlLast = t; lvlHist.push([avg(visLevels.slice(0, 12)), avg(visLevels.slice(12))]); if (lvlHist.length > 300) lvlHist.shift(); }
+  const L = Math.min(1, avg(visLevels.slice(0, 12)) * 1.2), R = Math.min(1, avg(visLevels.slice(12)) * 1.6);
+  if (t - lvlLast > 100) { lvlLast = t; lvlHist.push([L, R]); if (lvlHist.length > 300) lvlHist.shift(); }
+  if (t - loudLast > 250) { loudLast = t; loudHist.push((L + R) / 2); if (loudHist.length > 120) loudHist.shift(); }
   const fit = fitCanvas(c);
   if (!fit) return;
   const [g, w, h] = fit;
   if (!(S && S.playing) && Math.max(...visLevels) < .02) return drawIdle(g, w, h);
-  g.fillStyle = "#241907";
-  [.25, .5, .75].forEach(f => { for (let x = 0; x < w; x += 6) g.fillRect(x, Math.round(h * f), 2, 1); });
-  g.font = "13px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.textBaseline = "alphabetic";
-  ["0 dB", "-12", "-24"].forEach((l, i) => g.fillText(l, 2, h * (.25 + i * .25) - 3));
-  const n = Math.min(lvlHist.length, Math.floor(w / 3));
-  for (let i = 0; i < n; i++) {
-    const [l, r] = lvlHist[lvlHist.length - n + i], x = w - (n - i) * 3;
-    g.fillStyle = "#ffb02e"; g.fillRect(x, (1 - Math.min(1, l * 1.2)) * (h - 10) + 2, 2, 2);
-    g.fillStyle = "#c4841f"; g.fillRect(x, (1 - Math.min(1, r * 1.6)) * (h - 10) + 6, 2, 2);
+  g.font = "13px VT323, monospace"; g.textAlign = "left"; g.textBaseline = "alphabetic";
+  const mode = LEVEL_MODES[lvlMode];
+  if (mode === "Trace") {
+    g.fillStyle = "#241907";
+    [.25, .5, .75].forEach(f => { for (let x = 0; x < w; x += 6) g.fillRect(x, Math.round(h * f), 2, 1); });
+    g.fillStyle = "#9c6c22";
+    ["0 dB", "-12", "-24"].forEach((l, i) => g.fillText(l, 2, h * (.25 + i * .25) - 3));
+    const n = Math.min(lvlHist.length, Math.floor(w / 3));
+    for (let i = 0; i < n; i++) {
+      const [l, r] = lvlHist[lvlHist.length - n + i], x = w - (n - i) * 3;
+      g.fillStyle = "#ffb02e"; g.fillRect(x, (1 - l) * (h - 10) + 2, 2, 2);
+      g.fillStyle = "#c4841f"; g.fillRect(x, (1 - r) * (h - 10) + 6, 2, 2);
+    }
+  } else if (mode === "Meter") {
+    const segs = 30, gap = 3, bh = Math.min(22, (h - 40) / 2), sw = (w - 30 - gap * (segs - 1)) / segs;
+    [L, R].forEach((v, k) => {
+      lvlPeak[k] = Math.max(v, lvlPeak[k] - .004);
+      const y = 8 + k * (bh + 14), lit = Math.round(v * segs), pk = Math.min(segs - 1, Math.round(lvlPeak[k] * segs));
+      g.fillStyle = "#9c6c22"; g.fillText(k ? "R" : "L", 2, y + bh - 4);
+      for (let i = 0; i < segs; i++) {
+        g.fillStyle = i === pk && pk > 0 ? "#ffd27a" : i < lit ? (i > segs * .8 ? "#ffd27a" : "#ffb02e") : "#241907";
+        g.fillRect(24 + i * (sw + gap), y, sw, bh);
+      }
+    });
+    g.fillStyle = "#9c6c22";
+    ["-40", "-20", "-10", "-3", "0"].forEach((l, i) => g.fillText(l, 24 + [0, .4, .6, .8, .94][i] * (w - 30), h - 4));
+  } else if (mode === "Needle") {
+    lvlNeedle += ((L + R) / 2 - lvlNeedle) * .15;  // needle ballistics
+    const cx = w / 2, R0 = Math.min(w * .45, h * .9), cy = h - 8;
+    for (let i = 0; i <= 30; i++) {
+      const f = i / 30, a = Math.PI + f * Math.PI, big = i % 5 === 0;
+      g.fillStyle = f > .8 ? "#ffd27a" : f <= lvlNeedle ? "#ffb02e" : "#3d2a0c";
+      g.fillRect(cx + Math.cos(a) * R0 - 1, cy + Math.sin(a) * R0 - 1, big ? 3 : 2, big ? 3 : 2);
+    }
+    const a = Math.PI + Math.min(1, lvlNeedle) * Math.PI;
+    g.fillStyle = "#ffb02e";
+    for (let r = R0 * .15; r < R0 * .95; r += 3) g.fillRect(cx + Math.cos(a) * r - 1, cy + Math.sin(a) * r - 1, 2, 2);
+    g.fillStyle = "#9c6c22"; g.textAlign = "center"; g.fillText("VU", cx, cy - R0 * .35);
+  } else if (mode === "Goniometer") {
+    const cx = w / 2, cy = h / 2, s = Math.min(w, h) * .45;
+    g.fillStyle = "#241907";
+    for (let i = -s; i <= s; i += 5) { g.fillRect(cx + i, cy - (s - Math.abs(i)), 2, 2); g.fillRect(cx + i, cy + (s - Math.abs(i)), 2, 2); }
+    for (let i = 0; i < 260; i++) {
+      const l = (Math.random() * 2 - 1) * L, r = (Math.random() * 2 - 1) * R * .8 + l * .5;
+      const x = cx + (l - r) * s * .7, y = cy - (l + r) * s * .5;
+      g.fillStyle = i % 4 ? "#c4841f" : "#ffb02e"; g.fillRect(x, y, 2, 2);
+    }
+  } else {  // Loudness
+    const bw = 4, n = Math.min(loudHist.length, Math.floor(w / bw));
+    for (let i = 0; i < n; i++) {
+      const v = loudHist[loudHist.length - n + i], x = w - (n - i) * bw, hh = v * (h - 8);
+      for (let y = h - 2; y > h - 2 - hh; y -= 4) { g.fillStyle = tier(.3 + (h - y) / h * .7); g.fillRect(x, y, bw - 1, 3); }
+    }
   }
 }
 
@@ -2115,6 +2231,26 @@ function closeAbout() { if (!$("about").hidden) { $("about").hidden = true; } }
 ["line1", "line2", "desc"].forEach(x => $(x).addEventListener("click", openAbout));
 $("aboutClose").addEventListener("click", closeAbout);
 $("about").addEventListener("click", e => { if (e.target === $("about")) closeAbout(); });
+
+/* Volume: two-finger sideways swipe over the bar changes it in steps of 5, like the tuner tape
+   (swiping left turns it up); the setting is sent once the swipe settles. */
+let volWheelAcc = 0, volWheelTimer = null;
+$("bar").addEventListener("wheel", e => {
+  if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || $("vol").disabled) return;
+  e.preventDefault();
+  volWheelAcc += e.deltaX;
+  let v = +$("vol").value;
+  while (Math.abs(volWheelAcc) >= 18) {
+    const dir = volWheelAcc > 0 ? 1 : -1;
+    volWheelAcc -= dir * 18;
+    v = Math.max(0, Math.min(100, v + dir * 5));
+  }
+  $("vol").value = v;
+  volDragging = true;
+  drawVolume(v);
+  clearTimeout(volWheelTimer);
+  volWheelTimer = setTimeout(async () => { volWheelAcc = 0; await act.volume(v); volDragging = false; }, 250);
+}, { passive: false });
 
 /* Volume: update the bar live, send after a short pause. */
 let volTimer;
@@ -2362,6 +2498,7 @@ async function visLoop(t) {
   drawVisScreen($("vis"), 0, t);
   drawVisScreen($("fall"), 1, t);
   drawLevel(t);
+  drawSigil(t);
   drawMap(t);
   requestAnimationFrame(visLoop);
 }
@@ -2378,6 +2515,7 @@ build().then(async () => {
   buildCities();
   setMapRange(mapRange);
   drawVisLabels();
+  drawLevelLabel();
   drawMapFoot();
   offlineNote();
   drawMode();
