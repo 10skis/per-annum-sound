@@ -1569,6 +1569,9 @@ const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
 // The world range drifts slowly (content moving left) until the pointer is over the map.
 let mapPan = 0, mapHover = false, mapT = 0, labelSpot = {}, labelP = {}, mapHoverKey = null;
+// Click-to-zoom: a click off the dots zooms in about that point; the next one zooms back out.
+const MAP_ZOOM = 1.9;
+let mapZ = { z: 1, target: 1, fx: 0, fy: 0 };
 const PAN_DEG_PER_S = 1.5;
 function decodeLand() {
   const W = window.WORLD;
@@ -1627,27 +1630,34 @@ function drawMap(t) {
   if (!w || !h) return;
   if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   const g = c.getContext("2d"), r = RANGES[mapRange];
-  if (mapRange === "world" && !mapHover && !reduceMotion && mapT)
+  if (mapRange === "world" && !mapHover && !reduceMotion && mapT && mapZ.target === 1 && mapZ.z < 1.01)
     mapPan = (mapPan - Math.min(100, t - mapT) / 1000 * PAN_DEG_PER_S) % 360;  // content drifts left; long gaps don't jump
   const mdt = mapT ? Math.min(100, t - mapT) / 1000 : 0;
   mapT = t;
+  mapZ.z += (mapZ.target - mapZ.z) * Math.min(1, mdt * 9);  // eased zoom
+  if (Math.abs(mapZ.target - mapZ.z) < .002) mapZ.z = mapZ.target;
+  const z = mapZ.z, zx = v => mapZ.fx + (v - mapZ.fx) * z, zy = v => mapZ.fy + (v - mapZ.fy) * z;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
   const base = mapBaseLayer(c, w, h, dpr);
+  g.setTransform(dpr * z, 0, 0, dpr * z, dpr * mapZ.fx * (1 - z), dpr * mapZ.fy * (1 - z));  // zoom about the focus point
   if (mapRange === "world") {  // two copies side by side so the world wraps
-    const off = (((mapPan / 360) % 1) + 1) % 1 * c.width;  // fractional, so the drift is smooth
-    g.drawImage(base, off, 0);
-    g.drawImage(base, off - c.width, 0);
-  } else g.drawImage(base, 0, 0);
+    const off = (((mapPan / 360) % 1) + 1) % 1 * w;  // fractional, so the drift is smooth
+    g.drawImage(base, off, 0, w, h);
+    g.drawImage(base, off - w, 0, w, h);
+  } else g.drawImage(base, 0, 0, w, h);
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   // Corner coordinates, like a plotter's frame (they follow the drift)
   const fmt = (v, pos, neg) => Math.abs(Math.round(v)) + (v >= 0 ? pos : neg);
   const wrap = v => ((v + 540) % 360) - 180;
-  const left = mapRange === "world" ? wrap(r.lon0 - mapPan) : r.lon0, right = mapRange === "world" ? wrap(r.lon1 - mapPan - .01) : r.lon1;
+  const unLon = x => r.lon0 + x / w * (r.lon1 - r.lon0) - (mapRange === "world" ? mapPan : 0);
+  const unLat = y => r.lat0 - y / h * (r.lat0 - r.lat1);
+  const left = wrap(unLon(mapZ.fx * (1 - 1 / z))), right = wrap(unLon(mapZ.fx + (w - mapZ.fx) / z) - .01);
+  const top = unLat(mapZ.fy * (1 - 1 / z)), bottom = unLat(mapZ.fy + (h - mapZ.fy) / z);
   g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.textBaseline = "top";
-  g.fillText(`${fmt(r.lat0, "N", "S")} ${fmt(left, "E", "W")}`, 2, 1);
+  g.fillText(`${fmt(top, "N", "S")} ${fmt(left, "E", "W")}${z > 1.01 ? `  ×${z.toFixed(1)}` : ""}`, 2, 1);
   g.textAlign = "right"; g.textBaseline = "bottom";
-  g.fillText(`${fmt(r.lat1, "N", "S")} ${fmt(right, "E", "W")}`, w - 2, h - 1);
+  g.fillText(`${fmt(bottom, "N", "S")} ${fmt(right, "E", "W")}`, w - 2, h - 1);
   g.textAlign = "left";
 
   // Sweep: a slow scan line with a fading wake
@@ -1664,6 +1674,7 @@ function drawMap(t) {
   const pts = CITIES.map(ci => {
       const p = project(r, ci.lat, ci.lon, w, h);
       if (mapRange === "world") p[1] = Math.max(6, Math.min(h - 6, p[1]));
+      p[0] = zx(p[0]); p[1] = zy(p[1]);
       return { ci, p };
     })
     .filter(o => o.p[0] >= -4 && o.p[0] <= w + 4 && o.p[1] >= -4 && o.p[1] <= h + 4)
@@ -1677,7 +1688,7 @@ function drawMap(t) {
   mapHits = clusters;
   // Markers first, labels on top. A city shows just its dot until the pointer is over it (or it's
   // selected); then its label wipes out from the dot, and wipes back when the pointer leaves.
-  const MARK = "#ffe23d", MARK_HOT = "#fff59a";
+  const MARK = "#e8c43a", MARK_HOT = "#ffe56e";
   for (const k of clusters) {
     k.ids = k.cities.flatMap(ci => ci.ids);
     k.key = k.cities[0].name;
@@ -1686,11 +1697,11 @@ function drawMap(t) {
     const x = k.x, y = k.y;  // not rounded: markers glide with the drifting dots
     if (k.live && !reduceMotion) {
       const ph = (t % 1600) / 1600, rad = 5 + ph * 12;
-      g.strokeStyle = `rgba(255,226,61,${(1 - ph) * .9})`; g.lineWidth = 1;
+      g.strokeStyle = `rgba(232,196,58,${(1 - ph) * .85})`; g.lineWidth = 1;
       g.strokeRect(x - rad, y - rad, rad * 2, rad * 2);
     }
     g.fillStyle = k.live || k.sel || k.key === mapHoverKey ? MARK_HOT : MARK;
-    g.shadowColor = "#ffd400"; g.shadowBlur = k.live ? 14 : 7;
+    g.shadowColor = "#d9b000"; g.shadowBlur = k.live ? 10 : 4;
     g.fillRect(x - 3.5, y - 3.5, 8, 8);
     g.shadowBlur = 0;
   }
@@ -1722,6 +1733,7 @@ function drawMap(t) {
 }
 function setMapRange(rng) {
   mapRange = rng;
+  mapZ = { z: 1, target: 1, fx: 0, fy: 0 };
   store.set("piRadioMapRange", rng);
   $("rngWorld").classList.toggle("on", rng === "world");
   $("rngEurope").classList.toggle("on", rng === "europe");
@@ -1729,9 +1741,14 @@ function setMapRange(rng) {
 function inRange(r, ci) { return ci.lon >= r.lon0 && ci.lon <= r.lon1 && ci.lat <= r.lat0 && ci.lat >= r.lat1; }
 $("navMap").addEventListener("click", e => {
   const b = $("navMap").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
-  let best = null, bd = 22;
+  let best = null, bd = 16;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
-  if (!best) { mapSel = null; drawMapFoot(); return; }
+  if (!best) {
+    mapSel = null; drawMapFoot();
+    if (mapZ.target > 1) mapZ.target = 1;
+    else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; } mapZ.target = MAP_ZOOM; }
+    return;
+  }
   if (best.cities.length > 1 && mapRange === "world" && best.cities.every(ci => inRange(RANGES.europe, ci))) {
     setMapRange("europe");
     return;
