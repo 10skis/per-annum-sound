@@ -1,13 +1,13 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.44 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.45 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.44 |
+| Version | v0.45 |
 | Owner | Robert |
 | Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
@@ -25,7 +25,7 @@ Start here. Written 2026-11-03 at v0.34, updated at v0.44 so a new session can p
 | Art | `art.py`: 45° halftone for covers, 1-bit for logos, sigil for stations with none. The page has matching JS for the no-server build |
 | Map land | `make_map.py` builds `static/worldmap.js` from Natural Earth (`dev/ne_110m_land.geojson`) |
 | Offline | `static/sw.js`, copied to the web root by the build |
-| App icon | Dark display window like the site's panels, PAS in VT323, glass highlight (iOS 26/27 style; the sigil version was rejected). Drawn by the page (`dev/icon.js`); `make_icons.py` serves web/ and saves what the page posts. Steps in its docstring |
+| App icon | Glyph dial: the rotating-window arc of katakana with the lit ｦ shown large in LED dots, dark dot-matrix plate, glass highlight, no letters (iOS 26/27 style; the sigil and display-window versions were rejected). Drawn by the page (`dev/icon.js`); `make_icons.py` serves web/ and saves what the page posts. Steps in its docstring |
 
 After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at 375 px, then log (update file, VERSION_CONTROL, PROJECTS, TODO) and push.
 
@@ -66,7 +66,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify for v0.44, then remove and re-add the home-screen shortcut so iOS picks up the new icon. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- Robert re-drags `app/web` to Netlify for v0.45, then remove and re-add the home-screen shortcut so iOS picks up the new icon. v0.34 was deployed and tested on the iPhone 2026-11-03.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.
