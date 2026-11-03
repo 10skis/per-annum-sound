@@ -97,6 +97,22 @@
   .next .trk span:first-child { color: var(--amber-dim); }
   .next .trk span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .next .trk:first-of-type span:last-child { color: var(--amber); }
+  .next .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .next .chips button { border: 1px solid var(--amber-dim); padding: 2px 8px; font: 18px/1.1 var(--dot); color: var(--amber-mid);
+                        transition: color .14s, border-color .14s, background .14s; }
+  .next .chips button:hover, .next .chips button:focus-visible { color: var(--amber); border-color: var(--amber); background: var(--amber-ghost); }
+  .next .chips button small { color: var(--amber-dim); font-size: 15px; margin-left: 4px; }
+  .next .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 21px/1.2 var(--dot); }
+
+  /* About pop-up: the station in full */
+  .strip .line, .strip .desc { cursor: pointer; }
+  .about-card { max-width: 560px; max-height: calc(100vh - 32px); overflow-y: auto; }
+  .about-card h3 { margin: 0; font: 400 40px/1 var(--dot); color: var(--amber); text-shadow: 0 0 8px #ffb02e66; letter-spacing: .02em; }
+  .about-card .sub { font: 20px var(--dot); color: var(--amber-mid); margin-top: 4px; }
+  .about-card p { margin: 0; font: 20px/1.25 var(--dot); color: var(--amber-mid); }
+  .about-card .facts { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 20px/1.2 var(--dot); }
+  .about-card a { color: var(--amber); }
+  .about-card .now { border-top: 1px dashed var(--line); padding-top: 10px; }
 
   .head .clock { color: var(--amber-mid); }
   .head .timer { color: var(--amber-mid); text-shadow: none; }
@@ -322,7 +338,7 @@
   .row.active .sub { color: var(--amber-mid); }
 
   .ticker { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center;
-            border-top: 1px dashed var(--line); margin-top: 14px; padding-top: 10px; }
+            border-bottom: 1px dashed var(--line); margin-bottom: 12px; padding-bottom: 8px; }
   .ticker-win { overflow: hidden;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
             mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
@@ -330,10 +346,19 @@
   .ticker-win:hover .ticker-run { animation-play-state: paused; }
   .ticker-run .half { display: flex; gap: 14px; padding-right: 14px; align-items: baseline; }
   @keyframes tick { to { transform: translateX(-50%); } }
-  .tk { font-family: var(--dot); font-size: 19px; color: var(--amber-mid); white-space: nowrap; }
+  .tk { font-family: var(--dot); font-size: 19px; color: var(--amber-mid); white-space: nowrap; padding: 3px 8px;
+        position: relative; isolation: isolate;
+        text-shadow: 0 0 0 #ffb02e00, 0 0 0 #ffb02e00, 0 0 0 #ffb02e00; transition: color .14s ease-out, text-shadow .14s ease-out; }
+  .tk::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--amber-ghost); opacity: 0;
+                clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); transition: opacity .14s ease-out; }
+  .tk:hover::before, .tk:focus-visible::before { opacity: 1; }
+  .tk:hover, .tk:focus-visible { text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
+  .row.peek::before { opacity: 1; }
+  .row.peek { color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
   .tk .t { color: var(--amber-dim); margin-right: 6px; }
   .tk small { font-size: 17px; color: var(--amber-dim); }
   .tk:hover, .tk:focus-visible { color: var(--amber); }
+  .tk:hover small, .tk:focus-visible small { color: var(--amber-mid); }
   .ticker .sep { color: var(--line); }
 
   /* Schedule and recently played: time column + text */
@@ -489,10 +514,14 @@
     }
     .head { grid-area: head; }
     .mid { display: contents; }
-    .artcol { grid-area: art; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+    /* contain: size so the art column and signal panel take the height the controls give them,
+       instead of the level canvas pushing the whole row taller */
+    .artcol { grid-area: art; display: flex; flex-direction: column; gap: 16px; min-height: 0; contain: size; }
     .artcol .art { flex: none; }
-    .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); flex: 1; min-height: 120px; padding: 22px 12px 10px; gap: 6px; }
-    .strip { grid-area: info; aspect-ratio: auto; padding: 28px 24px 18px; align-content: start; gap: 16px; min-width: 0; }
+    .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); flex: 1; min-height: 0; padding: 22px 12px 10px; gap: 6px; }
+    .strip { grid-area: info; aspect-ratio: auto; padding: 28px 24px 18px; align-content: start; gap: 16px; min-width: 0;
+             contain: size; overflow-y: auto; scrollbar-width: none; }
+    .strip::-webkit-scrollbar { display: none; }
     .strip > div:last-child { order: -1; }  /* the station name leads; description and progress under it */
     .detail { display: grid; gap: 12px; }
     .line.big { font-size: clamp(38px, 3vw, 48px); }
@@ -627,16 +656,24 @@
 
 <nav class="list cham" aria-label="Stations">
   <div class="list-head"><span>STATIONS</span><span id="listCount">--</span></div>
+  <div class="ticker" aria-label="Recently played">
+    <span class="label">Recently played</span>
+    <div class="ticker-win"><div class="ticker-run" id="recent"></div></div>
+  </div>
   <div class="cols">
     <div id="colA"></div>
     <div id="colB"></div>
     <div id="colC"></div>
   </div>
-  <div class="ticker" aria-label="Recently played">
-    <span class="label">Recently played</span>
-    <div class="ticker-win"><div class="ticker-run" id="recent"></div></div>
-  </div>
 </nav>
+
+<div class="help" id="about" hidden role="dialog" aria-modal="true" aria-label="About this station">
+  <div class="help-card about-card screen cham">
+    <span class="tab" aria-hidden="true"><b>06</b>About</span>
+    <div id="aboutBody" style="display:grid;gap:14px"></div>
+    <button class="key cham" id="aboutClose">CLOSE</button>
+  </div>
+</div>
 
 <button class="help-btn cham" id="helpBtn" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
 <div class="help" id="help" hidden role="dialog" aria-modal="true" aria-label="Keys and gestures">
@@ -1189,8 +1226,15 @@ function render(s) {
 
   const on = s.playing, id = s.station.id;
   // Listening timer: starts when a station starts playing, restarts on a new station, clears on stop.
-  if (!on) { listen = null; endSleep(); }
-  else if (!listen || listen.id !== id) listen = { id, since: Date.now() };
+  if (!on) { flushListen(); listen = null; endSleep(); }
+  else if (!listen || listen.id !== id) {
+    flushListen();
+    listen = { id, since: Date.now() };
+    listen.saved = listen.since;
+    const st0 = statFor(id);
+    st0.prevLast = st0.last; st0.last = new Date().toISOString(); st0.sessions++;
+    store.set("piRadioListen", listenStats);
+  }
   $("status").innerHTML = on ? `● <span class="st-word">${s.player === "phone" && !STATIC ? "ON DEVICE" : "ON AIR"}</span>` +
     ` <span class="timer" id="timer" title="Listening to this station for">${elapsed()}</span>` : "○ STANDBY";
   $("status").className = on ? "glow" : "";
@@ -1327,9 +1371,13 @@ async function loadRecent() {
                         : `<span class="half"><span class="tk">NOTHING YET</span></span>`;
   run.style.animation = items ? "" : "none";
   run.style.setProperty("--dur", Math.max(20, run.scrollWidth / 2 / 38) + "s");  // about 38 px a second
-  run.querySelectorAll("[data-name]").forEach(b => b.onclick = () => {
+  run.querySelectorAll("[data-name]").forEach(b => {
     const id = order.find(i => NAMES[i] === b.dataset.name);
-    if (id) act.play(id);
+    const row = id && document.querySelector(`.row[data-id="${id}"]`);
+    b.onclick = () => { if (id) act.play(id); };
+    // Hovering an entry lights its station in the board too
+    b.onmouseenter = b.onfocus = () => row && row.classList.add("peek");
+    b.onmouseleave = b.onblur = () => row && row.classList.remove("peek");
   });
 }
 
@@ -1345,6 +1393,7 @@ function tick() {
   if (listen && $("timer")) $("timer").textContent = elapsed();
   if (d.getSeconds() === 0) { const st = STN[selectedId()]; if (st && st.tz) document.querySelectorAll(".roTime").forEach(e => e.textContent = localTime(st.tz)); }
   if (d.getSeconds() % 15 === 0) drawNext();
+  if (d.getSeconds() % 30 === 0) flushListen();
   if (sleep) sleepTick();
   $("clock").innerHTML = `${pad(d.getHours())}<i>:</i>${pad(d.getMinutes())}`;
   if (d.getSeconds() % 10 === 0 && S && S.now && !drag) drawProgress(S.now);
@@ -1540,7 +1589,7 @@ document.addEventListener("keydown", e => {
   } else if (e.key === "s" || e.key === "S") cycleSleep();
   else if (e.key === "m" || e.key === "M") setMapRange(mapRange === "world" ? "europe" : "world");
   else if (e.key === "?") toggleHelp();
-  else if (e.key === "Escape") toggleHelp(false);
+  else if (e.key === "Escape") { toggleHelp(false); closeAbout(); }
 });
 
 /* Tape tuner under the dial and the phone tuner: slides so the current station sits at the needle. */
@@ -2029,8 +2078,75 @@ function drawNext() {
     box.innerHTML = `<div class="label">Recently on ${esc(st.name)}</div>` +
       trackLog[id].map(x => `<div class="trk"><span>${hhmm(x.at)}</span><span>${esc(x.title.toUpperCase())}</span></div>`).join("");
     box.hidden = false;
+  } else if (st.name) {
+    // Stations that publish nothing: somewhere to go next, and your own history here
+    // Nearby: other stations from the same city outside this group; similar: neighbours in the same group
+    const near = order.filter(x => x !== id && STN[x] && st.city && STN[x].city === st.city && STN[x].group !== st.group).slice(0, 4);
+    const i = order.indexOf(id), sim = [];
+    for (const d of [1, -1, 2, -2, 3, -3, 4, -4]) {
+      const x = order[i + d];
+      if (x && STN[x] && STN[x].group === st.group && !near.includes(x) && sim.length < 4) sim.push(x);
+    }
+    const chip = (x, note) => `<button data-play="${x}">${esc((NAMES[x] || x).toUpperCase())}${note ? `<small>${esc(note)}</small>` : ""}</button>`;
+    const chips = near.map(x => chip(x, "nearby")).concat(sim.map(x => chip(x, ""))).join("");
+    box.innerHTML = (chips ? `<div class="label">Nearby &amp; similar</div><div class="chips">${chips}</div>` : "") +
+      `<div class="label">Your listening here</div><div class="stats">${listenSummary(id)}</div>`;
+    box.querySelectorAll("[data-play]").forEach(b => b.onclick = () => act.play(b.dataset.play));
+    box.hidden = false;
   } else box.hidden = true;
 }
+
+/* Listening history per station, kept on this device: total time, sessions, last visit. */
+const listenStats = store.get("piRadioListen", {});
+function statFor(id) { return (listenStats[id] = listenStats[id] || { ms: 0, sessions: 0, last: null, prevLast: null }); }
+function flushListen() {
+  if (!listen) return;
+  const now = Date.now();
+  statFor(listen.id).ms += now - (listen.saved || listen.since);
+  listen.saved = now;
+  store.set("piRadioListen", listenStats);
+}
+function ago(iso) {
+  if (!iso) return "";
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  return m < 60 ? `${m} MIN AGO` : m < 1440 ? `${Math.round(m / 60)} H AGO` : `${Math.round(m / 1440)} DAYS AGO`;
+}
+function listenSummary(id) {
+  const s = listenStats[id] || { ms: 0, sessions: 0 };
+  const live = listen && listen.id === id ? Date.now() - (listen.saved || listen.since) : 0;
+  const t = Math.floor((s.ms + live) / 60000), dur = t >= 60 ? `${Math.floor(t / 60)}H ${t % 60}M` : `${t}M`;
+  if (!s.sessions) return `<span class="ro"><i>Status</i>FIRST TIME HERE</span>`;
+  return `<span class="ro"><i>Total</i>${dur}</span><span class="ro"><i>Sessions</i>${s.sessions}</span>` +
+    `<span class="ro"><i>Last time</i>${s.prevLast ? ago(s.prevLast) : "FIRST VISIT"}</span>`;
+}
+
+/* About pop-up: click the station's name or description for the full profile. */
+function openAbout() {
+  const id = selectedId(), st = STN[id] || {}, now = (S && S.now) || {};
+  if (!st.name) return;
+  const facts = [];
+  const fact = (k, v) => v && facts.push(`<span class="ro"><i>${k}</i>${v}</span>`);
+  fact("Group", esc(st.group || ""));
+  fact("City", esc(((st.city || st.place) || "").toUpperCase()));
+  if (st.founded) fact("Since", st.founded);
+  if (st.tz) fact("Local", localTime(st.tz));
+  if (st.geo) fact("From " + HOME_NAME, Math.round(distKm(HOME, st.geo)).toLocaleString("en-US") + " KM");
+  const site = st.site || (st.kind === "nts_mixtape" ? `https://www.nts.live/infinite-mixtapes/${id}` : st.kind === "nts_live" ? "https://www.nts.live" : "");
+  const profile = st.profile || st.about || (st.kind === "nts_mixtape" ? now.description : "") || "";
+  const showNow = st.kind === "nts_live" && now.title ? `<div class="now"><div class="label">On now</div><p><b style="font-weight:400;color:var(--amber)">${esc(now.title.toUpperCase())}</b></p><p>${esc(now.description || "")}</p></div>` : "";
+  $("aboutBody").innerHTML = `<div><h3>${esc(st.name.toUpperCase())}</h3><div class="sub">${esc([st.genre, st.place].filter(Boolean).join(" · ").toUpperCase())}</div></div>` +
+    (profile ? `<p>${esc(profile)}</p>` : "") +
+    (st.notable && st.notable.length ? `<div><div class="label">Notable</div><p>${st.notable.map(esc).join(" · ")}</p></div>` : "") +
+    `<div class="facts">${facts.join("")}</div>` + showNow +
+    `<div><div class="label">Your listening here</div><div class="facts">${listenSummary(id)}</div></div>` +
+    (site ? `<p><a href="${esc(site)}" target="_blank" rel="noopener">${esc(site.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a></p>` : "");
+  $("about").hidden = false;
+  $("aboutClose").focus();
+}
+function closeAbout() { if (!$("about").hidden) { $("about").hidden = true; } }
+["line1", "line2", "desc"].forEach(x => $(x).addEventListener("click", openAbout));
+$("aboutClose").addEventListener("click", closeAbout);
+$("about").addEventListener("click", e => { if (e.target === $("about")) closeAbout(); });
 
 /* Volume: update the bar live, send after a short pause. */
 let volTimer;

@@ -67,8 +67,24 @@ groups:
   - name: NTS Live
     place: London
     stations:
-      - {id: nts1, name: NTS 1, kind: nts_live, channel: "1", url: "https://stream-relay-geo.ntslive.net/stream"}
-      - {id: nts2, name: NTS 2, kind: nts_live, channel: "2", url: "https://stream-relay-geo.ntslive.net/stream2"}
+      - id: nts1
+        name: NTS 1
+        kind: nts_live
+        channel: "1"
+        url: "https://stream-relay-geo.ntslive.net/stream"
+        site: "https://www.nts.live"
+        founded: 2011
+        notable: ["The Do!! You!!! Breakfast Show", "Stephen O'Malley", "Four Tet"]
+        profile: "Founded in April 2011 in Hackney, London, by Femi Adeyemi. An online station with two live channels plus the music-only Infinite Mixtapes, with no FM licence. Guest takeovers have included Björk, Thom Yorke and Aphex Twin."
+      - id: nts2
+        name: NTS 2
+        kind: nts_live
+        channel: "2"
+        url: "https://stream-relay-geo.ntslive.net/stream2"
+        site: "https://www.nts.live"
+        founded: 2011
+        notable: ["The Do!! You!!! Breakfast Show", "Stephen O'Malley", "Four Tet"]
+        profile: "Founded in April 2011 in Hackney, London, by Femi Adeyemi. An online station with two live channels plus the music-only Infinite Mixtapes, with no FM licence. Guest takeovers have included Björk, Thom Yorke and Aphex Twin."
 
   - name: Infinite Mixtapes
     place: London
@@ -101,6 +117,8 @@ groups:
         url: "https://livepeercdn.studio/hls/85c28sa2o8wppm58/14_0/index.m3u8"
         art: "https://cdn.prod.website-files.com/5f4bdfc87623ea5cc5d24cf3/606da84551eef3d5fa8c0cb9_icon.png"
         about: "Independent, non-profit radio streaming around the clock from a shipping container on an empty lot in Williamsburg. Live DJs from New York and beyond, across every genre."
+        site: "https://www.thelotradio.com"
+        profile: "An independent, non-profit station streaming around the clock from a repurposed shipping container on an empty lot in Brooklyn, with an outdoor kiosk alongside. Founded by François Vaxelaire. Mostly live DJ sets, leaning towards electronic music, disco and soul."
       - id: dublab
         name: Dublab
         kind: radio
@@ -108,6 +126,10 @@ groups:
         url: "https://dublab.out.airtime.pro/dublab_a"
         info: "airtime:dublab"
         about: "Non-profit, listener-supported web radio from Los Angeles since 1999. It calls itself future roots radio: experimental, jazz, electronic, folk and everything between."
+        site: "https://www.dublab.com"
+        founded: 1999
+        notable: ["Daedelus", "Carlos Niño", "Matthewdavid"]
+        profile: "Started in Los Angeles in 1999 by Jonathan Buck, Mark McNeill and fellow students from USC's college station. Non-profit and listener-supported, online and on 99.1 FM in Los Angeles. It also makes exhibitions, films, events and records."
       - id: refuge
         name: Refuge Worldwide
         kind: radio
@@ -116,6 +138,9 @@ groups:
         art: "https://refugeworldwide.com/apple-touch-icon.png"
         info: "radioco:s3699c5e49"
         about: "Community radio from Neukölln, grown out of a Berlin fundraising party series. Resident shows across club, experimental and global sounds."
+        site: "https://refugeworldwide.com"
+        founded: 2021
+        profile: "Began in 2015 as fundraising parties for refugee housing and grassroots groups in Neukölln, started by George Patrick. Became a full-time station in January 2021, broadcasting online from Berlin, and runs free DJ and media workshops."
       - id: kiosk
         name: Kiosk Radio
         kind: radio
@@ -124,13 +149,18 @@ groups:
         art: "https://kioskradio.com/favicon.png"
         info: "airtime:kioskradiobxl"
         about: "Community radio broadcasting live from a wooden kiosk in Brussels' Parc Royal. Local selectors and touring guests, from slow mornings to club nights."
+        site: "https://kioskradio.com"
+        founded: 2017
+        profile: "Started in 2017 as a meeting point for Belgium's underground, broadcasting from a wooden kiosk with a small bar in Brussels' Parc Royal. Live DJ sets, recorded shows and conversations. It also runs the yearly Woodblocks festival."
       - id: cashmere
         name: Cashmere Radio
         kind: radio
         place: Berlin
         url: "https://cashmereradio.out.airtime.pro/cashmereradio_b"
         info: "airtime:cashmereradio"
-        about: "Non-commercial community station in Berlin-Lichtenberg since 2015. Leans experimental: ambient, noise, sound art and the odd corners of club music."
+        about: "Non-commercial community station in Berlin, now based in Wedding. Leans experimental: ambient, noise, sound art and the odd corners of club music."
+        site: "https://cashmereradio.com"
+        profile: "A not-for-profit, community-based experimental station in Berlin, open to the public as a space and online around the clock. It spent its first six years in Lichtenberg before moving to a studio in Wedding, and is on DAB+ on Fridays and Saturdays."
       - id: noods
         name: Noods Radio
         kind: radio
@@ -138,6 +168,9 @@ groups:
         url: "https://noods-radio.radiocult.fm/stream"
         info: "radiocult:noods-radio"
         about: "Independent community radio from Bristol since 2015. DJ-led and eclectic, with a strong line in leftfield dance, dub and bass."
+        site: "https://noodsradio.com"
+        founded: 2015
+        profile: "Founded in Bristol in 2015 out of Sunday morning music sessions in a front room. It sets out to bring the city's separate scenes together and show new talent, and joined DAB+ in Bristol in 2019."
       - id: alhara
         name: Radio alHara
         kind: radio
@@ -145,18 +178,29 @@ groups:
         url: "https://stream.radioalhara.net/ra"
         art: "https://radioalhara.net/img/radio-alhara-logo-512.png"
         about: "Started in Bethlehem during the 2020 lockdown; alHara means the neighbourhood. Open, community-run programming from Palestine and the wider Arab world, with guests from everywhere."
+        site: "https://www.radioalhara.net"
+        founded: 2020
+        profile: "An online community station in Bethlehem, started in March 2020 during the lockdown by a group of friends spread across Bethlehem, Ramallah and Amman, including Yazan Khalili and Yousef and Elias Anastas."
       - id: rinse
         name: Rinse FM
         kind: radio
         place: London
         url: "https://admin.stream.rinse.fm/proxy/rinse_uk/stream"
         about: "Began as a London pirate station in 1994 and helped launch UK garage, grime and dubstep. Licensed since 2010 and still the home of UK club music."
+        site: "https://rinse.fm"
+        founded: 1994
+        notable: ["Skream", "Kode9", "Skepta"]
+        profile: "Began in 1994 as a pirate station founded by Geeneus and Slimzee, first playing jungle, and became central to UK garage, grime and dubstep. Licensed since 2010, on 106.8 FM and DAB in London; it runs Rinse France and, since 2023, Kool FM."
       - id: kool
         name: Kool FM
         kind: radio
         place: London
         url: "https://admin.stream.rinse.fm/proxy/kool/stream"
         about: "London's jungle and drum & bass station, on air since it started as a pirate in 1991. Selectors and MCs from the original scene to now, broadcast through Rinse."
+        site: "https://rinse.fm/channels/kool/"
+        founded: 1991
+        notable: ["Brockie", "Andy C", "Nicky Blackmarket"]
+        profile: "First broadcast on 28 November 1991 on 94.5 FM from Clapton, East London, as a jungle pirate. It went online as Kool London in 2010, and since 2023 Rinse has run it as Kool FM. It also puts on the Kool Skool club night."
       - id: worldwide-fm
         name: Worldwide FM
         kind: radio
@@ -164,12 +208,20 @@ groups:
         url: "https://worldwide-fm.radiocult.fm/stream"
         info: "radiocult:worldwide-fm"
         about: "The independent station Gilles Peterson founded in London in 2016. Jazz, soul, Brazilian, club and global music, picked by people rather than algorithms."
+        site: "https://www.worldwidefm.net"
+        founded: 2016
+        notable: ["Gilles Peterson"]
+        profile: "Launched on 5 September 2016 by Gilles Peterson with Boiler Room and WeTransfer. Underground music, culture and stories from around the world, presented by a rotating roster of international DJs."
       - id: wfmu
         name: WFMU
         kind: radio
         place: New Jersey
         url: "https://stream0.wfmu.org/freeform-high.aac"
         about: "Listener-supported freeform radio from Jersey City since 1958, the longest-running freeform station in the US. DJs play whatever they want, and it shows."
+        site: "https://wfmu.org"
+        founded: 1958
+        notable: ["Ken Freedman", "Glen Jones"]
+        profile: "First on air in April 1958 at Upsala College; owned since 1994 by the non-profit Auricle Communications. Listener-supported freeform radio run mostly by volunteer DJs, on 91.1 FM from studios in Jersey City."
       - id: kexp
         name: KEXP
         kind: radio
@@ -177,6 +229,10 @@ groups:
         url: "https://kexp.streamguys1.com/kexp160.aac"
         info: "kexp"
         about: "Listener-supported public radio from Seattle, known for its live studio sessions. Indie, rock, hip-hop and world music chosen by DJs."
+        site: "https://www.kexp.org"
+        founded: 1972
+        notable: ["John Richards", "Street Sounds", "Audioasis"]
+        profile: "Began in 1972 as KCMU, the University of Washington's student station, and became KEXP in 2001. Run by the non-profit Friends of KEXP, on 90.3 FM from studios at Seattle Center, opened in 2015."
       - id: fip
         name: FIP
         kind: radio
@@ -184,6 +240,10 @@ groups:
         url: "https://icecast.radiofrance.fr/fip-hifi.aac"
         art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"
         about: "Radio France's eclectic music station since 1971. Jazz, rock, soul, electronic and world music in long segues with very little talk."
+        site: "https://www.radiofrance.fr/fip"
+        founded: 1971
+        notable: ["Club Jazzafip"]
+        profile: "A Radio France station that began on 5 January 1971 as France Inter Paris. Music with only brief announcements, chosen by curators in three-hour blocks, about 85 percent of it from independent labels. On 105.1 FM in Paris."
       - id: fip-jazz
         name: FIP Jazz
         kind: radio
@@ -197,12 +257,15 @@ groups:
         place: New York
         url: "https://stream.wqxr.org/wqxr-web"
         about: "New York's classical station, listener-supported and on air since 1936. Orchestral, chamber music and opera, plus live performances from around the city."
+        site: "https://www.wqxr.org"
+        notable: ["New Sounds", "Operavore"]
+        profile: "A classical station run by the non-profit New York Public Radio since 2009, on 105.9 FM from Hudson Square, with its transmitter on the Empire State Building. Its lineage goes back to the experimental W2XR of 1929."
       - id: chillhop
         name: Chillhop Radio
         kind: radio
         place: Berlin
         url: "https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/"
-        about: "Lo-fi hip-hop curated by the Chillhop Music label, broadcast by Berlin's FluxFM. Mellow beats for working, reading or winding down."
+        about: "FluxFM's lo-fi hip-hop channel from Berlin. Mellow beats for working, reading or winding down."
 
   - name: Genre Radio
     # One station per genre. Streams checked 2026-11-02.
@@ -214,6 +277,8 @@ groups:
         place: Paris
         url: "https://chantefrance60s.ice.infomaniak.ch/chantefrance60s-128.mp3"
         about: "The 1960s channel of Chante France, a Paris station that plays only French song. Sixties chanson and variété, all day."
+        site: "https://www.chantefrance.com"
+        profile: "One of the web channels of Chante France, a Paris station founded in 1994 and devoted to French-language song. The 60s channel launched in 2013 alongside 70s, 80s and other themed streams."
       - id: italia-anni-60
         name: Radio Italia Anni 60
         kind: radio
@@ -221,6 +286,8 @@ groups:
         place: Bologna
         url: "https://ice04.fluidstream.net/ria60_bo.mp3"
         about: "An Italian oldies network built around the songs of the 1960s, with later decades mixed in. This is its Emilia-Romagna feed."
+        site: "https://www.radioitaliaanni60.it"
+        profile: "An Italian network of regional stations playing Italian and international hits from the 1960s onward, each run by a local operator on its own FM frequency."
       - id: reprezent
         name: Reprezent Radio
         kind: radio
@@ -228,6 +295,10 @@ groups:
         place: London
         url: "https://radio.canstream.co.uk:8022/live.mp3"
         about: "A youth-led London station that trains young presenters and works with emerging artists. UK rap, grime and the wider London scene."
+        site: "https://reprezent.org.uk"
+        founded: 2011
+        notable: ["Stormzy", "Lady Leshurr", "Jamz Supernova"]
+        profile: "A youth-led station on air since April 2011, broadcasting on 107.3 FM and DAB from converted shipping containers at Pop Brixton in South London. Aimed at 18 to 30 year olds, with a playlist of UK artists only."
       - id: unearthed
         name: triple j Unearthed
         kind: radio
@@ -235,6 +306,10 @@ groups:
         place: Sydney
         url: "https://streaming.abc-cdn.net.au/audio/hls/triplejunearthed.m3u8?source=web"
         about: "The Australian public broadcaster ABC's channel for unsigned and emerging Australian artists. Mostly self-released, early-career music."
+        site: "https://www.abc.net.au/triplejunearthed"
+        founded: 2011
+        notable: ["Flume", "Vance Joy", "Gang of Youths"]
+        profile: "The ABC's discovery station, sister to triple j. Unearthed began as a talent search in 1995 and the station launched in 2011, playing only Australian music uploaded to the Unearthed site."
       - id: yumi-co
         name: Yumi Co. Radio
         kind: radio
@@ -243,13 +318,18 @@ groups:
         map: [28.0, -165.0, North Pacific]
         url: "https://yumicoradio.net/stream"
         about: "A round-the-clock station for city pop, future funk, anime groove and nu disco. Run from France; no city given."
+        site: "https://yumicoradio.net"
+        profile: "A round-the-clock web station for future funk, city pop, anime groove, nu disco and vaporwave, based in France, with an open-source Android app that has live chat and track rankings."
       - id: folk-alley
         name: Folk Alley
         kind: radio
         genre: Americana and folk
         place: Kent, Ohio
         url: "https://freshgrass.streamguys1.com/folkalley-128mp3"
-        about: "A member-supported folk station started by public radio WKSU in Ohio. Human-picked folk, Americana and singer-songwriters."
+        about: "A member-supported folk service that began at public radio WKSU in Ohio. Human-picked folk, Americana and singer-songwriters."
+        site: "https://folkalley.com"
+        notable: ["Elena See", "Jim Blum"]
+        profile: "A human-curated, member-supported folk and roots service that began at WKSU in Kent, Ohio, and is now produced by the FreshGrass Foundation. Four streams, a weekly radio show, podcasts and video sessions."
       - id: christmas-vinyl
         name: Christmas Vinyl HD
         kind: radio
@@ -257,6 +337,8 @@ groups:
         place: North Pole
         url: "https://icecast.walmradio.com:8443/christmas"
         about: "WALM Radio's year-round Christmas channel. Vintage holiday records, crooners and old-time radio, in high quality."
+        site: "https://walmradio.com"
+        profile: "One of the streams of WALM Radio, playing vintage Christmas records all year under the line 'The Christmas Music You Remember'."
 
   - name: Deep Cuts
     # Small, odd and far-flung. Streams checked 2026-11-02.
@@ -268,6 +350,10 @@ groups:
         place: London
         url: "https://stream.resonance.fm/resonance"
         about: "London's arts radio station, on 104.4 FM since 2002. Sound art, experimental music and shows you won't hear anywhere else."
+        site: "https://resonancefm.com"
+        founded: 1998
+        notable: ["The Good Drugs Guide", "Hooting Yard on the Air", "You Are Hear"]
+        profile: "Run by the London Musicians' Collective, which first broadcast in June 1998 during the Meltdown festival and returned in 2002 on 104.4 FM. It calls itself the world's first radio art station."
       - id: oroko
         name: Oroko Radio
         kind: radio
@@ -276,6 +362,8 @@ groups:
         url: "https://oroko-radio.radiocult.fm/stream"
         info: "radiocult:oroko-radio"
         about: "A not-for-profit independent station in Accra, Ghana. Built on conversation, collaboration and the city's music community."
+        site: "https://oroko.live"
+        profile: "An independent, not-for-profit station in Accra giving a platform to African and diasporic creative communities. Founded by Kikelomo Oludemi with Nico Adomako and Naemi Ada, it runs a residency programme for new hosts."
       - id: hanoi
         name: Ha Noi Community Radio
         kind: radio
@@ -299,6 +387,9 @@ groups:
         place: Tbilisi
         url: "https://listen.radioking.com/radio/282820/stream/328621"
         about: "A Tbilisi platform for mixes, interviews, live sets and talk. Experimental, dub, krautrock and new wave."
+        site: "https://www.mutantradio.net"
+        founded: 2019
+        profile: "A community station and cultural space in Tbilisi founded in 2019. Its base is a caravan studio that also broadcasts from elsewhere in Georgia, and it opened a small studio in Berlin in 2025."
       - id: super45
         name: Super45.fm
         kind: radio
@@ -307,6 +398,8 @@ groups:
         url: "https://s4.radio.co/s421105570/listen"
         info: "radioco:s421105570"
         about: "A collective online radio project from Santiago, Chile. Indie, experimental electronic and jazz, in themed shows."
+        site: "https://super45.fm"
+        profile: "A collective, non-profit online station from Santiago, Chile, playing alternative, electronic and experimental music under the line 'Nuevos caminos para la música'."
       - id: stegi
         name: stegi.radio
         kind: radio
@@ -315,6 +408,8 @@ groups:
         url: "https://movementathens.out.airtime.pro/movementathens_a"
         info: "airtime:movementathens"
         about: "An international station in Athens run by the Onassis Stegi arts centre, formerly Movement Radio. Ambient, experimental, hip-hop, jazz and world music."
+        site: "https://stegi.radio"
+        profile: "A round-the-clock online station from Onassis Stegi in Athens, with more than 200 producers across three channels. It began as the pop-up Movement Radio for the Movement 1920-2020 festival."
       - id: radio80000
         name: Radio 80000
         kind: radio
@@ -323,6 +418,9 @@ groups:
         url: "https://radio80k.out.airtime.pro:8000/radio80k_a"
         info: "airtime:radio80k"
         about: "Freeform community radio from Munich. Resident shows plus art projects and residencies around the city."
+        site: "https://radio80k.de"
+        founded: 2015
+        profile: "Non-commercial community radio from Munich, founded in April 2015 by Felix Flemmer and Leonard Bauer and run by the non-profit 80000 e.V. It has worked with Kunstverein München and Museum Brandhorst."
       - id: drummer
         name: Give the Drummer Radio
         kind: radio
@@ -330,6 +428,9 @@ groups:
         place: New Jersey
         url: "https://stream0.wfmu.org/drummer"
         about: "WFMU's second 24-hour channel, started in 2010 by longtime DJ Doug Schulkind. More than two dozen shows by music obsessives, broadcasting from home."
+        site: "https://wfmu.org/drummer"
+        founded: 2010
+        profile: "WFMU's web-only 24-hour channel, created in 2010 by longtime WFMU DJ Doug Schulkind. Sometimes live DJs, sometimes a jukebox of its curator's records."
       - id: raheem
         name: Radio Raheem
         kind: radio
@@ -338,6 +439,9 @@ groups:
         url: "https://radioraheem.out.airtime.pro/radioraheem_a"
         info: "airtime:radioraheem"
         about: "Cosmic perspective radio from Milan, as it describes itself. Always digging into the most interesting scenes, at home and abroad."
+        site: "https://www.radioraheem.it"
+        founded: 2017
+        profile: "An independent web radio from Milan founded in 2017, and Triennale Milano's resident station from 2020. Its founders describe it as a web radio, a physical space and a think tank."
       - id: sleeping-pill
         name: Ambient Sleeping Pill
         kind: radio
@@ -346,6 +450,8 @@ groups:
         map: [2.0, -145.0, Mid-Pacific]
         url: "https://radio.stereoscenic.com/asp-h"
         about: "Internet radio for sleep, meditation and slowing down. Ambient music around the clock."
+        site: "https://ambientsleepingpill.com"
+        profile: "Round-the-clock internet radio for sleeping, napping and quiet moments, run by Andrew J Klimek of Stereoscenic Records."
       - id: nightride
         name: Nightride FM
         kind: radio
@@ -354,3 +460,5 @@ groups:
         map: [-48.88, -123.39, Point Nemo]
         url: "https://stream.nightride.fm/nightride.mp3"
         about: "Synthwave in 320 kbps: retrowave, darksynth and outrun. It runs sister channels for each style."
+        site: "https://nightride.fm"
+        profile: "'The Home of Synthwave Radio', streaming at 320 kbps, with sister channels including Chillsynth, Datawave, Spacesynth and Darksynth, plus live DJ sets, interviews and an archive of past shows."
