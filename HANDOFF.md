@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.45 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.46 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.45 |
+| Version | v0.46 |
 | Owner | Robert |
-| Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -66,7 +66,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify for v0.45, then remove and re-add the home-screen shortcut so iOS picks up the new icon. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- v0.45 is live. Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.

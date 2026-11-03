@@ -115,7 +115,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Signal readout | Codec, bitrate, sample rate, plus a clock |
 | Recently played | Last 50 shows and tracks, logged every 15 s while playing |
 | Output switch | RADIO plays on the speakers at home; THIS DEVICE plays the stream on the phone or laptop, with lock-screen controls |
-| Away from home | Until the Pi: a no-server build on a free static host (Netlify, live at https://spiffy-elf-9ebf5d.netlify.app). With the Pi: Tailscale private network to it |
+| Away from home | Until the Pi: a no-server build on a free static host (Netlify, live at https://perannum.netlify.app). With the Pi: Tailscale private network to it |
 | Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
 | Presets | Six preset keys, car-radio style: tap to play, hold to save the current station. Kept per device for now; candidates for six physical buttons on the Pi |
 | Listening and sleep timers | Time on the current station next to ON AIR; ZZ sets a 15, 30, 60 or 90 minute sleep timer that fades out where the device allows |

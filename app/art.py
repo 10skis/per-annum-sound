@@ -20,7 +20,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 # Wikimedia refuses generic user agents with a 429; it wants a name and a way to reach the owner.
-UA = "PerAnnumSound/0.35 (personal radio app; https://spiffy-elf-9ebf5d.netlify.app)"
+UA = "PerAnnumSound (personal radio app; https://perannum.netlify.app)"
 log = logging.getLogger("pi-radio")
 
 N = 128                  # working resolution, the art screen's pixel size
