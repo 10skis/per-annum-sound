@@ -960,7 +960,7 @@ async function ditherArt(url, name) {
    switched on or off by the station's name so every station gets its own mark, with the station's
    city code and city in the middle (the number is already on the dial), over a faint dot matrix.
    In the page it's drawn live: while playing, each ring turns at its own speed, alternating
-   direction. The art shimmer is for real artwork only. placeholderArt() is the still version
+   direction, and the art ripple swells its dots. placeholderArt() is the still version
    (lock screen); art.placeholder() is the server's. */
 function sigilModel(name) {
   let seed = 2166136261;
@@ -975,25 +975,24 @@ function sigilModel(name) {
   const city = st.city || st.place || "";
   return { rings, city, code: st.code || city.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() };
 }
-function drawSigilOn(g, size, m, fx) {
+function drawSigilOn(g, size, m, swell) {  // swell(x, y) in 0-1 units: how much the dot there grows, during a ripple
   const S = size / 440, cx = size / 2, cy = size / 2;
   // A faint dot matrix behind the rings, like an unlit display, fading toward the corners
   const pitch = 11 * S;
   for (let y = pitch / 2; y < size; y += pitch) for (let x = pitch / 2; x < size; x += pitch) {
     const f = 1 - Math.min(1, Math.hypot(x - cx, y - cy) / (size * .72));
-    g.fillStyle = `rgba(156,108,34,${(.07 + f * .13).toFixed(3)})`;
-    g.fillRect(x - 1.2 * S, y - 1.2 * S, 2.4 * S, 2.4 * S);
+    const b = swell ? Math.max(0, swell(x / size, y / size)) : 0, q = 1.2 * S * (1 + b * 1.4);
+    g.fillStyle = `rgba(156,108,34,${(.07 + f * .13 + b * .25).toFixed(3)})`;
+    g.fillRect(x - q, y - q, 2 * q, 2 * q);
   }
   for (const r of m.rings) {
     const rad = (60 + r.ring * 15) * S, dots = Math.floor(rad * Math.PI * 2 / (9 * S));
     for (let d = 0; d < dots; d++) {
       const a = r.rot + d / dots * Math.PI * 2, on = r.pattern[Math.floor(d / dots * r.segs)];
       const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad;
-      let col = on ? (r.ring % 4 === 0 ? "#ffd27a" : "#ffb02e") : "#3a2a10";
-      if (fx && fx(x / size, y / size) && on) col = "#fff4dc";
-      else if (fx && fx(x / size, y / size)) col = "#7a5419";
-      g.fillStyle = col;
-      g.beginPath(); g.arc(x, y, (on ? 3 : 2) * S, 0, Math.PI * 2); g.fill();
+      const b = swell ? swell(x / size, y / size) : 0;
+      g.fillStyle = on ? (r.ring % 4 === 0 ? "#ffd27a" : "#ffb02e") : "#3a2a10";
+      g.beginPath(); g.arc(x, y, Math.max(.3, (on ? 3 : 2) * S * (1 + b)), 0, Math.PI * 2); g.fill();
     }
   }
   g.textAlign = "center"; g.textBaseline = "middle";
@@ -1025,7 +1024,8 @@ function drawSigil(t) {
   const [g, w] = fit, dt = Math.min(100, t - (sigil.t || t)) / 1000;
   sigil.t = t;
   if (S && S.playing && !reduceMotion && !artHeld) for (const r of sigil.model.rings) r.rot += r.speed * dt;
-  drawSigilOn(g, w, sigil.model, null);  // no ripple or sweep on the sigil; those are for real artwork
+  const R = dotRipple && dotRipple.sigil ? dotRipple : null;  // the art's breathing ripple, on the sigil's dots
+  drawSigilOn(g, w, sigil.model, R ? (x, y) => rippleSwell(R, x * ART_OUT, y * ART_OUT) : null);
 }
 
 function setArt(img, s) {
@@ -2110,8 +2110,8 @@ function shimmerSoon() {
       el.style.setProperty("--rx", Math.round(15 + Math.random() * 70) + "%");
       el.style.setProperty("--ry", Math.round(15 + Math.random() * 70) + "%");
       void el.offsetWidth;  // restart the animation
-      // Artwork only; the sigil turns instead. Halftone art ripples its own dots; logos get the overlay.
-      if (!sigil && !startDotRipple(ripple)) el.classList.add(ripple ? "ripple" : "sweep");
+      // Halftone art and the sigil ripple their own dots; logos get the overlay.
+      if (!startDotRipple(ripple)) el.classList.add(ripple ? "ripple" : "sweep");
     }
     shimmerSoon();
   }, 7000 + Math.random() * 9000);  // every 7 to 16 seconds, so a 5 s swell never overlaps the next
@@ -2157,11 +2157,12 @@ function dotModel(img) {
   return m;
 }
 function startDotRipple(ring) {
+  const at = { ring, x: (.15 + Math.random() * .7) * ART_OUT, y: (.15 + Math.random() * .7) * ART_OUT, t0: performance.now(), dur: ring ? 5200 : 4600 };
+  if (sigil) { dotRipple = { ...at, sigil: true }; return true; }  // drawSigil() swells its own dots
   if (!isHalftoneArt()) return false;
   const m = dotModel($("art"));
   if (!m) return false;
-  dotRipple = { m, src: $("art").src, ring, x: (.15 + Math.random() * .7) * ART_OUT, y: (.15 + Math.random() * .7) * ART_OUT,
-                t0: performance.now(), dur: ring ? 5200 : 4600 };
+  dotRipple = { ...at, m, src: $("art").src };
   $("artDots").hidden = false;
   $("artScreen").classList.add("rippling");
   return true;
@@ -2171,23 +2172,28 @@ function endDotRipple() {
   $("artDots").hidden = true;
   $("artScreen").classList.remove("rippling");
 }
+// How much a dot at (x, y) grows at this point in a ripple (512-unit art space): a slow, soft
+// swell on the wave, easing a little smaller just behind it, faded in and out over the run so
+// the picture breathes rather than flashes. The wave travels at an even pace.
+function rippleSwell(R, x, y) {
+  const p = Math.min(1, Math.max(0, (performance.now() - R.t0) / R.dur));
+  const front = R.ring ? -120 + p * 900 : -300 + p * 1120, amp = .42 * Math.sin(Math.PI * p);
+  const d = R.ring ? Math.hypot(x - R.x, y - R.y) : (x - ART_OUT / 2) * SWEEP_DX + (y - ART_OUT / 2) * SWEEP_DY + ART_OUT / 2;
+  const u = (d - front) / 85;
+  return (Math.exp(-u * u) - .45 * Math.exp(-((u + 1.3) ** 2))) * amp;
+}
+const SWEEP_DX = Math.cos(110 * Math.PI / 180), SWEEP_DY = Math.sin(110 * Math.PI / 180);
 function drawArtDots(t) {
   if (!dotRipple) return;
-  const R = dotRipple, p = Math.max(0, (t - R.t0) / R.dur);
-  if (p >= 1 || $("art").src !== R.src) return endDotRipple();
+  const R = dotRipple;
+  if ((t - R.t0) / R.dur >= 1 || (R.sigil ? !sigil : $("art").src !== R.src)) return endDotRipple();
+  if (R.sigil) return;
   const fit = fitCanvas($("artDots"));
   if (!fit) return;
   const [g, w] = fit, k = w / ART_OUT;
-  // A slow, soft swell: dots grow on the wave and ease back smaller just behind it, faded in and
-  // out over the run so the picture breathes rather than flashes
-  const front = R.ring ? -120 + p * 900 : -300 + p * 1120,  // an even pace, so the swell peaks mid-picture
-    amp = .42 * Math.sin(Math.PI * p);
-  const dx = Math.cos(110 * Math.PI / 180), dy = Math.sin(110 * Math.PI / 180);
   g.fillStyle = "#ffb02e";
   for (const [x, y, r] of R.m.dots) {
-    const d = R.ring ? Math.hypot(x - R.x, y - R.y) : (x - ART_OUT / 2) * dx + (y - ART_OUT / 2) * dy + ART_OUT / 2;
-    const u = (d - front) / 85, b = (Math.exp(-u * u) - .45 * Math.exp(-((u + 1.3) ** 2))) * amp;
-    const rr = Math.min(R.m.pitch * .55, r * (1 + b) + Math.max(0, b) * R.m.pitch * .06);
+    const b = rippleSwell(R, x, y), rr = Math.min(R.m.pitch * .55, r * (1 + b) + Math.max(0, b) * R.m.pitch * .06);
     if (rr < .4) continue;
     g.beginPath(); g.arc(x * k, y * k, rr * k, 0, Math.PI * 2); g.fill();
   }
@@ -2231,7 +2237,7 @@ if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw
 
 /* 05 LEVEL: click the screen or its label for the next display. Trace: the last ~30 s of left
    and right level as dotted lines. Meter: two LED bargraphs with peak hold. Needle: one analog VU.
-   Goniometer: the stereo image as a phosphor trace. Loudness: a rolling bar per quarter second.
+   Goniometer: the stereo image as a cloud of dots. Loudness: a rolling bar per quarter second.
    Left = low bands, right = high bands (MPD's real levels when there, otherwise the simulation). */
 const LEVEL_MODES = ["Trace", "Meter", "Needle", "Goniometer", "Loudness"];
 let lvlMode = store.get("piRadioLevelMode", 0), lvlHist = [], lvlLast = 0, lvlPeak = [0, 0], lvlNeedle = 0, loudHist = [], loudLast = 0, lvlS = [0, 0], lvlT = 0;
@@ -2306,7 +2312,7 @@ function drawLevel(t) {
     for (let r = R0 * .15; r < R0 * .95; r += 3) g.fillRect(cx + Math.cos(a) * r - 1, cy + Math.sin(a) * r - 1, 2, 2);
     g.fillStyle = "#9c6c22"; g.textAlign = "center"; g.fillText("VU", cx, cy - R0 * .35);
   } else if (mode === "Goniometer") {
-    drawGonio(g, w, h, t, dt);
+    drawGonio(g, w, h, L, R);
   } else {  // Loudness
     const bw = 4, off = Math.min(1, (t - loudLast) / 250) * bw, n = Math.min(loudHist.length, Math.floor(w / bw));
     const bars = loudHist.slice(loudHist.length - n).concat([(L + R) / 2]);
@@ -2317,65 +2323,29 @@ function drawLevel(t) {
   }
 }
 
-/* Goniometer as a slow phosphor scope: a short window of stereo "signal" (low, mid and high
-   partials at the current band levels, the sides widening with the highs) plotted as dots on a
-   buffer that fades over about a quarter second, so the figure drifts and leaves long trails. The window slides at a
-   fifth of real time, so it moves like an analog scope rather than flickering. Mid is up, L and R
-   on the diagonals. Small LO and HI scopes either side show the bass and the treble alone; a
-   correlation bar runs along the bottom. */
-let gonioBuf = null, gonioCorr = 0;
-function drawGonio(g, w, h, t, dt) {
-  const dpr = window.devicePixelRatio || 1, bw = Math.round(w * dpr), bh = Math.round(h * dpr);
-  if (!gonioBuf || gonioBuf.width !== bw || gonioBuf.height !== bh) { gonioBuf = document.createElement("canvas"); gonioBuf.width = bw; gonioBuf.height = bh; }
-  const b = gonioBuf.getContext("2d");
-  b.setTransform(dpr, 0, 0, dpr, 0, 0);
-  b.globalCompositeOperation = "destination-out";
-  b.fillStyle = `rgba(0,0,0,${Math.min(1, dt * 4).toFixed(3)})`;  // slow phosphor decay, frame-rate independent
-  b.fillRect(0, 0, w, h);
-  b.globalCompositeOperation = "source-over";
+/* Goniometer: the stereo image as a cloud of dots in a diamond (mid up, L and R on the
+   diagonals), redrawn each frame. Small LO and HI clouds either side show the bass and the
+   treble alone, where there's room. */
+function drawGonio(g, w, h, L, R) {
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
-  const lo = avg(visLevels.slice(0, 6)), mid = avg(visLevels.slice(6, 16)), hi = avg(visLevels.slice(16));
-  const cx = w / 2, cy = h / 2 - 5, s = Math.min(w, h - 12) * .46, TAU = Math.PI * 2, slow = t / 1000 * .2;
-  const width = .4 + hi * 1.6;
-  const signal = {  // [mid, side] at time tau, per scope
-    all: tau => [lo * Math.sin(tau * TAU * 47) + mid * .7 * Math.sin(tau * TAU * 196 + .4) + hi * .4 * Math.sin(tau * TAU * 523),
-                 width * (mid * .6 * Math.sin(tau * TAU * 151 + t / 3000) + hi * .5 * Math.sin(tau * TAU * 607 + t / 1800) + lo * .25 * Math.sin(tau * TAU * 31))],
-    lo: tau => [Math.sin(tau * TAU * 47) * .9, .45 * Math.sin(tau * TAU * 31 + t / 4000)],
-    hi: tau => [Math.sin(tau * TAU * 150) * .7, (.5 + hi) * Math.sin(tau * TAU * 200 + t / 2200)],  // exactly 3:4, so it holds a figure that turns slowly
-  };
-  let sm = 0, ss = 0;
-  const scope = (x0, y0, r, fn, gain, n, dot, glow) => {
-    // the grid: diamond and axes
+  const cloud = (cx, cy, s, l0, r0, n, labels) => {
     g.fillStyle = "#241907";
-    const step = r > 30 ? 5 : 4;
-    for (let i = -r; i <= r; i += step) { g.fillRect(x0 + i, y0 - (r - Math.abs(i)), 2, 2); g.fillRect(x0 + i, y0 + (r - Math.abs(i)), 2, 2); }
-    for (let i = -r; i <= r; i += 6) { g.fillRect(x0, y0 + i, 1, 2); g.fillRect(x0 + i, y0, 2, 1); }
-    b.fillStyle = "#ffb02e"; b.shadowColor = "#ffb02e"; b.shadowBlur = glow;
+    for (let i = -s; i <= s; i += 5) { g.fillRect(cx + i, cy - (s - Math.abs(i)), 2, 2); g.fillRect(cx + i, cy + (s - Math.abs(i)), 2, 2); }
     for (let i = 0; i < n; i++) {
-      const [m, sd] = fn(slow + i / n * .022);  // 22 ms of "audio": a few turns of each partial, not a solid block
-      if (fn === signal.all) { sm += m * m; ss += sd * sd; }
-      b.fillRect(x0 + Math.tanh(sd * gain * .7) * r - dot / 2, y0 - Math.tanh(m * gain * .7) * r - dot / 2, dot, dot);
+      const l = (Math.random() * 2 - 1) * l0, r = (Math.random() * 2 - 1) * r0 * .8 + l * .5;
+      g.fillStyle = i % 4 ? "#c4841f" : "#ffb02e";
+      g.fillRect(cx + (l - r) * s * .7, cy - (l + r) * s * .5, 2, 2);
     }
-    b.shadowBlur = 0;
+    if (labels) { g.fillStyle = "#9c6c22"; g.textAlign = "center"; g.fillText(labels, cx, cy + s + 12); }
   };
-  scope(cx, cy, s, signal.all, .85, 260, 2, 2);
-  g.fillStyle = "#9c6c22"; g.textAlign = "center";
-  g.fillText("M", cx, cy - s - 2); g.fillText("L", cx - s * .55, cy - s * .55); g.fillText("R", cx + s * .55, cy - s * .55);
-  // The side scopes, where there's room beside the main one
+  const cx = w / 2, cy = h / 2, s = Math.min(w, h) * .45;
+  cloud(cx, cy, s, L, R, 260);
   const side = (w - 2 * s) / 2, r = Math.min(side * .36, s * .5);
   if (r >= 14) {
-    [[cx - s - side / 2, signal.lo, lo, "LO"], [cx + s + side / 2, signal.hi, hi, "HI"]].forEach(([x0, fn, lv, name]) => {
-      scope(x0, cy, r, fn, .35 + lv * 1.1, 120, 1.6, 2);
-      g.fillStyle = "#9c6c22"; g.fillText(name, x0, cy + r + 12);
-    });
+    const lo = Math.min(1, avg(visLevels.slice(0, 6)) * 1.2), hi = Math.min(1, avg(visLevels.slice(16)) * 1.8);
+    cloud(cx - s - side / 2, cy - 6, r, lo, lo * .9, 90, "LO");
+    cloud(cx + s + side / 2, cy - 6, r, hi, hi * .9, 90, "HI");
   }
-  g.drawImage(gonioBuf, 0, 0, w, h);
-  // Correlation: +1 when the image is all mid (mono), toward -1 as the sides take over
-  gonioCorr += ((sm - ss) / Math.max(1e-6, sm + ss) - gonioCorr) * (1 - Math.exp(-dt * 2));
-  const y = h - 4, x0 = 16, x1 = w - 16;
-  g.fillStyle = "#241907"; for (let x = x0; x <= x1; x += 4) g.fillRect(x, y, 2, 2);
-  g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.fillText("-", 2, y + 3); g.textAlign = "right"; g.fillText("+", w - 2, y + 3);
-  g.fillStyle = "#ffb02e"; g.fillRect(x0 + (gonioCorr + 1) / 2 * (x1 - x0) - 2, y - 3, 4, 8);
 }
 
 /* Up next, under the description: for NTS, the next shows on a small timeline with a needle at
