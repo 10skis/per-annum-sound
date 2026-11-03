@@ -10,6 +10,7 @@ def load(path: Path) -> dict:
     data = yaml.safe_load(path.read_text())
     places = data.get("places", {})
     zones = data.get("timezones", {})
+    codes = data.get("codes", {})
     for g in data["groups"]:
         for st in g["stations"]:
             st.setdefault("place", g.get("place", ""))
@@ -19,4 +20,6 @@ def load(path: Path) -> dict:
             if p:
                 st["geo"] = [p[0], p[1]]
                 st["city"] = p[2] if len(p) > 2 else st["place"]
+            city = st.get("city") or st["place"]
+            st["code"] = codes.get(city) or "".join(ch for ch in city if ch.isalpha())[:3].upper()
     return data

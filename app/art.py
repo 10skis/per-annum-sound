@@ -19,6 +19,8 @@ import httpx
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
+# Wikimedia refuses generic user agents with a 429; it wants a name and a way to reach the owner.
+UA = "PerAnnumSound/0.35 (personal radio app; https://spiffy-elf-9ebf5d.netlify.app)"
 log = logging.getLogger("pi-radio")
 
 N = 128                  # working resolution, the art screen's pixel size
@@ -38,7 +40,7 @@ def _to_png(mask: Image.Image) -> bytes:
 
 def _gray(url: str) -> Optional[Image.Image]:
     try:
-        r = httpx.get(url, timeout=8, follow_redirects=True, headers={"User-Agent": "pi-radio/0.1"})
+        r = httpx.get(url, timeout=8, follow_redirects=True, headers={"User-Agent": UA})
         r.raise_for_status()
         img = Image.open(io.BytesIO(r.content))
         if img.mode in ("RGBA", "LA", "P"):

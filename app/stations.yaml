@@ -37,6 +37,34 @@ places:
   Milan: [45.46, 9.19]
   North Pole: [90.0, 0.0]
 
+# Airport-style code for each map label, shown on the map and in the middle of the sigil.
+# A label not listed falls back to its first three letters.
+codes:
+  London: LON
+  Bristol: BRS
+  Paris: PAR
+  Brussels: BRU
+  Berlin: BER
+  Bethlehem: BTH
+  New York: NYC
+  Los Angeles: LAX
+  Seattle: SEA
+  Bologna: BLQ
+  Sydney: SYD
+  Kent, Ohio: KNT
+  Accra: ACC
+  Hanoi: HAN
+  Bangkok: BKK
+  Tbilisi: TBS
+  Santiago: SCL
+  Athens: ATH
+  Munich: MUC
+  Milan: MIL
+  North Pole: NPL
+  North Pacific: NPC
+  Mid-Pacific: MPC
+  Point Nemo: NMO
+
 # Time zone for each place, for the local-time readout.
 timezones:
   London: Europe/London
@@ -140,7 +168,7 @@ groups:
         about: "Community radio from Neukölln, grown out of a Berlin fundraising party series. Resident shows across club, experimental and global sounds."
         site: "https://refugeworldwide.com"
         founded: 2021
-        profile: "Began in 2015 as fundraising parties for refugee housing and grassroots groups in Neukölln, started by George Patrick. Became a full-time station in January 2021, broadcasting online from Berlin, and runs free DJ and media workshops."
+        profile: "Began in 2015 as Refuge, a series of fundraising parties for refugee housing and grassroots groups in Neukölln started by George Patrick. With Richard Akingbehin he turned it into a radio station in January 2021, broadcasting around the clock from Neukölln, and it runs workshops and training in media and creative fields."
       - id: kiosk
         name: Kiosk Radio
         kind: radio
@@ -170,7 +198,7 @@ groups:
         about: "Independent community radio from Bristol since 2015. DJ-led and eclectic, with a strong line in leftfield dance, dub and bass."
         site: "https://noodsradio.com"
         founded: 2015
-        profile: "Founded in Bristol in 2015 out of Sunday morning music sessions in a front room. It sets out to bring the city's separate scenes together and show new talent, and joined DAB+ in Bristol in 2019."
+        profile: "Founded in Bristol in 2015, growing out of Sunday sessions among friends in a Stokes Croft living room. It aims to nurture the city's talent and document its scene, has been based at the Mickey Zoggs pub since 2021, and broadcasts on DAB+ in Bristol."
       - id: alhara
         name: Radio alHara
         kind: radio
@@ -180,7 +208,7 @@ groups:
         about: "Started in Bethlehem during the 2020 lockdown; alHara means the neighbourhood. Open, community-run programming from Palestine and the wider Arab world, with guests from everywhere."
         site: "https://www.radioalhara.net"
         founded: 2020
-        profile: "An online community station in Bethlehem, started in March 2020 during the lockdown by a group of friends spread across Bethlehem, Ramallah and Amman, including Yazan Khalili and Yousef and Elias Anastas."
+        profile: "An online community station first on air on 20 March 2020, at the start of Palestine's lockdown, founded by friends in Bethlehem, Ramallah and Amman: Yousef and Elias Anastas, Yazan Khalili, Saeed Abu-Jaber and Mothanna Hussein."
       - id: rinse
         name: Rinse FM
         kind: radio
@@ -251,6 +279,9 @@ groups:
         url: "https://icecast.radiofrance.fr/fipjazz-hifi.aac"
         art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"
         about: "FIP's jazz channel. Classic and contemporary jazz all day, with the same light touch."
+        site: "https://www.radiofrance.fr/fip/radio-jazz"
+        founded: 2016
+        profile: "One of six web stations FIP put online on 5 January 2016 for its 45th birthday, first called FIP autour du jazz. Jazz around the clock with the same light-touch presentation as the main station."
       - id: wqxr
         name: WQXR
         kind: radio
@@ -266,6 +297,8 @@ groups:
         place: Berlin
         url: "https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/"
         about: "FluxFM's lo-fi hip-hop channel from Berlin. Mellow beats for working, reading or winding down."
+        site: "https://www.fluxfm.de/chillhop"
+        profile: "One of the web channels of FluxFM, the Berlin station on 100.6 FM that began as Motor FM in 2004 and took its current name in August 2011. It plays hand-picked lo-fi and chilled hip-hop instrumentals."
 
   - name: Genre Radio
     # One station per genre. Streams checked 2026-11-02.
@@ -317,9 +350,9 @@ groups:
         place: Online
         map: [28.0, -165.0, North Pacific]
         url: "https://yumicoradio.net/stream"
-        about: "A round-the-clock station for city pop, future funk, anime groove and nu disco. Run from France; no city given."
+        about: "A round-the-clock station for city pop, future funk, anime groove and nu disco. No home city given."
         site: "https://yumicoradio.net"
-        profile: "A round-the-clock web station for future funk, city pop, anime groove, nu disco and vaporwave, based in France, with an open-source Android app that has live chat and track rankings."
+        profile: "A round-the-clock web station for future funk, city pop, nu disco and vaporwave, with an open-source Android app styled like Windows 9x that includes the station's live chat."
       - id: folk-alley
         name: Folk Alley
         kind: radio
@@ -363,7 +396,8 @@ groups:
         info: "radiocult:oroko-radio"
         about: "A not-for-profit independent station in Accra, Ghana. Built on conversation, collaboration and the city's music community."
         site: "https://oroko.live"
-        profile: "An independent, not-for-profit station in Accra giving a platform to African and diasporic creative communities. Founded by Kikelomo Oludemi with Nico Adomako and Naemi Ada, it runs a residency programme for new hosts."
+        founded: 2022
+        profile: "A not-for-profit online station in Accra, launched in 2022 by Kikelomo, Nico Adomako, Naëmi Ada and Truseye to platform Ghanaian and diasporic artists, with a yearly residents programme. It announced an indefinite hiatus in April 2026."
       - id: hanoi
         name: Ha Noi Community Radio
         kind: radio
@@ -372,6 +406,9 @@ groups:
         url: "https://ha-noi-community-radio.radiocult.fm/stream"
         info: "radiocult:ha-noi-community-radio"
         about: "A community station in Hanoi, Vietnam. DJ mixes and live music, from Asian artists in Vietnam and beyond to disco and house."
+        site: "https://hanoicommunityradio.com"
+        founded: 2021
+        profile: "Founded in 2020 by Maggie Tra and on air from April 2021, an online station run entirely by volunteers. Shows come from local artists and the Vietnamese diaspora, with no fixed studio; it streams monthly live sets from bars and cafés around Hanoi."
       - id: bangkok
         name: Bangkok Community Radio
         kind: radio
@@ -379,17 +416,20 @@ groups:
         place: Bangkok
         url: "https://bcr.radiocult.fm/stream"
         info: "radiocult:bcr"
-        about: "A community-led independent station in Bangkok. In its own words, the sounds of Siam from the heart of the city."
+        about: "A grassroots community station broadcasting from the heart of Bangkok. Ambient, techno, molam, disco, funk and soul from the city's underground."
+        site: "https://www.bangkokcommunityradio.com"
+        founded: 2021
+        profile: "Started during the pandemic by Frank 'Vell' Nankivell, Liam 'Seelie' Rielly, Sarayu 'Jay' Sriyuksiri and Top 'DOTT', and first on air on 10 July 2021. It has more than 90 residents and since 2023 has had a studio above the Entertainment Project record shop on Charoen Krung Road."
       - id: mutant
         name: Mutant Radio
         kind: radio
         genre: Experimental
         place: Tbilisi
         url: "https://listen.radioking.com/radio/282820/stream/328621"
-        about: "A Tbilisi platform for mixes, interviews, live sets and talk. Experimental, dub, krautrock and new wave."
+        about: "A Tbilisi community platform for mixes, live sets, interviews and talk. Experimental psychedelia to post-punk and synth pop, with a focus on Georgian artists."
         site: "https://www.mutantradio.net"
         founded: 2019
-        profile: "A community station and cultural space in Tbilisi founded in 2019. Its base is a caravan studio that also broadcasts from elsewhere in Georgia, and it opened a small studio in Berlin in 2025."
+        profile: "Founded in Tbilisi in 2019 by Tata Janashia and Nina Botchorishvili (Ninasupsa), with help from Amsterdam's Red Light Radio. Its studio is a converted caravan at a former power station that is now a bar and cultural venue, and it opened a small studio in Berlin in April 2025."
       - id: super45
         name: Super45.fm
         kind: radio
@@ -399,7 +439,7 @@ groups:
         info: "radioco:s421105570"
         about: "A collective online radio project from Santiago, Chile. Indie, experimental electronic and jazz, in themed shows."
         site: "https://super45.fm"
-        profile: "A collective, non-profit online station from Santiago, Chile, playing alternative, electronic and experimental music under the line 'Nuevos caminos para la música'."
+        profile: "A collective, experimental, non-profit online station from Santiago de Chile, playing Latin American indie alongside alternative and electronic music from elsewhere. Its line today is 'Música online en contra del algoritmo'."
       - id: stegi
         name: stegi.radio
         kind: radio
@@ -409,7 +449,7 @@ groups:
         info: "airtime:movementathens"
         about: "An international station in Athens run by the Onassis Stegi arts centre, formerly Movement Radio. Ambient, experimental, hip-hop, jazz and world music."
         site: "https://stegi.radio"
-        profile: "A round-the-clock online station from Onassis Stegi in Athens, with more than 200 producers across three channels. It began as the pop-up Movement Radio for the Movement 1920-2020 festival."
+        profile: "A round-the-clock online station produced by Onassis Stegi in Athens, with more than 200 producers across three channels. It grew out of Movement Radio, the pop-up station Onassis Stegi ran for the Movement 1920-2020 festival in February 2020."
       - id: radio80000
         name: Radio 80000
         kind: radio
@@ -420,17 +460,17 @@ groups:
         about: "Freeform community radio from Munich. Resident shows plus art projects and residencies around the city."
         site: "https://radio80k.de"
         founded: 2015
-        profile: "Non-commercial community radio from Munich, founded in April 2015 by Felix Flemmer and Leonard Bauer and run by the non-profit 80000 e.V. It has worked with Kunstverein München and Museum Brandhorst."
+        profile: "Non-commercial online radio from Munich, founded in April 2015 by Felix Flemmer and Leonard Bauer. In 2018 its studio moved into Kunstverein München, and it has run programmes with Museum Brandhorst."
       - id: drummer
         name: Give the Drummer Radio
         kind: radio
         genre: WFMU freeform
         place: New Jersey
         url: "https://stream0.wfmu.org/drummer"
-        about: "WFMU's second 24-hour channel, started in 2010 by longtime DJ Doug Schulkind. More than two dozen shows by music obsessives, broadcasting from home."
+        about: "WFMU's second 24-hour channel, started in 2010 by longtime DJ Doug Schulkind. More than two dozen shows, hosted remotely by music obsessives from around the US and abroad."
         site: "https://wfmu.org/drummer"
         founded: 2010
-        profile: "WFMU's web-only 24-hour channel, created in 2010 by longtime WFMU DJ Doug Schulkind. Sometimes live DJs, sometimes a jukebox of its curator's records."
+        profile: "A 24-hour WFMU radio and streaming channel created in 2010 by longtime WFMU DJ Doug Schulkind, who still hosts its Friday morning show, Give The Drummer Some."
       - id: raheem
         name: Radio Raheem
         kind: radio
@@ -441,7 +481,7 @@ groups:
         about: "Cosmic perspective radio from Milan, as it describes itself. Always digging into the most interesting scenes, at home and abroad."
         site: "https://www.radioraheem.it"
         founded: 2017
-        profile: "An independent web radio from Milan founded in 2017, and Triennale Milano's resident station from 2020. Its founders describe it as a web radio, a physical space and a think tank."
+        profile: "An independent web radio founded in Milan in March 2017 by a group including Marco Aimo and Diego Montinaro, first broadcasting from a bar window on the Navigli. It was resident at Triennale Milano from early 2020 and in 2026 moved to a permanent booth at Combo Milano."
       - id: sleeping-pill
         name: Ambient Sleeping Pill
         kind: radio
@@ -451,7 +491,8 @@ groups:
         url: "https://radio.stereoscenic.com/asp-h"
         about: "Internet radio for sleep, meditation and slowing down. Ambient music around the clock."
         site: "https://ambientsleepingpill.com"
-        profile: "Round-the-clock internet radio for sleeping, napping and quiet moments, run by Andrew J Klimek of Stereoscenic Records."
+        founded: 2013
+        profile: "Internet radio for sleep, meditation and study, launched in January 2013 by Andrew J Klimek, who runs the small label Stereoscenic with Angela (poemme)."
       - id: nightride
         name: Nightride FM
         kind: radio

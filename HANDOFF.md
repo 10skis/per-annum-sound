@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.35 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.34 |
+| Version | v0.35 |
 | Owner | Robert |
-| Live site | https://spiffy-elf-9ebf5d.netlify.app (still v0.7; Robert re-drags `app/web` to update) |
+| Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -21,7 +21,7 @@ Start here. Written 2026-11-03 at v0.34 so a new session can pick up without re-
 | Server version (the Pi later) | `app/run.sh`, port 8080. FastAPI plus MPD; falls back to a silent mock player when MPD isn't running |
 | No-server version (Netlify) | `.venv/bin/python build_static.py` writes `app/web/`. Serve locally with `python3 -m http.server 8090` from `app/web` |
 | One page, two modes | `app/static/index.html` serves both. The build injects `window.PI_RADIO_STATIC = true`; the `DATA` object switches between the server API and fetching NTS and stations.json directly |
-| Station data | `app/stations.yaml`: groups, `places` (lat/lon/label), `timezones`, per-station `about`, `info`, `genre`, `profile`, `founded`, `notable`, `site`, `map`. Loaded by `catalog.py` for both server and build |
+| Station data | `app/stations.yaml`: groups, `places` (lat/lon/label), `timezones`, per-station `about`, `info`, `genre`, `profile`, `founded`, `notable`, `site`, `map`, plus `codes` (airport-style city codes for the map and sigil). Loaded by `catalog.py` for both server and build |
 | Art | `art.py`: 45° halftone for covers, 1-bit for logos, sigil for stations with none. The page has matching JS for the no-server build |
 | Map land | `make_map.py` builds `static/worldmap.js` from Natural Earth (`dev/ne_110m_land.geojson`) |
 | Offline | `static/sw.js`, copied to the web root by the build |
@@ -57,12 +57,13 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | `hidden` ignored | `[hidden] { display: none !important }` exists because class display rules override the attribute |
 | Patching | Edits are scripted string replacements with `assert count == 1`. Comment markers often appear twice (CSS and JS); match the longer, unique form |
 | Streams | Must be HTTPS (Netlify page). Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them |
+| Wikimedia art | Needs a descriptive user agent (`UA` in `art.py`) or it returns 429 and the build quietly drops the FIP logos. Check `web/art/` after a build |
 | iPhone | Pages can't set volume; the bar becomes a "use the volume buttons" note |
 | Testing in the built-in browser | It won't register service workers; screenshots right after load can be stale or mid boot animation; a hidden pane pauses requestAnimationFrame. For visuals, freeze animations and look at the frame. "Animation running" is not "visible" |
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify, then tests on the iPhone: lock-screen playback, offline mode, swipe and tap controls.
-- No profiles yet for Ha Noi Community Radio, Bangkok Community Radio, Chillhop and FIP Jazz. About a dozen smaller-station profiles came from search summaries and are worth a spot check (listed in `updates/2026-11-02-ticker-about-nearby.md`).
-- The server version's sigil uses the first three letters of the city, not the map's airport-style codes.
-- MPD install and the hardware build: see TODO.md and SCOPE.md.
+- Robert re-drags `app/web` to Netlify for v0.35. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
+- Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
+- MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.

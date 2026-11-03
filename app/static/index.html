@@ -942,7 +942,7 @@ function sigilModel(name) {
   }
   const id = order.find(i => NAMES[i] === name), st = STN[id] || {};
   const city = st.city || st.place || "";
-  return { rings, city, code: CITY_CODE[city] || city.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() };
+  return { rings, city, code: st.code || city.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() };
 }
 function drawSigilOn(g, size, m, fx) {
   const S = size / 440, cx = size / 2, cy = size / 2;
@@ -1743,11 +1743,6 @@ const RANGES = {
   world: { lon0: -180, lon1: 180, lat0: 80, lat1: -58, grid: 30 },
   europe: { lon0: -22, lon1: 60, lat0: 62, lat1: 28, grid: 10 },
 };
-const CITY_CODE = { London: "LON", Bristol: "BRS", Paris: "PAR", Brussels: "BRU", Berlin: "BER", Bethlehem: "BTH",
-                    "New York": "NYC", "Los Angeles": "LAX", Seattle: "SEA", Bologna: "BLQ", Sydney: "SYD",
-                    "Kent, Ohio": "KNT", Accra: "ACC", Hanoi: "HAN", Bangkok: "BKK", Tbilisi: "TBS",
-                    Santiago: "SCL", Athens: "ATH", Munich: "MUC", Milan: "MIL", "North Pole": "NPL",
-                    "North Pacific": "NPC", "Mid-Pacific": "MPC", "Point Nemo": "NMO" };
 const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
 // The world range drifts slowly (content moving left) until the pointer is over the map.
@@ -1776,11 +1771,11 @@ function buildCities() {
   order.forEach(id => {
     const st = STN[id];
     if (!st || !st.geo) return;
-    const c = by[st.city] = by[st.city] || { name: st.city, lat: 0, lon: 0, ids: [] };
+    const c = by[st.city] = by[st.city] || { name: st.city, code: st.code, lat: 0, lon: 0, ids: [] };
     c.lat += st.geo[0]; c.lon += st.geo[1]; c.ids.push(id);
   });
   CITIES = Object.values(by).map(c => ({ ...c, lat: c.lat / c.ids.length, lon: c.lon / c.ids.length,
-                                         code: CITY_CODE[c.name] || c.name.slice(0, 3).toUpperCase() }));
+                                         code: c.code || c.name.slice(0, 3).toUpperCase() }));
 }
 function project(r, lat, lon, w, h) {
   let fx = (lon - r.lon0) / (r.lon1 - r.lon0);
