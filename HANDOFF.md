@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.52 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.53 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.52 |
+| Version | v0.53 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.52 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.53 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -40,7 +40,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Tape tuner | Under the dial (desktop) and under the tuner (phones). Thin 1 px analog ticks, a number every fifth, group bands, needle. Swipe or drag left = higher stations |
 | Volume | Two-finger swipe right = louder |
 | Phones | Tuner strip instead of the dial; no clock in the header (status bar has it); ? in the header; brand shows P·A·S |
-| Level displays | Eight: Trace, Meter, Needle, Goniometer, Loudness, then eye candy (Phosphor, Fluid, Reels). Goniometer is the first version, a random dot cloud with LO and HI clouds; v0.49's trace lives on as Phosphor. Eye candy is welcome here; avoid repeating the spectrum screens' displays |
+| Level displays | Eight: Trace, Meter, Needle, Goniometer, Loudness, then eye candy (Phosphor, Fluid, Reels). Goniometer is the first version, a random dot cloud with LO and HI clouds; v0.49's trace lives on as Phosphor. Eye candy is welcome here; avoid repeating the spectrum screens' displays. Fluid is a 3D dot surface with spikes; Phosphor, Goniometer and Fluid all have LO and HI side versions |
 | Art shimmer | Breathing, not flashing (v0.50): a 5.2 s ring or 4.6 s sweep every 7 to 16 s, dots swelling by up to about 40%, no highlight colour. Cover art and sigils (v0.51). Since v0.49 halftone art swells its own dots (read back from the image onto `#artDots`, image hidden only during the ripple); logos keep the `.shimmer` overlay |
 | Hold | Tap the art to hold shimmer and sigil rotation; tap the title to stop its scroll. Tap again resumes; remembered per device. About opens from the line under the title and the description, not the title |
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), faint dot matrix behind. Breathes with the same ripple as cover art |
@@ -56,6 +56,8 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 |---|---|
 | Canvases inflating the layout | A canvas with height 100% in a grid or flex row feeds its own size back. Use `contain: size` on the canvas, and on `.artcol` and `.strip`, so the right-hand controls set the top row's height |
 | Class name clashes | It's one 2,500-line file. The ticker once used `.tk`, the tape's tick class, and turned the ticks into a solid line. Grep a class name before using it |
+| Phone header | The full header needs about 460 px, so below 560 px it shows P·A·S and drops the clock and "ON AIR". Anything wider than the screen widens the whole page on iPhone and knocks the art and tape out of line |
+| Spectrum screens (03) | New displays go at the end of `VIS_MODES`: the saved choice is an index |
 | Layering | The art image's drop-shadow filter paints it as its own layer. Anything meant to sit on top (`.shimmer`) needs a z-index, or it's hidden. The shimmer was invisible from v0.17 to v0.33 because of this |
 | `hidden` ignored | `[hidden] { display: none !important }` exists because class display rules override the attribute |
 | Patching | Edits are scripted string replacements with `assert count == 1`. Comment markers often appear twice (CSS and JS); match the longer, unique form |

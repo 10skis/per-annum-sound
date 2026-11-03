@@ -32,7 +32,7 @@
   html, body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: var(--mono); }
   body {
     min-height: 100vh;
-    padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    padding: max(20px, calc(env(safe-area-inset-top) + 14px)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     display: flex; flex-direction: column; align-items: center; gap: 20px;
   }
   body {
@@ -156,7 +156,7 @@
     .head .help-head { display: inline; }
     .help-btn { display: none; }
   }
-  @media (max-width: 419px) {
+  @media (max-width: 559px) {  /* the full header needs about 460 px */
     .head { gap: 8px; letter-spacing: .02em; }
     .head .st-word { display: none; }  /* the lit dot already says on air; room for the timers */
     .head .clock { display: none; }     /* the phone's status bar already shows the time */
@@ -489,7 +489,7 @@
   .tape-run .seg { position: absolute; bottom: 3px; height: 13px; border-top: 2px solid var(--line); padding-left: 3px; overflow: hidden;
                    white-space: nowrap; font: 600 10px/11px var(--cond); letter-spacing: .14em; color: var(--amber-dim); text-transform: uppercase; }
   .tape-run .seg.on { border-top-color: var(--amber); color: var(--amber); }
-  .tuner-tape { height: 64px; }
+  .tuner-tape { height: 74px; }  /* any shorter and the numbers sit on the group labels */
 
   /* Help */
   .help-btn {
@@ -2391,6 +2391,24 @@ function drawPhosphor(g, w, h, t, dt) {
   for (let i = -s; i <= s; i += 6) { g.fillRect(cx, cy + i, 1, 2); g.fillRect(cx + i, cy, 2, 1); }
   g.fillStyle = "#9c6c22"; g.textAlign = "center";
   g.fillText("M", cx, cy - s - 2); g.fillText("L", cx - s * .55, cy - s * .55); g.fillText("R", cx + s * .55, cy - s * .55);
+  // LO and HI traces either side, where there's room: the bass and the treble alone
+  const side = (w - 2 * s) / 2, r = Math.min(side * .36, s * .5);
+  if (r >= 14) {
+    [[cx - s - side / 2, "LO", .05, tau => [Math.sin(tau * TAU * 47) * (.3 + lo), (.2 + lo * .5) * Math.sin(tau * TAU * 31 + t / 900)]],
+     [cx + s + side / 2, "HI", .022, tau => [Math.sin(tau * TAU * 150) * (.3 + hi), (.3 + hi) * Math.sin(tau * TAU * 200 + t / 500)]]  // 3:4
+    ].forEach(([x0, name, win, fn]) => {
+      g.fillStyle = "#241907";
+      for (let i = -r; i <= r; i += 4) { g.fillRect(x0 + i, cy - (r - Math.abs(i)), 2, 2); g.fillRect(x0 + i, cy + (r - Math.abs(i)), 2, 2); }
+      g.fillStyle = "#9c6c22"; g.fillText(name, x0, cy + r + 12);
+      b.strokeStyle = "#ffb02e"; b.lineWidth = 1.2; b.shadowColor = "#ffb02e"; b.shadowBlur = 6;
+      b.beginPath();
+      for (let i = 0; i < 120; i++) {
+        const [m, sd] = fn(t / 1000 + i / 120 * win), x = x0 + Math.tanh(sd * 1.2) * r * .95, y = cy - Math.tanh(m * 1.2) * r * .95;
+        i ? b.lineTo(x, y) : b.moveTo(x, y);
+      }
+      b.stroke(); b.shadowBlur = 0;
+    });
+  }
   g.drawImage(phosBuf, 0, 0, w, h);
   // Correlation: +1 when the image is all mid (mono), toward -1 as the sides take over
   phosCorr += ((sm - ss) / Math.max(1e-6, sm + ss) - phosCorr) * (1 - Math.exp(-dt * 4));
@@ -2400,55 +2418,65 @@ function drawPhosphor(g, w, h, t, dt) {
   g.fillStyle = "#ffb02e"; g.fillRect(x0 + (phosCorr + 1) / 2 * (x1 - x0) - 2, y - 3, 4, 8);
 }
 
-/* Fluid: cornstarch on a speaker cone. A puddle of dots on dim cone rings; its outline wobbles
-   slowly, and bass hits throw out fingers that shoot up fast and sag back over about a second.
-   It leans toward the louder channel. Small LO and HI puddles either side: LO swells and rolls
-   with the bass, HI quivers with fine spikes from the treble. */
-const fluid = { fingers: [], lo: 0, t: 0 };
+/* Fluid: cornstarch on a speaker cone, seen from above at an angle. A disc of dots whose height
+   is a slow rolling swell plus spikes: the music keeps throwing up narrow columns that shoot up
+   and slump back, more of them the louder it gets, with a burst on each bass kick. Dots are drawn
+   back to front and lit by height, so the surface reads in depth. It leans toward the louder
+   channel. Small LO (a rolling swell) and HI (a bed of fast, fine spikes) puddles sit either side. */
+const fluid = { main: [], lo: 0, hiS: [] };
+const FLUID_TONES = ["#3d2a0c", "#7a5419", "#c4841f", "#ffb02e", "#ffd27a"];
+function fluidSpikes(list, t, dt, rate, max, h, w, life, burst = 0) {
+  let n = rate * dt + burst;  // spikes expected this frame
+  while (list.length < max && Math.random() < n) {
+    n -= 1;
+    const a = Math.random() * Math.PI * 2, q = Math.sqrt(Math.random()) * .8;
+    list.push({ x: Math.cos(a) * q, y: Math.sin(a) * q, h: h * (.5 + Math.random() * .8), w: w * (1 + Math.random()), born: t, life: life * (.7 + Math.random() * .6) });
+  }
+  return list.filter(s => (t - s.born) / 1000 < s.life * 2.2);  // gone once it has slumped to a tenth, freeing the slot
+}
+function fluidSurface(g, x0, y0, R, steps, height) {  // height(u, v) on the unit disc, in units of R
+  for (let j = 0; j <= steps; j++) {  // back row first, so nearer dots cover farther ones
+    const v = -1 + 2 * j / steps;
+    for (let i = 0; i <= steps; i++) {
+      const u = -1 + 2 * (i + (j % 2) * .5) / steps, rr = u * u + v * v;  // alternate rows offset half a step: a hex mesh, not columns
+      if (rr > 1) continue;
+      const z = .95 * Math.tanh(height(u, v) * Math.sqrt(1 - rr) / .95);  // the edge stays low, like a puddle; tall spikes ease off before the top
+      g.fillStyle = FLUID_TONES[Math.max(0, Math.min(4, Math.floor(1 + z * 6 + (v + 1) * .6)))];
+      const d = 1.4 + (v + 1) * .5;
+      g.fillRect(x0 + u * R - d / 2, y0 + v * R * .42 - z * R - d / 2, d, d);
+    }
+  }
+}
 function drawFluid(g, w, h, t, dt, L, R) {
-  const avg = a => a.reduce((x, y) => x + y, 0) / a.length, TAU = Math.PI * 2;
-  const lo = avg(visLevels.slice(0, 6)), hi = avg(visLevels.slice(16));
-  const cx = w / 2 + (R - L) * 30, cy = h / 2, base = Math.min(w, h) * .2;
-  // A kick (bass jumping above its recent level) throws out one to three fingers
-  if (lo - fluid.lo > .1 && t - fluid.t > 260 && fluid.fingers.length < 9) {
-    fluid.t = t;
-    for (let k = 0, n = 1 + Math.floor(Math.random() * 3); k < n; k++)
-      fluid.fingers.push({ a: Math.random() * TAU, w: .1 + Math.random() * .14, h: base * (.5 + Math.random() * .9) * (.4 + lo), born: t });
-  }
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const lo = avg(visLevels.slice(0, 6)), mid = avg(visLevels.slice(6, 16)), hi = avg(visLevels.slice(16));
+  const kick = lo - fluid.lo > .08 ? 3 : 0;
   fluid.lo += (lo - fluid.lo) * (1 - Math.exp(-dt * 6));
-  fluid.fingers = fluid.fingers.filter(f => t - f.born < 3000);
-  const angGap = (a, b) => { const d = Math.abs(((a - b) % TAU + TAU) % TAU); return Math.min(d, TAU - d); };
-  const outline = th => {
-    let r = base * (1 + .07 * Math.sin(3 * th + t / 800) + .05 * Math.sin(5 * th - t / 1100) + lo * .22);
-    for (const f of fluid.fingers) {
-      const age = (t - f.born) / 1000, grow = age < .12 ? age / .12 : Math.exp(-(age - .12) / .75);
-      const bend = Math.sin(age * 7 + f.a * 3) * .04 * grow;  // the tip wobbles as it sags
-      r += f.h * grow * Math.exp(-((angGap(th, f.a + bend) / f.w) ** 2));
+  fluid.main = fluidSpikes(fluid.main, t, dt, 5 + (lo + mid) * 28, 48, .8 * (.5 + lo), .09, .6, kick);
+  fluid.hiS = fluidSpikes(fluid.hiS, t, dt, 12 + hi * 50, 36, .35 * (.4 + hi), .09, .25);
+  const spikeAt = (list, u, v) => {
+    let z = 0;
+    for (const s of list) {
+      const age = (t - s.born) / 1000, grow = age < .07 ? age / .07 : Math.exp(-(age - .07) / s.life);
+      const dx = u - s.x, dy = v - s.y;
+      z += s.h * grow * Math.exp(-(dx * dx + dy * dy) / (s.w * s.w));
     }
-    return r;
+    return z;
   };
-  // The cone: dim dashed rings
-  g.fillStyle = "#241907";
-  for (const k of [1.55, 2.1]) for (let i = 0; i < 64; i += 2) {
-    const a = i / 64 * TAU; g.fillRect(w / 2 + Math.cos(a) * base * k, cy + Math.sin(a) * base * k * .92, 2, 2);
+  const Rm = Math.min(w * .2, h * .62), y0 = h * .64, cx = w / 2 + (R - L) * 24;
+  g.fillStyle = "#241907";  // the cone: dim rings round the puddle
+  for (const k of [1.25, 1.6]) for (let i = 0; i < 72; i += 2) {
+    const a = i / 72 * Math.PI * 2; g.fillRect(w / 2 + Math.cos(a) * Rm * k, y0 + Math.sin(a) * Rm * k * .42, 2, 2);
   }
-  const puddle = (x0, y0, fn, n) => {
-    for (let i = 0; i < n; i++) {
-      const th = Math.random() * TAU, edge = fn(th), q = Math.sqrt(Math.random());
-      g.fillStyle = q > .86 ? "#ffb02e" : i % 3 ? "#c4841f" : "#9c6c22";
-      g.fillRect(x0 + Math.cos(th) * edge * q, y0 + Math.sin(th) * edge * q, 2, 2);
-    }
-    g.fillStyle = "#ffd27a";  // the surface, lit
-    for (let i = 0; i < 72; i++) { const th = i / 72 * TAU, e = fn(th); g.fillRect(x0 + Math.cos(th) * e - 1, y0 + Math.sin(th) * e - 1, 2, 2); }
-  };
-  puddle(cx, cy, outline, 520);
-  const side = (w - base * 5) / 2, r = Math.min(side * .3, base * .55);
+  fluidSurface(g, cx, y0, Rm, 30, (u, v) =>
+    .06 + lo * .1 * (Math.sin(3 * u + t / 700) * Math.cos(2 * v - t / 900) + .6 * Math.sin(4 * (u + v) + t / 450)) + spikeAt(fluid.main, u, v));
+  const side = (w - Rm * 3.2) / 2, r = Math.min(side * .38, Rm * .5);
   if (r >= 10) {
+    const xl = w / 2 - Rm * 1.6 - side / 2, xr = w / 2 + Rm * 1.6 + side / 2;
+    fluidSurface(g, xl, y0, r, 12, (u, v) => .08 + lo * .35 * (.5 + .5 * Math.sin(2.5 * u + t / 380) * Math.cos(2 * v - t / 520)));
+    fluidSurface(g, xr, y0, r, 12, (u, v) => .04 + spikeAt(fluid.hiS, u, v));
     g.fillStyle = "#9c6c22"; g.textAlign = "center";
-    puddle(w / 2 - base * 2.5 - side / 2, cy - 6, th => r * (1 + lo * .35 + .12 * Math.sin(2 * th + t / 500) + .08 * Math.sin(3 * th - t / 700)), 110);
-    puddle(w / 2 + base * 2.5 + side / 2, cy - 6, th => r * (1 + hi * .3 * Math.abs(Math.sin(11 * th + t / 90)) + .05 * Math.sin(17 * th - t / 60)), 110);
-    g.fillStyle = "#9c6c22";
-    g.fillText("LO", w / 2 - base * 2.5 - side / 2, cy + r * 1.6 + 8); g.fillText("HI", w / 2 + base * 2.5 + side / 2, cy + r * 1.6 + 8);
+    g.fillText("LO", xl, y0 + r * .42 + 13); g.fillText("HI", xr, y0 + r * .42 + 13);
   }
 }
 
@@ -2710,7 +2738,7 @@ function simLevels(t) {
 }
 /* Two visualizer screens; clicking either steps it to its next display. Stopped, they rest on a flat
    line with NO CARRIER. Levels are MPD's when it's there, otherwise the labelled simulation. */
-const VIS_MODES = ["Spectrum", "Waterfall", "Scope", "VU", "Polar", "Mirror", "Ridges", "Glyph Rain", "Lissajous", "Starfield", "Tunnel"];
+const VIS_MODES = ["Spectrum", "Waterfall", "Scope", "VU", "Polar", "Mirror", "Ridges", "Glyph Rain", "Lissajous", "Starfield", "Tunnel", "Spectrogram"];  // new ones go last, so saved choices keep their place
 let visMode = store.get("piRadioVisModes", [0, 1]), peaks = new Array(BANDS).fill(0), vu = [0, 0];
 const TIERS = ["#1c1407", "#3d2a0c", "#7a5419", "#c4841f", "#ffb02e"];
 const tier = v => TIERS[v < .12 ? 0 : v < .35 ? 1 : v < .6 ? 2 : v < .85 ? 3 : 4];
@@ -2752,6 +2780,28 @@ function drawBars(g, w, h) {
       g.fillRect(i * (bw + gap), h - (j + 1) * ch - j * gap, bw, ch);
     }
   }
+}
+/* Spectrogram: time scrolling right to left, frequency up the side (low at the bottom), each
+   cell lit by its level, the bands blended smoothly between. A column every 50 ms, gliding
+   between columns so it scrolls smoothly. */
+let specHist = [], specLast = 0;
+function drawSpectrogram(g, w, h, t) {
+  if (t - specLast > 50) { specLast = t; specHist.push(visLevels.slice()); if (specHist.length > 600) specHist.shift(); }
+  const cw = 3, ch = 3, lab = 26, rows = Math.floor((h - 2) / ch), off = Math.min(1, (t - specLast) / 50) * cw;
+  const n = Math.min(specHist.length, Math.ceil((w - lab) / cw) + 1);
+  for (let k = 0; k < n; k++) {
+    const lv = specHist[specHist.length - 1 - k], x = w - (k + 1) * cw - off;
+    if (x + cw < lab) break;
+    for (let r = 0; r < rows; r++) {
+      const f = (rows - 1 - r) / (rows - 1) * (BANDS - 1), i0 = Math.floor(f), v = lv[i0] + ((lv[i0 + 1] ?? lv[i0]) - lv[i0]) * (f - i0);
+      if (v < .1) continue;
+      g.fillStyle = tier(v * (1 - k / (n * 2.2)));  // older columns dim a little
+      g.fillRect(x, 1 + r * ch, cw - 1, ch - 1);
+    }
+  }
+  g.fillStyle = "#070503"; g.fillRect(0, 0, lab, h);
+  g.font = "13px VT323, monospace"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#9c6c22";
+  [["16K", 1], ["4K", .72], ["1K", .48], ["250", .24], ["60", .02]].forEach(([l, f]) => g.fillText(l, 0, 1 + (1 - f) * (h - 8) + 3));
 }
 function drawWaterfall(g, w, h) {
   const gap = 3, bw = (w - gap * (BANDS - 1)) / BANDS, ch = 3, rows = Math.floor((h + 2) / (ch + 2));
@@ -2901,7 +2951,8 @@ function drawTunnel(g, w, h, t, slot) {
   }
 }
 const VIS_DRAW = { Spectrum: drawBars, Waterfall: drawWaterfall, Scope: drawScope, VU: drawVU, Polar: drawPolar, Mirror: drawMirror,
-                   Ridges: drawRidges, "Glyph Rain": drawRain, Lissajous: drawLissajous, Starfield: drawStars, Tunnel: drawTunnel };
+                   Ridges: drawRidges, "Glyph Rain": drawRain, Lissajous: drawLissajous, Starfield: drawStars, Tunnel: drawTunnel,
+                   Spectrogram: drawSpectrogram };
 function drawVisScreen(c, slot, t) {
   const fit = fitCanvas(c);
   if (!fit) return;
