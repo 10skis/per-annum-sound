@@ -6,13 +6,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.20: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.21: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.21 | 2026-11-02 | Dial turns with the hand, trackpad swipe on the tape, orange map markers | [link](updates/2026-11-02-dial-swipe-markers.md) |
 | v0.20 | 2026-11-02 | Rotating-window dial, tape tuner, fitted no-art names, five more visualizers | [link](updates/2026-11-02-dial-tape-visualizers.md) |
 | v0.19 | 2026-11-02 | Knockout names on no-art stations, volume above visualizers on phones, map labels glide, clickable tuning tape | [link](updates/2026-11-02-knockout-tape.md) |
 | v0.18 | 2026-11-02 | Renamed Per Annum Sound, smoother map drift, glyph dial, dot-matrix no-art design, Terrascan FM with Worldwide FM | [link](updates/2026-11-02-per-annum-sound.md) |

@@ -1502,6 +1502,28 @@ document.querySelectorAll(".tape").forEach(tape => {
     else if (S) render(S);
   });
   tape.addEventListener("pointercancel", () => { tapeDrag = null; if (S) render(S); });
+  // Two-finger horizontal swipe (trackpad) scrubs the tape; it tunes once the swipe settles.
+  // Vertical scrolling is left alone so the page still scrolls.
+  let wheelAcc = 0, wheelTimer = null;
+  tape.addEventListener("wheel", e => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    if (!tapeDrag) { const i = currentIndex(); tapeDrag = { wheel: true, start: i < 0 ? 0 : i, idx: i < 0 ? 0 : i }; }
+    wheelAcc += e.deltaX;
+    while (Math.abs(wheelAcc) >= 28) {  // about one station per 28px of swipe; swiping left moves to higher stations
+      const dir = wheelAcc > 0 ? 1 : -1;
+      wheelAcc -= dir * 28;
+      tapeDrag.idx = Math.max(0, Math.min(order.length - 1, tapeDrag.idx + dir));
+      drawTapes(tapeDrag.idx); previewDial(tapeDrag.idx);
+    }
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      const d = tapeDrag;
+      tapeDrag = null; wheelAcc = 0;
+      if (!d || !d.wheel) return;
+      if (d.idx !== d.start) act.play(order[d.idx]); else if (S) render(S);
+    }, 380);
+  }, { passive: false });
 });
 function drawTapes(idx) {
   const grp = tapeSegs.findIndex(g => idx >= g.from && idx < g.to);
@@ -1521,7 +1543,7 @@ function drawRing(idx) {
     let off = i - idx;
     if (off > n / 2) off -= n;
     if (off < -n / 2) off += n;  // the nearest way round
-    const a = off * RING_STEP;
+    const a = -off * RING_STEP;  // next stations wait on the left, so turning clockwise brings them to the top
     d.style.transform = `rotate(${a}deg) translateY(calc(-1 * var(--ring, 72px))) rotate(${-a}deg)`;
     d.style.opacity = Math.abs(off) > RING_SHOW ? 0 : 1 - Math.abs(off) / (RING_SHOW + 1) * .85;
     d.className = off === 0 ? "lit" : "";
@@ -1656,12 +1678,13 @@ function drawMap(t) {
     const x = k.x, y = k.y;  // not rounded: markers and labels glide with the drifting dots
     if (live && !reduceMotion) {
       const ph = (t % 1600) / 1600, rad = 5 + ph * 12;
-      g.strokeStyle = `rgba(255,176,46,${(1 - ph) * .8})`; g.lineWidth = 1;
+      g.strokeStyle = `rgba(255,122,26,${(1 - ph) * .9})`; g.lineWidth = 1;
       g.strokeRect(x - rad, y - rad, rad * 2, rad * 2);
     }
-    g.fillStyle = live || sel ? "#ffb02e" : "#d08c26";
-    g.shadowColor = "#ffb02e"; g.shadowBlur = live ? 8 : 0;
-    g.fillRect(x - 3, y - 3, 7, 7);
+    // Station markers in solid orange, so they stand off the amber land
+    g.fillStyle = live || sel ? "#ff9a3c" : "#ff7a1a";
+    g.shadowColor = "#ff7a1a"; g.shadowBlur = live ? 12 : 5;
+    g.fillRect(x - 3.5, y - 3.5, 8, 8);
     g.shadowBlur = 0;
     const text = (k.cities.length > 1 ? k.cities[0].code + "+" : k.cities[0].code) + " " + ids.length;
     const tw = g.measureText(text).width + 6;
