@@ -103,6 +103,12 @@
   .next .chips button:hover, .next .chips button:focus-visible { color: var(--amber); border-color: var(--amber); background: var(--amber-ghost); }
   .next .chips button small { color: var(--amber-dim); font-size: 15px; margin-left: 4px; }
   .next .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 21px/1.2 var(--dot); }
+  .next .dn-status { font: 19px/1 var(--dot); color: var(--amber-mid); margin-top: -4px; }
+  .next .dn { display: grid; grid-template-columns: repeat(48, 1fr); gap: 2px; height: 12px; }
+  .next .dn i { background: #1c1407; }
+  .next .dn i.day { background: #9c6c22; }
+  .next .dn i.now { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .next .dn-scale { display: flex; justify-content: space-between; font: 14px/1 var(--dot); color: var(--amber-dim); margin-top: -6px; }
 
   /* About pop-up: the station in full */
   .strip .line, .strip .desc { cursor: pointer; }
@@ -1997,7 +2003,7 @@ function shimmerSoon() {
       if (!sigil) el.classList.add(ripple ? "ripple" : "sweep");  // artwork only; the sigil turns instead
     }
     shimmerSoon();
-  }, 3000 + Math.random() * 5000);  // every 3 to 8 seconds
+  }, 5000 + Math.random() * 9000);  // every 5 to 14 seconds
 }
 shimmerSoon();
 
@@ -2134,6 +2140,11 @@ function logTrack(id, title) {
 function drawNext() {
   const box = $("next"), id = selectedId(), st = STN[id] || {};
   if (!box) return;
+  if (!st.name) { box.hidden = true; return; }
+  // Every station gets the same stack, so the panel is never empty: what's on (NTS schedule or
+  // recent tracks, where known), day or night where it broadcasts, nearby & similar stations,
+  // and your own listening there.
+  const parts = [];
   if (st.kind === "nts_live" && (schedule[st.name] || []).length) {
     const shows = schedule[st.name].slice(0, 4), t0 = new Date(shows[0].start).getTime();
     const last = shows[shows.length - 1], t1 = new Date(last.end || last.start).getTime(), span = Math.max(1, t1 - t0);
@@ -2146,30 +2157,92 @@ function drawNext() {
                           : `${hhmm(s.start)}<button class="cal" data-cal="${esc(st.name)}|${i}" aria-label="Add ${esc(s.title)} to your calendar">+CAL</button>`;
       return `<div class="blk${i === 0 ? " now" : ""}" style="left:${pct(a)}%;width:calc(${pct(b) - pct(a)}% - 4px)"><b>${esc(s.title.toUpperCase())}</b><small>${sub}</small></div>`;
     }).join("");
-    box.innerHTML = `<div class="label">Coming up on ${esc(st.name)}</div><div class="ruler">${ruler}</div>` +
-      `<div class="blocks">${blocks}<div class="nowline" style="left:${pct(Date.now())}%"></div></div>`;
-    box.querySelectorAll("[data-cal]").forEach(b => b.onclick = () => { const [ch, i] = b.dataset.cal.split("|"); downloadReminder(ch, schedule[ch][+i]); });
-    box.hidden = false;
+    parts.push(`<div class="label">Coming up on ${esc(st.name)}</div><div class="ruler">${ruler}</div>` +
+      `<div class="blocks">${blocks}<div class="nowline" style="left:${pct(Date.now())}%"></div></div>`);
   } else if (st.kind === "radio" && (trackLog[id] || []).length) {
-    box.innerHTML = `<div class="label">Recently on ${esc(st.name)}</div>` +
-      trackLog[id].map(x => `<div class="trk"><span>${hhmm(x.at)}</span><span>${esc(x.title.toUpperCase())}</span></div>`).join("");
-    box.hidden = false;
-  } else if (st.name) {
-    // Stations that publish nothing: somewhere to go next, and your own history here
-    // Nearby: other stations from the same city outside this group; similar: neighbours in the same group
-    const near = order.filter(x => x !== id && STN[x] && st.city && STN[x].city === st.city && STN[x].group !== st.group).slice(0, 4);
-    const i = order.indexOf(id), sim = [];
-    for (const d of [1, -1, 2, -2, 3, -3, 4, -4]) {
-      const x = order[i + d];
-      if (x && STN[x] && STN[x].group === st.group && !near.includes(x) && sim.length < 4) sim.push(x);
-    }
-    const chip = (x, note) => `<button data-play="${x}">${esc((NAMES[x] || x).toUpperCase())}${note ? `<small>${esc(note)}</small>` : ""}</button>`;
-    const chips = near.map(x => chip(x, "nearby")).concat(sim.map(x => chip(x, ""))).join("");
-    box.innerHTML = (chips ? `<div class="label">Nearby &amp; similar</div><div class="chips">${chips}</div>` : "") +
-      `<div class="label">Your listening here</div><div class="stats">${listenSummary(id)}</div>`;
-    box.querySelectorAll("[data-play]").forEach(b => b.onclick = () => act.play(b.dataset.play));
-    box.hidden = false;
-  } else box.hidden = true;
+    parts.push(`<div class="label">Recently on ${esc(st.name)}</div>` + trackLog[id].slice(0, 3).map(x =>
+      `<div class="trk"><span>${hhmm(x.at)}</span><span>${esc(x.title.toUpperCase())}</span></div>`).join(""));
+  }
+  if (st.geo) parts.push(dayNight(st));
+  if (st.kind !== "nts_live") parts.push(nearbyChips(id, st));
+  parts.push(`<div class="label">Your listening here</div><div class="stats">${listenSummary(id)}</div>`);
+  box.innerHTML = parts.filter(Boolean).join("");
+  box.querySelectorAll("[data-cal]").forEach(b => b.onclick = () => { const [ch, i] = b.dataset.cal.split("|"); downloadReminder(ch, schedule[ch][+i]); });
+  box.querySelectorAll("[data-play]").forEach(b => b.onclick = () => act.play(b.dataset.play));
+  box.hidden = false;
+}
+
+/* Nearby & similar: stations from the same city in other groups; where there are fewer than
+   three, the closest stations elsewhere (one per city, with the distance). Then neighbours in
+   the same group. */
+function nearbyChips(id, st) {
+  const chip = (x, note) => `<button data-play="${x}">${esc((NAMES[x] || x).toUpperCase())}${note ? `<small>${esc(note)}</small>` : ""}</button>`;
+  const near = order.filter(x => x !== id && STN[x] && st.city && STN[x].city === st.city && STN[x].group !== st.group).slice(0, 3);
+  const notes = Object.fromEntries(near.map(x => [x, "same city"]));
+  if (near.length < 3 && st.geo) {
+    const seen = new Set([st.city]);
+    order.filter(x => x !== id && STN[x] && STN[x].geo && STN[x].city !== st.city)
+      .map(x => [x, distKm(st.geo, STN[x].geo)]).sort((a, b) => a[1] - b[1])
+      .forEach(([x, km]) => {
+        if (near.length >= 3 || seen.has(STN[x].city)) return;
+        seen.add(STN[x].city); near.push(x);
+        notes[x] = Math.round(km).toLocaleString("en-US") + " km";
+      });
+  }
+  const i = order.indexOf(id), sim = [];
+  for (const d of [1, -1, 2, -2, 3, -3, 4, -4]) {
+    const x = order[i + d];
+    if (x && STN[x] && STN[x].group === st.group && !near.includes(x) && sim.length < 3) sim.push(x);
+  }
+  const chips = near.map(x => chip(x, notes[x])).concat(sim.map(x => chip(x, ""))).join("");
+  return chips ? `<div class="label">Nearby &amp; similar</div><div class="chips">${chips}</div>` : "";
+}
+
+/* Day or night where the station is: a 24-hour strip in the station's local time, daylight lit,
+   a marker at the hour it is there now, and how long until sunrise or sunset. Sun times use the
+   standard solar-position approximation (as in the suncalc library). */
+function sunTimes(lat, lon, date) {
+  const rad = Math.PI / 180, dayMs = 864e5, J1970 = 2440588, J2000 = 2451545;
+  const d = date.valueOf() / dayMs - .5 + J1970 - J2000, lw = -lon * rad, phi = lat * rad;
+  const n = Math.round(d - .0009 - lw / (2 * Math.PI)), ds = .0009 + lw / (2 * Math.PI) + n;
+  const M = rad * (357.5291 + .98560028 * ds);
+  const L = M + rad * (1.9148 * Math.sin(M) + .02 * Math.sin(2 * M) + .0003 * Math.sin(3 * M)) + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(L) * Math.sin(rad * 23.4397));
+  const noon = J2000 + ds + .0053 * Math.sin(M) - .0069 * Math.sin(2 * L);
+  const cosw = (Math.sin(-.833 * rad) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+  if (cosw < -1) return { polar: "day" };
+  if (cosw > 1) return { polar: "night" };
+  const w = Math.acos(cosw), set = J2000 + .0009 + (w + lw) / (2 * Math.PI) + n + .0053 * Math.sin(M) - .0069 * Math.sin(2 * L);
+  const toDate = j => new Date((j + .5 - J1970) * dayMs);
+  return { rise: toDate(noon - (set - noon)), set: toDate(set) };
+}
+function localHours(date, st) {
+  if (st.tz) {
+    try {
+      const p = new Intl.DateTimeFormat("en-GB", { timeZone: st.tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
+      return +p.find(x => x.type === "hour").value + +p.find(x => x.type === "minute").value / 60;
+    } catch (_) {}
+  }
+  return ((date.getUTCHours() + date.getUTCMinutes() / 60 + st.geo[1] / 15) % 24 + 24) % 24;  // no time zone: go by longitude
+}
+function dayNight(st) {
+  const now = new Date(), [lat, lon] = st.geo, sun = sunTimes(lat, lon, now), h = localHours(now, st);
+  const city = (st.city || st.place || "").toUpperCase();
+  let rise = null, set = null, status;
+  if (sun.polar) status = sun.polar === "day" ? `MIDNIGHT SUN IN ${city}` : `POLAR NIGHT IN ${city}`;
+  else {
+    rise = localHours(sun.rise, st); set = localHours(sun.set, st);
+    const isDay = rise < set ? h >= rise && h < set : h >= rise || h < set;
+    const until = t => { const m = Math.round(((t - h + 24) % 24) * 60); return m >= 60 ? `${Math.floor(m / 60)}H ${m % 60}M` : `${m}M`; };
+    status = isDay ? `DAYTIME IN ${city} · SUNSET IN ${until(set)}` : `NIGHT IN ${city} · SUNRISE IN ${until(rise)}`;
+  }
+  const lit = x => sun.polar ? sun.polar === "day" : rise < set ? x >= rise && x < set : x >= rise || x < set;
+  const cells = Array.from({ length: 48 }, (_, k) => {
+    const x = k / 2;
+    return `<i class="${lit(x + .25) ? "day" : ""}${Math.floor(h * 2) === k ? " now" : ""}"></i>`;
+  }).join("");
+  return `<div class="label">Day &amp; night</div><div class="dn-status">${status}</div><div class="dn">${cells}</div>` +
+    `<div class="dn-scale"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>`;
 }
 
 /* Listening history per station, kept on this device: total time, sessions, last visit. */
