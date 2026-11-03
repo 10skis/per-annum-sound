@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level On Phone</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --amber: #ffb02e; --dim: #9c6c22; --bg: #0e0c0a; }
+  body { margin: 0; background: #050403; color: var(--amber); font-family: "Saira Condensed", sans-serif; padding: 24px 16px; }
+  h1 { font: 400 16px "Michroma", sans-serif; letter-spacing: .2em; margin: 0 0 6px; }
+  p { color: var(--dim); margin: 0 0 20px; font-size: 17px; max-width: 820px; }
+  .row { display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start; }
+  .opt h2 { font-weight: 600; font-size: 18px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 10px; }
+  iframe { width: 390px; border: 1px solid #3a2a10; border-radius: 28px; background: var(--bg); display: block; }
+</style>
+</head>
+<body>
+<h1>05 LEVEL ON PHONE</h1>
+<p>The real app at iPhone width (390 px), playing muted. Left is today. Right adds 05 Level between 03 Spectrum and 04 Map, 180 px tall, set to Fluid. Scroll this page to compare; click a panel to step through its displays as usual.</p>
+<div class="row">
+  <div class="opt"><h2>Without (now)</h2><iframe id="without" src="index.html?mock=without"></iframe></div>
+  <div class="opt"><h2>With 05 Level</h2><iframe id="with" src="index.html?mock=with"></iframe></div>
+</div>
+<script>
+// Both frames are this page's own build, so the mockup can reach in: mute and start a station,
+// and in the right one move the level panel into the deck with the phone styling it would get.
+const PHONE_LEVEL_CSS = `
+  @media (max-width: 959px) {
+    .deck .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 180px; padding: 22px 12px 10px; gap: 6px; }
+  }`;
+function prepare(frame, withLevel) {
+  const w = frame.contentWindow, d = frame.contentDocument;
+  const run = code => w.eval(code);  // the app keeps its state in script-level variables, not on window
+  const go = () => {
+    if (!run("typeof act !== 'undefined' && order.length > 0")) return setTimeout(go, 300);
+    run("audio.muted = true; act.play(order[0])");
+    if (withLevel) {
+      const st = d.createElement("style"); st.textContent = PHONE_LEVEL_CSS; d.head.appendChild(st);
+      d.querySelector(".deck").insertBefore(d.querySelector(".lvl"), d.querySelector(".deck .map"));
+      run("lvlMode = LEVEL_MODES.indexOf('Fluid'); drawLevelLabel()");
+    }
+    const fit = () => { frame.style.height = d.documentElement.scrollHeight + "px"; };
+    fit(); setTimeout(fit, 1500); setTimeout(fit, 4000);
+  };
+  go();
+}
+document.querySelectorAll("iframe").forEach(f => f.addEventListener("load", () => prepare(f, f.id === "with")));
+</script>
+</body>
+</html>
