@@ -1445,9 +1445,10 @@ $("dial").addEventListener("pointermove", e => {
   if (!drag.moved) return;
   drag.acc += d;
   while (Math.abs(drag.acc) >= STEP_DEG) {
-    const dir = drag.acc > 0 ? 1 : -1;
-    drag.acc -= dir * STEP_DEG;
-    drag.idx = ((drag.idx < 0 ? 0 : drag.idx) + dir + order.length) % order.length;
+    const turn = drag.acc > 0 ? 1 : -1;  // 1 = the hand moved clockwise
+    drag.acc -= turn * STEP_DEG;
+    // The ring follows the hand: turning it clockwise brings up the station on the left (the previous one)
+    drag.idx = ((drag.idx < 0 ? 0 : drag.idx) - turn + order.length) % order.length;
     if (navigator.vibrate) navigator.vibrate(6);
     previewDial(drag.idx);
   }
@@ -1683,7 +1684,7 @@ function drawRing(idx) {
     let off = i - idx;
     if (off > n / 2) off -= n;
     if (off < -n / 2) off += n;  // the nearest way round
-    const a = -off * RING_STEP;  // next stations wait on the left, so turning clockwise brings them to the top
+    const a = off * RING_STEP;  // next stations wait on the right, as on the tape: ▶ turns the ring anticlockwise, ◀ clockwise
     d.style.transform = `rotate(${a}deg) translateY(calc(-1 * var(--ring, 72px))) rotate(${-a}deg)`;
     d.style.opacity = Math.abs(off) > RING_SHOW ? 0 : 1 - Math.abs(off) / (RING_SHOW + 1) * .85;
     d.className = off === 0 ? "lit" : "";
