@@ -17,3 +17,5 @@
 
 ## Follow-up (same version)
 - The shimmer itself is slower, not just less frequent: the ripple now takes 4.6 s to cross the art (was 2.4 s) and the sweep 3.6 s (was 1.9 s).
+- Shimmer restored exactly to its v0.25 form, on Robert's call: a single ripple ring over 1.8 s, a narrow 1.5 s sweep, every 5 to 14 s. (The stronger echo ring and the slowed 4.6 s version are gone.)
+- Volume swipe reversed: swiping right turns it up, toward the full end of the bar.

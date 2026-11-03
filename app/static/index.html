@@ -434,19 +434,16 @@
     position: absolute; inset: 8px; pointer-events: none; opacity: 0; mix-blend-mode: screen;
     -webkit-mask: var(--art) center / 100% 100% no-repeat; mask: var(--art) center / 100% 100% no-repeat;
   }
-  /* A wide bright ring with a softer echo ring behind it */
+  /* Same as v0.25: a single ring and a narrow sweep */
   .shimmer.ripple {
-    background:
-      radial-gradient(circle at var(--rx) var(--ry), transparent calc(var(--rip) - 90px),
-        #fff4dc calc(var(--rip) - 30px), transparent var(--rip)),
-      radial-gradient(circle at var(--rx) var(--ry), transparent calc(var(--rip) - 230px),
-        #ffd88acc calc(var(--rip) - 185px), transparent calc(var(--rip) - 140px));
-    animation: ripple 4.6s cubic-bezier(.25, .5, .35, 1);  /* slow, so it reads as a swell rather than a flash */
+    background: radial-gradient(circle at var(--rx) var(--ry), transparent calc(var(--rip) - 46px),
+      #ffe3b0 calc(var(--rip) - 14px), transparent var(--rip));
+    animation: ripple 1.8s ease-out;
   }
-  @keyframes ripple { 0% { --rip: 0px; opacity: 1; } 70% { opacity: 1; } 100% { --rip: 820px; opacity: 0; } }
+  @keyframes ripple { 0% { --rip: 0px; opacity: 1; } 75% { opacity: .9; } 100% { --rip: 620px; opacity: 0; } }
   .shimmer.sweep {
-    background: linear-gradient(110deg, transparent 36%, #ffd88a99 44%, #fff4dc 50%, #ffd88a99 56%, transparent 64%) 0 0 / 300% 100%;
-    animation: sweep 3.6s ease-in-out;
+    background: linear-gradient(110deg, transparent 42%, #ffe3b0 50%, transparent 58%) 0 0 / 300% 100%;
+    animation: sweep 1.5s ease-in-out;
   }
   @keyframes sweep { 0% { background-position: 100% 0; opacity: 1; } 100% { background-position: 0 0; opacity: 1; } }
 
@@ -2297,8 +2294,8 @@ function closeAbout() { if (!$("about").hidden) { $("about").hidden = true; } }
 $("aboutClose").addEventListener("click", closeAbout);
 $("about").addEventListener("click", e => { if (e.target === $("about")) closeAbout(); });
 
-/* Volume: two-finger sideways swipe over the bar changes it in steps of 5, like the tuner tape
-   (swiping left turns it up); the setting is sent once the swipe settles. */
+/* Volume: two-finger sideways swipe over the bar changes it in steps of 5 (swiping right turns
+   it up, toward the full end of the bar); the setting is sent once the swipe settles. */
 let volWheelAcc = 0, volWheelTimer = null;
 $("bar").addEventListener("wheel", e => {
   if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || $("vol").disabled) return;
@@ -2308,7 +2305,7 @@ $("bar").addEventListener("wheel", e => {
   while (Math.abs(volWheelAcc) >= 18) {
     const dir = volWheelAcc > 0 ? 1 : -1;
     volWheelAcc -= dir * 18;
-    v = Math.max(0, Math.min(100, v + dir * 5));
+    v = Math.max(0, Math.min(100, v - dir * 5));
   }
   $("vol").value = v;
   volDragging = true;
