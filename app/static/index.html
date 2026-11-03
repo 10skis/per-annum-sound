@@ -48,7 +48,7 @@
     user-select: none; -webkit-user-select: none;
   }
   .head {
-    display: flex; gap: 14px; align-items: baseline;
+    display: flex; gap: 10px; align-items: baseline;
     font-family: var(--dot); font-size: 18px; color: var(--amber-dim); letter-spacing: .08em;
     border-bottom: 1px dashed var(--line); padding-bottom: 8px; margin: -4px 0 0;
   }
@@ -59,7 +59,28 @@
   .label { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--amber-dim); }
 
   /* Keys row */
-  .top { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 10px; }
+  .top { display: grid; gap: 10px; }
+  /* Presets 1-6, like a car radio: tap to play, hold to save */
+  .presets { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .preset {
+    height: 52px; min-width: 0; padding: 0 3px; border: 1px solid var(--amber-dim);
+    display: grid; align-content: center; justify-items: center; gap: 2px;
+    font-family: var(--dot); color: var(--amber-mid);
+    -webkit-touch-callout: none; touch-action: manipulation; transition: background .08s, color .08s;
+  }
+  .preset b { font-weight: 400; font-size: 24px; line-height: .9; }
+  .preset small { font-size: 13px; line-height: 1; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--amber-dim); }
+  .preset.empty { border-style: dashed; }
+  .preset.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
+  .preset.on small { color: var(--bg); }
+  .preset.saved { animation: blink .25s steps(1) 4; }
+  .head .sleep { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; white-space: nowrap; flex-shrink: 0; }
+  .head > :not(.sig) { white-space: nowrap; flex-shrink: 0; }
+  @media (max-width: 419px) {
+    .head { gap: 8px; letter-spacing: .02em; }
+    .head .st-word { display: none; }  /* the lit dot already says on air; room for the timers */
+  }
+  .head .sleep.on { color: var(--amber); }
   .key, .seg button {
     height: 48px; border: 1px solid var(--amber-dim);
     font-family: var(--dot); font-size: 24px; letter-spacing: .06em; color: var(--amber-mid);
@@ -262,6 +283,7 @@
     <span class="sig" id="sig"></span>
     <span class="clock" id="clock"></span>
     <span id="status">--</span>
+    <button class="sleep" id="sleepBtn" hidden aria-label="Sleep timer" title="Sleep timer: tap for 15, 30, 60, 90 min, off">ZZ</button>
   </div>
 
   <div class="out">
@@ -273,8 +295,7 @@
   </div>
 
   <div class="top">
-    <button class="key" data-play="nts1" id="key-nts1" aria-label="Play NTS 1">NTS 1</button>
-    <button class="key" data-play="nts2" id="key-nts2" aria-label="Play NTS 2">NTS 2</button>
+    <div class="presets" id="presets" role="group" aria-label="Presets: tap to play, hold to save the current station"></div>
     <div class="seg" role="group" aria-label="Play or stop">
       <button id="btnPlay" aria-label="Play">PLAY</button>
       <button id="btnStop" aria-label="Stop">STOP</button>
@@ -300,7 +321,7 @@
       <button class="tuner-read" id="tuneRead" aria-label="Play or stop"><b class="glow" id="tuneNum">--</b><span id="tuneOf">/--</span></button>
       <button class="key" id="tuneNext" aria-label="Next station">▶</button>
     </div>
-    <span class="label tuner-hint">Swipe art to tune · tap number to play/stop</span>
+    <span class="label tuner-hint">Swipe art to tune</span>
   </div>
 
   <div class="screen strip off" id="strip">
@@ -736,17 +757,17 @@ function render(s) {
 
   const on = s.playing, id = s.station.id;
   // Listening timer: starts when a station starts playing, restarts on a new station, clears on stop.
-  if (!on) listen = null;
+  if (!on) { listen = null; endSleep(); }
   else if (!listen || listen.id !== id) listen = { id, since: Date.now() };
-  $("status").innerHTML = on ? (s.player === "phone" && !STATIC ? "● ON DEVICE" : "● ON AIR") +
+  $("status").innerHTML = on ? `● <span class="st-word">${s.player === "phone" && !STATIC ? "ON DEVICE" : "ON AIR"}</span>` +
     ` <span class="timer" id="timer" title="Listening to this station for">${elapsed()}</span>` : "○ STANDBY";
   $("status").className = on ? "glow" : "";
   $("btnPlay").classList.toggle("on", on);
   $("btnStop").classList.toggle("on", !on);
   $("artScreen").classList.toggle("off", !on);
   $("strip").classList.toggle("off", !on);
-  $("key-nts1").classList.toggle("on", on && id === "nts1");
-  $("key-nts2").classList.toggle("on", on && id === "nts2");
+  drawPresets(id, on);
+  $("sleepBtn").hidden = !on;
 
   const title = [s.station.name, s.now.title].filter(Boolean).join(" · ");
   setLine($("line1"), title.toUpperCase());
@@ -857,13 +878,12 @@ function elapsed() {
 function tick() {
   const d = new Date();
   if (listen && $("timer")) $("timer").textContent = elapsed();
+  if (sleep) sleepTick();
   $("clock").innerHTML = `${pad(d.getHours())}<i>:</i>${pad(d.getMinutes())}`;
   if (d.getSeconds() % 10 === 0 && S && S.now && !drag) drawProgress(S.now);
 }
 
 /* Keys and play/stop */
-document.querySelectorAll("[data-play]").forEach(b =>
-  b.addEventListener("click", () => act.play(b.dataset.play)));
 $("btnPlay").addEventListener("click", () => { if (!S || !S.playing) act.toggle(); });
 $("btnStop").addEventListener("click", () => act.stop());
 $("outRadio").addEventListener("click", () => setMode("radio"));
@@ -927,11 +947,6 @@ $("dial").addEventListener("pointerup", () => {
   else if (S) render(S);  // turned and came back: restore the display
 });
 $("dial").addEventListener("pointercancel", () => { drag = null; if (S) render(S); });
-$("dial").addEventListener("keydown", e => {
-  const dir = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
-  if (dir) { e.preventDefault(); const i = currentIndex(); act.play(order[((i < 0 ? 0 : i) + dir + order.length) % order.length]); }
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act.toggle(); }
-});
 
 /* Tuner (phones): arrows and swipes step one station and play it straight away, inside the tap,
    which iPhones need before they'll start audio. */
@@ -953,6 +968,112 @@ $("artScreen").addEventListener("pointerup", e => {
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) stepPlay(dx < 0 ? 1 : -1);  // swipe left = next
 });
 $("artScreen").addEventListener("pointercancel", () => { swipe = null; });
+
+/* Presets 1-6, like a car radio. Tap plays the slot; hold (or tap an empty slot) stores the
+   station that's selected now. Slots 1 and 2 start as NTS 1 and 2. Kept on this device. */
+var presets = store.get("piRadioPresets", ["nts1", "nts2", null, null, null, null]);
+const HOLD_MS = 600;
+function shortName(id) {
+  return (NAMES[id] || id).replace(/^The /, "").replace(/ Radio$/, "").toUpperCase();
+}
+function selectedId() { return (mode === "phone" && local.id) || (S && S.station.id) || null; }
+function buildPresets() {
+  presets = presets.map(id => (id && URLS[id] ? id : null));  // drop stations that no longer exist
+  $("presets").innerHTML = presets.map((_, i) => `<button class="preset" data-slot="${i}"><b>${i + 1}</b><small></small></button>`).join("");
+  [...$("presets").children].forEach((b, i) => {
+    let hold = null;
+    b.addEventListener("pointerdown", () => {
+      hold = setTimeout(() => { hold = "fired"; savePreset(i); }, HOLD_MS);
+    });
+    // Touch fires pointerleave before click, so cancel only stops a pending hold; click reads "fired".
+    const cancel = () => { if (hold && hold !== "fired") { clearTimeout(hold); hold = null; } };
+    b.addEventListener("pointerleave", cancel);
+    b.addEventListener("pointercancel", cancel);
+    b.addEventListener("click", () => {
+      const fired = hold === "fired";
+      if (hold && !fired) clearTimeout(hold);
+      hold = null;
+      if (!fired) pressPreset(i);
+    });
+    b.addEventListener("contextmenu", e => e.preventDefault());  // long-press menu on phones
+  });
+  drawPresets(selectedId(), false);
+}
+function drawPresets(cur, on) {
+  [...$("presets").children].forEach((b, i) => {
+    const id = presets[i];
+    b.classList.toggle("empty", !id);
+    b.classList.toggle("on", !!(on && id && id === cur));
+    if (!b.classList.contains("saved")) b.querySelector("small").textContent = id ? shortName(id) : "--";
+    b.setAttribute("aria-label", `Preset ${i + 1}: ${id ? NAMES[id] || id : "empty"}. Hold to save the current station`);
+  });
+}
+function pressPreset(i) {
+  if (presets[i]) act.play(presets[i]);
+  else savePreset(i);
+}
+function savePreset(i) {
+  const id = selectedId();
+  if (!id) return;
+  presets[i] = id;
+  store.set("piRadioPresets", presets);
+  if (navigator.vibrate) navigator.vibrate(20);
+  const b = $("presets").children[i];
+  b.classList.add("saved");
+  b.querySelector("small").textContent = "SAVED";
+  setTimeout(() => { b.classList.remove("saved"); drawPresets(selectedId(), S && S.playing); }, 1000);
+}
+
+/* Sleep timer: tap ZZ (or press S) while playing to cycle 15, 30, 60, 90 min, off.
+   The countdown shows in the header; the last 10 s fade out where the device allows volume. */
+const SLEEP_MIN = [15, 30, 60, 90];
+var sleep = null;  // { step, until }
+function clockOf(ms) {
+  const t = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60;
+  return (h ? h + ":" + pad(m) : m) + ":" + pad(t % 60);
+}
+function cycleSleep() {
+  if (!S || !S.playing) return;
+  const step = sleep ? sleep.step + 1 : 0;
+  if (step < SLEEP_MIN.length) sleep = { step, until: Date.now() + SLEEP_MIN[step] * 60000 };
+  else endSleep();
+  drawSleep();
+}
+function drawSleep() {
+  $("sleepBtn").classList.toggle("on", !!sleep);
+  $("sleepBtn").textContent = sleep ? "ZZ " + clockOf(sleep.until - Date.now()) : "ZZ";
+}
+function endSleep() {
+  if (sleep && mode === "phone" && canSetVolume) audio.volume = local.volume / 100;  // undo any fade
+  sleep = null;
+  drawSleep();
+}
+function sleepTick() {
+  const left = sleep.until - Date.now();
+  if (left <= 0) { endSleep(); act.stop(); return; }
+  if (left < 10000 && mode === "phone" && canSetVolume) audio.volume = (local.volume / 100) * left / 10000;
+  drawSleep();
+}
+$("sleepBtn").addEventListener("click", cycleSleep);
+
+/* Keyboard (desktop): space play/stop, left/right tune, 1-6 presets, shift+1-6 save, S sleep. */
+document.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+  const t = e.target;
+  if (t.matches && t.matches("input, textarea, select")) return;  // the volume slider keeps its arrows
+  const slot = /^Digit([1-6])$/.exec(e.code);
+  if (e.key === " " || (e.key === "Enter" && t === $("dial"))) {
+    e.preventDefault();
+    if (t.blur && t !== document.body) t.blur();  // or a focused button would also click on keyup
+    act.toggle();
+  } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    e.preventDefault();
+    stepPlay(e.key === "ArrowRight" ? 1 : -1);
+  } else if (slot) {
+    e.preventDefault();
+    e.shiftKey ? savePreset(+slot[1] - 1) : pressPreset(+slot[1] - 1);
+  } else if (e.key === "s" || e.key === "S") cycleSleep();
+});
 
 /* Volume: update the bar live, send after a short pause. */
 let volTimer;
@@ -1020,6 +1141,7 @@ async function poll() {
   render(await api("/api/state"));
 }
 build().then(async () => {
+  buildPresets();
   drawMode();
   if (STATIC) {
     // Start on the last station played here, stopped, until a station is tapped.
