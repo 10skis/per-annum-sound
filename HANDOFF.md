@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.48 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.49 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.48 |
+| Version | v0.49 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.48 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.49 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -40,7 +40,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Tape tuner | Under the dial (desktop) and under the tuner (phones). Thin 1 px analog ticks, a number every fifth, group bands, needle. Swipe or drag left = higher stations |
 | Volume | Two-finger swipe right = louder |
 | Phones | Tuner strip instead of the dial; no clock in the header (status bar has it); ? in the header; brand shows P·A·S |
-| Art shimmer | Exactly the v0.25 settings: one ring over 1.8 s, 1.5 s sweep, every 5 to 14 s. Artwork only |
+| Art shimmer | Timing as v0.25: one ring over 1.8 s, 1.5 s sweep, every 5 to 14 s. Artwork only. Since v0.49 halftone art swells its own dots (read back from the image onto `#artDots`, image hidden only during the ripple); logos keep the `.shimmer` overlay |
 | Hold | Tap the art to hold shimmer and sigil rotation; tap the title to stop its scroll. Tap again resumes; remembered per device. About opens from the line under the title and the description, not the title |
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), faint dot matrix behind, no shimmer |
 | Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. WORLD and EUROPE ranges |
@@ -58,7 +58,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Layering | The art image's drop-shadow filter paints it as its own layer. Anything meant to sit on top (`.shimmer`) needs a z-index, or it's hidden. The shimmer was invisible from v0.17 to v0.33 because of this |
 | `hidden` ignored | `[hidden] { display: none !important }` exists because class display rules override the attribute |
 | Patching | Edits are scripted string replacements with `assert count == 1`. Comment markers often appear twice (CSS and JS); match the longer, unique form |
-| Streams | Must be HTTPS (Netlify page). HLS is only detected by `.m3u8` in the URL; a playlist at a bare address (wyep.org/stream) fails, so use a direct MP3/AAC stream. More than 70 stations needs more `DIAL_GLYPHS`. BBC Radio 4 is UK-only; World Service plays abroad. Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them. No "tap play" note: fast scrolling aborts plays and used to flash it |
+| Streams | Must be HTTPS (Netlify page). HLS is only detected by `.m3u8` in the URL; a playlist at a bare address (wyep.org/stream) fails, so use a direct MP3/AAC stream. More than 70 stations needs more `DIAL_GLYPHS`. BBC Radio 4 is UK-only; World Service plays abroad. Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them. No "tap play" note: fast scrolling aborts plays and used to flash it. The browser pane runs no animation frames while hidden, so rAF-timed checks stall; test logic directly |
 | Wikimedia art | Needs a descriptive user agent (`UA` in `art.py`) or it returns 429 and the build quietly drops the FIP logos. Check `web/art/` after a build |
 | Track titles | Some feeds send file names (250119_0258). `fileLike()` in the page filters them; prefer a feed's show name over its track title |
 | iPhone | Pages can't set volume; the bar becomes a "use the volume buttons" note |

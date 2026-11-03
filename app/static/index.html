@@ -148,6 +148,10 @@
   .head .sleep { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; white-space: nowrap; flex-shrink: 0; }
   .head > :not(.sig) { white-space: nowrap; flex-shrink: 0; }
   @media (max-width: 959px) {
+    /* Phones: of the detail, only the description, as a scrolling line under the title */
+    .strip .detail { display: block; order: 1; }
+    .strip .detail > :not(.desc) { display: none !important; }
+    .strip .desc { font-size: clamp(16px, 4.6vw, 19px); color: var(--amber-dim); margin-top: 6px; }
     .head .sig { display: none; }  /* phones: the header is for the timers */
     .head .help-head { display: inline; }
     .help-btn { display: none; }
@@ -173,7 +177,7 @@
   .seg { display: grid; grid-template-columns: 1fr 1fr; }
   .seg button + button, .playstop > span + span { border-left: 0; }
   .playstop { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .ps-row { display: grid; grid-template-columns: 1fr 72px; gap: 6px; }
+  .ps-row { display: grid; grid-template-columns: 72px 1fr; gap: 6px; }
   .playstop > span { pointer-events: none; }
   .playstop:active > span:not(.on) { background: var(--amber-ghost); color: var(--amber); }
 
@@ -456,6 +460,7 @@
   .sigil { position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px); contain: size;
            filter: drop-shadow(0 0 2px #ffb02e66); }
   .off .sigil { opacity: .2; }
+  .rippling img { visibility: hidden; }  /* the dots are redrawn on #artDots while a ripple runs */
 
   /* VFD digits: an unlit 8 behind every lit numeral */
   .ghost { position: relative; isolation: isolate; }
@@ -588,10 +593,13 @@
   <div class="top">
     <div class="presets" id="presets" role="group" aria-label="Presets: tap to play, hold to save the current station"></div>
     <div class="ps-row">
+      <button class="key" id="btnRandom" aria-label="Random station" title="Random station (R)">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M2 7h5l10 10h4M2 17h5l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>
+      </button>
       <button class="playstop" id="btnPlayStop" aria-label="Play">
         <span id="btnPlay">PLAY</span><span id="btnStop">STOP</span>
       </button>
-      <button class="key" id="btnRandom" aria-label="Random station" title="Random station (R)">RND</button>
     </div>
   </div>
 
@@ -602,6 +610,7 @@
       <span class="shimmer" id="shimmer" aria-hidden="true"></span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
       <canvas id="sigil" class="sigil" hidden aria-hidden="true"></canvas>
+      <canvas id="artDots" class="sigil" hidden aria-hidden="true"></canvas>
     </div>
     <div class="screen lvl cham">
       <span class="tab" aria-hidden="true"><b>05</b>Level</span>
@@ -895,7 +904,7 @@ function loadImage(url) {
 /* Cover art as an amber halftone: one dot per cell on a 45° grid, dot area tracking brightness
    (midtones eased darker so highlights stay separate dots). Station names with no usable art
    become block letters. Same treatment as art.py, so both versions match. */
-const ART_N = 128, ART_OUT = 512, HT_CELLS = 32, HT_ANGLE = 45, HT_GAMMA = 1.2;
+const ART_N = 128, ART_OUT = 512, HT_CELLS = 32, HT_ANGLE = 45, HT_GAMMA = 1.2, halftoneSrcs = new Set();
 function halftoneCanvas(gray, cells = HT_CELLS) {
   const N = ART_N, c = document.createElement("canvas");
   c.width = c.height = ART_OUT;
@@ -939,7 +948,9 @@ async function ditherArt(url, name) {
     const sorted = Float32Array.from(gray).sort();
     const lo = sorted[Math.floor(N * N * 0.01)], hi = sorted[Math.floor(N * N * 0.99)];
     if (hi > lo) for (let i = 0; i < N * N; i++) gray[i] = Math.min(255, Math.max(0, (gray[i] - lo) * 255 / (hi - lo)));
-    return (artCache[key] = halftoneCanvas(gray).toDataURL());
+    const u = artCache[key] = halftoneCanvas(gray).toDataURL();
+    halftoneSrcs.add(u);
+    return u;
   }
   if (document.fonts) await document.fonts.ready;
   return (artCache[key] = placeholderArt(name).toDataURL());
@@ -1176,19 +1187,29 @@ function setLine(el, text, pace = 0.35) {  // pace: seconds per character of scr
   const run = el.querySelector(".run");
   if (run.dataset.text === text) return;
   run.dataset.text = text;
+  el.dataset.pace = pace;
+  requestAnimationFrame(() => { if (run.dataset.text === text) fitLine(el); });  // skip if a newer text arrived first
+  fitLine(el, true);
+}
+// Scroll the line only when its text is wider than it; the check runs again when its width changes
+// (a resize, or a line that was hidden when its text arrived).
+function fitLine(el, reset) {
+  const run = el.querySelector(".run"), text = run.dataset.text || "";
   el.classList.remove("scroll");
   run.textContent = text;
-  requestAnimationFrame(() => {
-    if (run.dataset.text !== text) return;  // a newer text arrived before this frame
-    if (run.scrollWidth > el.clientWidth) {
-      // Duplicate the text so the loop is seamless, speed scaled to length.
-      const gap = "   ·   ";
-      run.textContent = text + gap + text + gap;
-      el.style.setProperty("--dur", Math.max(8, text.length * pace) + "s");
-      el.classList.add("scroll");
-    }
-  });
+  if (reset || !el.clientWidth || run.scrollWidth <= el.clientWidth) return;
+  // Duplicate the text so the loop is seamless, speed scaled to length.
+  const gap = "   ·   ";
+  run.textContent = text + gap + text + gap;
+  el.style.setProperty("--dur", Math.max(8, text.length * +el.dataset.pace) + "s");
+  el.classList.add("scroll");
 }
+const lineWidths = new WeakMap();
+const lineWatch = new ResizeObserver(es => es.forEach(e => {
+  const w = Math.round(e.contentRect.width);
+  if (lineWidths.get(e.target) !== w) { lineWidths.set(e.target, w); fitLine(e.target); }
+}));
+["line1", "line2", "desc"].forEach(id => lineWatch.observe($(id)));
 
 function drawVolume(v) {
   const lit = v === null ? 0 : Math.round(v / 5);
@@ -1459,7 +1480,25 @@ function dialGeom(e) {
 function currentIndex() {
   return order.indexOf((mode === "phone" && local.id) || (S && S.station.id));
 }
+/* Haptics on phones: a tick as the tuner passes a station or the volume steps. Android has
+   navigator.vibrate; iPhones (Safari 18+) give a tick when a switch-style checkbox toggles, so a
+   hidden one is clicked. Anywhere else it does nothing. */
+const coarsePointer = matchMedia("(pointer: coarse)").matches;
+let hapticSwitch = null;
+function haptic() {
+  if (!coarsePointer) return;
+  if (navigator.vibrate) { navigator.vibrate(8); return; }
+  if (!hapticSwitch) {
+    hapticSwitch = document.createElement("label");
+    hapticSwitch.setAttribute("aria-hidden", "true");
+    hapticSwitch.style.cssText = "position:fixed;left:-100px;top:0;opacity:0;pointer-events:none";
+    hapticSwitch.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+    document.body.appendChild(hapticSwitch);
+  }
+  hapticSwitch.click();
+}
 function previewDial(idx) {
+  haptic();
   $("dialNum").textContent = $("tuneNum").textContent = pad(idx + 1);
   drawRing(idx);
   drawTapes(idx);
@@ -1533,11 +1572,13 @@ $("dial").addEventListener("wheel", e => {
 /* Tuner (phones): arrows and swipes step one station and play it straight away, inside the tap,
    which iPhones need before they'll start audio. */
 function randomPlay() {  // any station but the current one
+  haptic();
   const i = currentIndex(), j = Math.floor(Math.random() * (order.length - 1));
   act.play(order[i >= 0 && j >= i ? j + 1 : j]);
 }
 $("btnRandom").addEventListener("click", randomPlay);
 function stepPlay(dir) {
+  haptic();
   const i = currentIndex();
   act.play(order[((i < 0 ? 0 : i) + dir + order.length) % order.length]);
 }
@@ -2052,7 +2093,7 @@ let artHeld = store.get("piRadioArtHeld", false);
 function holdArt(on) {
   artHeld = on;
   store.set("piRadioArtHeld", on);
-  if (on) $("shimmer").className = "shimmer";  // stop a ripple mid-run
+  if (on) { $("shimmer").className = "shimmer"; endDotRipple(); }  // stop a ripple mid-run
 }
 function holdTitle(on) {
   $("line1").classList.toggle("held", on);
@@ -2069,12 +2110,86 @@ function shimmerSoon() {
       el.style.setProperty("--rx", Math.round(15 + Math.random() * 70) + "%");
       el.style.setProperty("--ry", Math.round(15 + Math.random() * 70) + "%");
       void el.offsetWidth;  // restart the animation
-      if (!sigil) el.classList.add(ripple ? "ripple" : "sweep");  // artwork only; the sigil turns instead
+      // Artwork only; the sigil turns instead. Halftone art ripples its own dots; logos get the overlay.
+      if (!sigil && !startDotRipple(ripple)) el.classList.add(ripple ? "ripple" : "sweep");
     }
     shimmerSoon();
   }, 5000 + Math.random() * 9000);  // every 5 to 14 seconds
 }
 shimmerSoon();
+
+/* Dot ripple: the halftone's dots are read back from the art image (same 45° grid as the
+   halftone, each dot's size from the ink inside its cell) and redrawn swelling as a ring or a
+   sweep passes, a faint dot rising even in empty cells at the wavefront. The image is hidden
+   only while it runs. */
+const dotModels = new Map();
+let dotRipple = null;
+function isHalftoneArt() {
+  const img = $("art"), st = STN[selectedId()] || {};
+  if (!img.complete || !img.naturalWidth || sigil) return false;
+  return STATIC ? halftoneSrcs.has(img.src) : st.kind !== "radio";  // the server sends radio stations' logos 1-bit
+}
+function dotModel(img) {
+  if (dotModels.has(img.src)) return dotModels.get(img.src);
+  const N = ART_OUT, c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(img, 0, 0, N, N);
+  let a = null;
+  try { a = g.getImageData(0, 0, N, N).data; } catch (_) {}
+  const dots = [];
+  if (a) {
+    const pitch = N / HT_CELLS, ang = HT_ANGLE * Math.PI / 180, ca = Math.cos(ang), sa = Math.sin(ang);
+    const span = Math.ceil(HT_CELLS * .75) + 1, half = pitch / 2;
+    for (let j = -span; j < span; j++) for (let i = -span; i < span; i++) {
+      const u = (i + .5) * pitch, v = (j + .5) * pitch, x = N / 2 + u * ca - v * sa, y = N / 2 + u * sa + v * ca;
+      if (x < 0 || y < 0 || x >= N || y >= N) continue;
+      let ink = 0;  // alpha inside the cell's circle: a dot never reaches past it
+      for (let yy = Math.max(0, Math.floor(y - half)); yy < Math.min(N, Math.ceil(y + half)); yy++)
+        for (let xx = Math.max(0, Math.floor(x - half)); xx < Math.min(N, Math.ceil(x + half)); xx++)
+          if ((xx + .5 - x) ** 2 + (yy + .5 - y) ** 2 <= half * half) ink += a[(yy * N + xx) * 4 + 3];
+      dots.push([x, y, Math.sqrt(ink / 255 / Math.PI)]);
+    }
+  }
+  const m = a ? { dots, pitch: N / HT_CELLS } : null;
+  if (dotModels.size > 20) dotModels.delete(dotModels.keys().next().value);
+  dotModels.set(img.src, m);
+  return m;
+}
+function startDotRipple(ring) {
+  if (!isHalftoneArt()) return false;
+  const m = dotModel($("art"));
+  if (!m) return false;
+  dotRipple = { m, src: $("art").src, ring, x: (.15 + Math.random() * .7) * ART_OUT, y: (.15 + Math.random() * .7) * ART_OUT,
+                t0: performance.now(), dur: ring ? 1800 : 1500 };
+  $("artDots").hidden = false;
+  $("artScreen").classList.add("rippling");
+  return true;
+}
+function endDotRipple() {
+  dotRipple = null;
+  $("artDots").hidden = true;
+  $("artScreen").classList.remove("rippling");
+}
+function drawArtDots(t) {
+  if (!dotRipple) return;
+  const R = dotRipple, p = Math.max(0, (t - R.t0) / R.dur);
+  if (p >= 1 || $("art").src !== R.src) return endDotRipple();
+  const fit = fitCanvas($("artDots"));
+  if (!fit) return;
+  const [g, w] = fit, k = w / ART_OUT;
+  const ease = R.ring ? 1 - (1 - p) ** 2 : p < .5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+  const front = R.ring ? ease * 780 : -260 + ease * 1040, amp = 1.1 * (1 - p * .7);
+  const dx = Math.cos(110 * Math.PI / 180), dy = Math.sin(110 * Math.PI / 180);
+  for (const [x, y, r] of R.m.dots) {
+    const d = R.ring ? Math.hypot(x - R.x, y - R.y) : (x - ART_OUT / 2) * dx + (y - ART_OUT / 2) * dy + ART_OUT / 2;
+    const b = Math.exp(-(((d - front) / 26) ** 2)) * amp;
+    const rr = Math.min(R.m.pitch * .6, r * (1 + b * .9) + b * R.m.pitch * .1);
+    if (rr < .4) continue;
+    g.fillStyle = b > .45 ? "#ffe3b0" : "#ffb02e";
+    g.beginPath(); g.arc(x * k, y * k, rr * k, 0, Math.PI * 2); g.fill();
+  }
+}
 
 /* Keys and gestures panel */
 function toggleHelp(show) {
@@ -2114,10 +2229,10 @@ if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw
 
 /* 05 LEVEL: click the screen or its label for the next display. Trace: the last ~30 s of left
    and right level as dotted lines. Meter: two LED bargraphs with peak hold. Needle: one analog VU.
-   Goniometer: the stereo image as a cloud of dots. Loudness: a rolling bar per quarter second.
+   Goniometer: the stereo image as a phosphor trace. Loudness: a rolling bar per quarter second.
    Left = low bands, right = high bands (MPD's real levels when there, otherwise the simulation). */
 const LEVEL_MODES = ["Trace", "Meter", "Needle", "Goniometer", "Loudness"];
-let lvlMode = store.get("piRadioLevelMode", 0), lvlHist = [], lvlLast = 0, lvlPeak = [0, 0], lvlNeedle = 0, loudHist = [], loudLast = 0;
+let lvlMode = store.get("piRadioLevelMode", 0), lvlHist = [], lvlLast = 0, lvlPeak = [0, 0], lvlNeedle = 0, loudHist = [], loudLast = 0, lvlS = [0, 0], lvlT = 0;
 function cycleLevel() {
   lvlMode = (lvlMode + 1) % LEVEL_MODES.length;
   store.set("piRadioLevelMode", lvlMode);
@@ -2132,7 +2247,11 @@ function drawLevel(t) {
   const c = $("lvl");
   if (!c || !c.clientWidth) return;
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
-  const L = Math.min(1, avg(visLevels.slice(0, 12)) * 1.2), R = Math.min(1, avg(visLevels.slice(12)) * 1.6);
+  // Meter ballistics: fast attack, slower release, timed by the frame so every display moves smoothly
+  const dt = Math.min(.1, (t - (lvlT || t)) / 1000), ease = (cur, v) => cur + (v - cur) * (1 - Math.exp(-dt * (v > cur ? 22 : 7)));
+  lvlT = t;
+  lvlS = [ease(lvlS[0], Math.min(1, avg(visLevels.slice(0, 12)) * 1.2)), ease(lvlS[1], Math.min(1, avg(visLevels.slice(12)) * 1.6))];
+  const [L, R] = lvlS;
   if (t - lvlLast > 100) { lvlLast = t; lvlHist.push([L, R]); if (lvlHist.length > 300) lvlHist.shift(); }
   if (t - loudLast > 250) { loudLast = t; loudHist.push((L + R) / 2); if (loudHist.length > 120) loudHist.shift(); }
   const fit = fitCanvas(c);
@@ -2146,27 +2265,34 @@ function drawLevel(t) {
     [.25, .5, .75].forEach(f => { for (let x = 0; x < w; x += 6) g.fillRect(x, Math.round(h * f), 2, 1); });
     g.fillStyle = "#9c6c22";
     ["0 dB", "-12", "-24"].forEach((l, i) => g.fillText(l, 2, h * (.25 + i * .25) - 3));
-    const n = Math.min(lvlHist.length, Math.floor(w / 3));
-    for (let i = 0; i < n; i++) {
-      const [l, r] = lvlHist[lvlHist.length - n + i], x = w - (n - i) * 3;
+    // Glide between samples instead of jumping 3 px every tenth of a second; the newest point is live
+    const off = Math.min(1, (t - lvlLast) / 100) * 3, n = Math.min(lvlHist.length, Math.floor(w / 3));
+    const pts = lvlHist.slice(lvlHist.length - n).concat([[L, R]]);
+    for (let i = 0; i < pts.length; i++) {
+      const [l, r] = pts[i], x = w - (pts.length - 1 - i) * 3 - off - 2;
       g.fillStyle = "#ffb02e"; g.fillRect(x, (1 - l) * (h - 10) + 2, 2, 2);
       g.fillStyle = "#c4841f"; g.fillRect(x, (1 - r) * (h - 10) + 6, 2, 2);
     }
   } else if (mode === "Meter") {
     const segs = 30, gap = 3, bh = Math.min(22, (h - 40) / 2), sw = (w - 30 - gap * (segs - 1)) / segs;
     [L, R].forEach((v, k) => {
-      lvlPeak[k] = Math.max(v, lvlPeak[k] - .004);
-      const y = 8 + k * (bh + 14), lit = Math.round(v * segs), pk = Math.min(segs - 1, Math.round(lvlPeak[k] * segs));
+      lvlPeak[k] = Math.max(v, lvlPeak[k] - dt * .25);
+      const y = 8 + k * (bh + 14), pk = Math.min(segs - 1, Math.round(lvlPeak[k] * segs));
       g.fillStyle = "#9c6c22"; g.fillText(k ? "R" : "L", 2, y + bh - 4);
       for (let i = 0; i < segs; i++) {
-        g.fillStyle = i === pk && pk > 0 ? "#ffd27a" : i < lit ? (i > segs * .8 ? "#ffd27a" : "#ffb02e") : "#241907";
-        g.fillRect(24 + i * (sw + gap), y, sw, bh);
+        // The top lit segment fades in with the level, so the bar slides rather than clicks
+        const f = Math.max(0, Math.min(1, v * segs - i));
+        g.fillStyle = "#241907"; g.fillRect(24 + i * (sw + gap), y, sw, bh);
+        if (i === pk && pk > 0) { g.fillStyle = "#ffd27a"; g.fillRect(24 + i * (sw + gap), y, sw, bh); continue; }
+        if (!f) continue;
+        g.globalAlpha = f; g.fillStyle = i > segs * .8 ? "#ffd27a" : "#ffb02e";
+        g.fillRect(24 + i * (sw + gap), y, sw, bh); g.globalAlpha = 1;
       }
     });
     g.fillStyle = "#9c6c22";
     ["-40", "-20", "-10", "-3", "0"].forEach((l, i) => g.fillText(l, 24 + [0, .4, .6, .8, .94][i] * (w - 30), h - 4));
   } else if (mode === "Needle") {
-    lvlNeedle += ((L + R) / 2 - lvlNeedle) * .15;  // needle ballistics
+    lvlNeedle += ((L + R) / 2 - lvlNeedle) * (1 - Math.exp(-dt * 9));  // needle ballistics
     const cx = w / 2, R0 = Math.min(w * .45, h * .9), cy = h - 8;
     for (let i = 0; i <= 30; i++) {
       const f = i / 30, a = Math.PI + f * Math.PI, big = i % 5 === 0;
@@ -2178,21 +2304,60 @@ function drawLevel(t) {
     for (let r = R0 * .15; r < R0 * .95; r += 3) g.fillRect(cx + Math.cos(a) * r - 1, cy + Math.sin(a) * r - 1, 2, 2);
     g.fillStyle = "#9c6c22"; g.textAlign = "center"; g.fillText("VU", cx, cy - R0 * .35);
   } else if (mode === "Goniometer") {
-    const cx = w / 2, cy = h / 2, s = Math.min(w, h) * .45;
-    g.fillStyle = "#241907";
-    for (let i = -s; i <= s; i += 5) { g.fillRect(cx + i, cy - (s - Math.abs(i)), 2, 2); g.fillRect(cx + i, cy + (s - Math.abs(i)), 2, 2); }
-    for (let i = 0; i < 260; i++) {
-      const l = (Math.random() * 2 - 1) * L, r = (Math.random() * 2 - 1) * R * .8 + l * .5;
-      const x = cx + (l - r) * s * .7, y = cy - (l + r) * s * .5;
-      g.fillStyle = i % 4 ? "#c4841f" : "#ffb02e"; g.fillRect(x, y, 2, 2);
-    }
+    drawGonio(g, w, h, t, dt);
   } else {  // Loudness
-    const bw = 4, n = Math.min(loudHist.length, Math.floor(w / bw));
-    for (let i = 0; i < n; i++) {
-      const v = loudHist[loudHist.length - n + i], x = w - (n - i) * bw, hh = v * (h - 8);
+    const bw = 4, off = Math.min(1, (t - loudLast) / 250) * bw, n = Math.min(loudHist.length, Math.floor(w / bw));
+    const bars = loudHist.slice(loudHist.length - n).concat([(L + R) / 2]);
+    for (let i = 0; i < bars.length; i++) {
+      const v = bars[i], x = w - (bars.length - 1 - i) * bw - off - bw, hh = v * (h - 8);
       for (let y = h - 2; y > h - 2 - hh; y -= 4) { g.fillStyle = tier(.3 + (h - y) / h * .7); g.fillRect(x, y, bw - 1, 3); }
     }
   }
+}
+
+/* Goniometer as a phosphor scope: a short window of stereo "signal" (low, mid and high partials
+   at the current band levels, the sides widening with the highs) traced as a glowing line on a
+   buffer that fades each frame, so the figure swirls and leaves trails. Mid is up, sides across,
+   L and R on the diagonals; a correlation bar runs along the bottom. */
+let gonioBuf = null, gonioCorr = 0;
+function drawGonio(g, w, h, t, dt) {
+  const dpr = window.devicePixelRatio || 1, bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+  if (!gonioBuf || gonioBuf.width !== bw || gonioBuf.height !== bh) { gonioBuf = document.createElement("canvas"); gonioBuf.width = bw; gonioBuf.height = bh; }
+  const b = gonioBuf.getContext("2d");
+  b.setTransform(dpr, 0, 0, dpr, 0, 0);
+  b.globalCompositeOperation = "destination-out";
+  b.fillStyle = `rgba(0,0,0,${Math.min(1, dt * 9).toFixed(3)})`;  // phosphor decay, frame-rate independent
+  b.fillRect(0, 0, w, h);
+  b.globalCompositeOperation = "source-over";
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const lo = avg(visLevels.slice(0, 6)), mid = avg(visLevels.slice(6, 16)), hi = avg(visLevels.slice(16));
+  const cx = w / 2, cy = h / 2 - 5, s = Math.min(w, h - 12) * .46, width = .4 + hi * 1.6, TAU = Math.PI * 2;
+  const pts = [];
+  let sm = 0, ss = 0;
+  for (let i = 0; i < 240; i++) {
+    const tau = t / 1000 + i / 240 * .05;  // 50 ms of "audio", sliding with time
+    const m = lo * Math.sin(tau * TAU * 47) + mid * .7 * Math.sin(tau * TAU * 196 + .4) + hi * .4 * Math.sin(tau * TAU * 523);
+    const sd = width * (mid * .6 * Math.sin(tau * TAU * 151 + t / 900) + hi * .5 * Math.sin(tau * TAU * 607 + t / 400) + lo * .25 * Math.sin(tau * TAU * 31));
+    sm += m * m; ss += sd * sd;
+    pts.push([cx + Math.tanh(sd) * s * .95, cy - Math.tanh(m) * s * .95]);
+  }
+  b.strokeStyle = "#ffb02e"; b.lineWidth = 1.4; b.lineJoin = "round"; b.shadowColor = "#ffb02e"; b.shadowBlur = 8;
+  b.beginPath(); pts.forEach(([x, y], i) => i ? b.lineTo(x, y) : b.moveTo(x, y)); b.stroke();
+  b.shadowBlur = 0; b.fillStyle = "#ffe3b0";
+  for (let i = 0; i < pts.length; i += 12) b.fillRect(pts[i][0] - 1, pts[i][1] - 1, 2, 2);  // bright beads along the trace
+  // Grid: the diamond and its axes, with labels
+  g.fillStyle = "#241907";
+  for (let i = -s; i <= s; i += 5) { g.fillRect(cx + i, cy - (s - Math.abs(i)), 2, 2); g.fillRect(cx + i, cy + (s - Math.abs(i)), 2, 2); }
+  for (let i = -s; i <= s; i += 6) { g.fillRect(cx, cy + i, 1, 2); g.fillRect(cx + i, cy, 2, 1); }
+  g.fillStyle = "#9c6c22"; g.textAlign = "center";
+  g.fillText("M", cx, cy - s - 2); g.fillText("L", cx - s * .55, cy - s * .55); g.fillText("R", cx + s * .55, cy - s * .55);
+  g.drawImage(gonioBuf, 0, 0, w, h);
+  // Correlation: +1 when the image is all mid (mono), toward -1 as the sides take over
+  gonioCorr += ((sm - ss) / Math.max(1e-6, sm + ss) - gonioCorr) * (1 - Math.exp(-dt * 4));
+  const y = h - 4, x0 = 16, x1 = w - 16;
+  g.fillStyle = "#241907"; for (let x = x0; x <= x1; x += 4) g.fillRect(x, y, 2, 2);
+  g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.fillText("-", 2, y + 3); g.textAlign = "right"; g.fillText("+", w - 2, y + 3);
+  g.fillStyle = "#ffb02e"; g.fillRect(x0 + (gonioCorr + 1) / 2 * (x1 - x0) - 2, y - 3, 4, 8);
 }
 
 /* Up next, under the description: for NTS, the next shows on a small timeline with a needle at
@@ -2399,6 +2564,7 @@ $("bar").addEventListener("wheel", e => {
 let volTimer;
 $("vol").addEventListener("input", e => {
   volDragging = true;
+  haptic();  // the slider steps by 5, so one tick per step
   drawVolume(+e.target.value);
   clearTimeout(volTimer);
   volTimer = setTimeout(async () => { await act.volume(+e.target.value); volDragging = false; }, 150);
@@ -2642,6 +2808,7 @@ async function visLoop(t) {
   drawVisScreen($("fall"), 1, t);
   drawLevel(t);
   drawSigil(t);
+  drawArtDots(t);
   drawMap(t);
   requestAnimationFrame(visLoop);
 }

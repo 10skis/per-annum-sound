@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.48: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.49: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.49 | 2026-11-03 | Smoother levels, phosphor goniometer, dot-size ripple, shuffle key, haptics, phone description | [link](updates/2026-11-03-smooth-levels-dot-ripple.md) |
 | v0.48 | 2026-11-03 | RND button; middle pane fixed, long descriptions scroll on one line | [link](updates/2026-11-03-random-fixed-pane.md) |
 | v0.47 | 2026-11-03 | Chante France 70s and 80s; London code LDN; tree glyph centred; play note removed | [link](updates/2026-11-03-decades-ldn-fixes.md) |
 | v0.46 | 2026-11-03 | Site renamed to perannum.netlify.app; v0.45 live; records updated | [link](updates/2026-11-03-new-address.md) |
