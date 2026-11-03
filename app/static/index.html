@@ -54,6 +54,7 @@
   }
   .head .sig { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .head .clock { color: var(--amber-mid); }
+  .head .timer { color: var(--amber-mid); text-shadow: none; }
   .head .clock i { font-style: normal; animation: blink 2s steps(1) infinite; }
   .label { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--amber-dim); }
 
@@ -91,6 +92,8 @@
   .tuner-read span { font-size: 18px; color: var(--amber-dim); }
   .tuner-hint { text-align: center; margin-top: -2px; }
   .dial-wrap { display: grid; justify-items: center; gap: 8px; }
+  .dial-row { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; justify-items: center; width: 100%; }
+  .dial-row .key { width: 44px; height: 44px; font-size: 20px; }
   .dial {
     width: 100%; max-width: 160px; aspect-ratio: 1; position: relative;
     touch-action: none; cursor: grab; border-radius: 50%; outline: none;
@@ -283,8 +286,12 @@
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
     </div>
     <div class="dial-wrap">
-      <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
-        <div class="dial-read"><b class="glow" id="dialNum">--</b><span id="dialOf">/--</span></div>
+      <div class="dial-row">
+        <button class="key" id="dialPrev" aria-label="Previous station">◀</button>
+        <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
+          <div class="dial-read"><b class="glow" id="dialNum">--</b><span id="dialOf">/--</span></div>
+        </div>
+        <button class="key" id="dialNext" aria-label="Next station">▶</button>
       </div>
       <span class="label">Turn · Press</span>
     </div>
@@ -728,7 +735,11 @@ function render(s) {
   mediaMeta(s);
 
   const on = s.playing, id = s.station.id;
-  $("status").textContent = on ? (s.player === "phone" && !STATIC ? "● ON DEVICE" : "● ON AIR") : "○ STANDBY";
+  // Listening timer: starts when a station starts playing, restarts on a new station, clears on stop.
+  if (!on) listen = null;
+  else if (!listen || listen.id !== id) listen = { id, since: Date.now() };
+  $("status").innerHTML = on ? (s.player === "phone" && !STATIC ? "● ON DEVICE" : "● ON AIR") +
+    ` <span class="timer" id="timer" title="Listening to this station for">${elapsed()}</span>` : "○ STANDBY";
   $("status").className = on ? "glow" : "";
   $("btnPlay").classList.toggle("on", on);
   $("btnStop").classList.toggle("on", !on);
@@ -837,8 +848,15 @@ async function loadRecent() {
 }
 
 /* Clock */
+var listen = null;  // { id, since } while a station is playing (var: render() can run first)
+function elapsed() {
+  if (!listen) return "";
+  const t = Math.floor((Date.now() - listen.since) / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60;
+  return (h ? h + ":" + pad(m) : m) + ":" + pad(t % 60);
+}
 function tick() {
   const d = new Date();
+  if (listen && $("timer")) $("timer").textContent = elapsed();
   $("clock").innerHTML = `${pad(d.getHours())}<i>:</i>${pad(d.getMinutes())}`;
   if (d.getSeconds() % 10 === 0 && S && S.now && !drag) drawProgress(S.now);
 }
@@ -922,6 +940,8 @@ function stepPlay(dir) {
   act.play(order[((i < 0 ? 0 : i) + dir + order.length) % order.length]);
 }
 $("tunePrev").addEventListener("click", () => stepPlay(-1));
+$("dialPrev").addEventListener("click", () => stepPlay(-1));
+$("dialNext").addEventListener("click", () => stepPlay(1));
 $("tuneNext").addEventListener("click", () => stepPlay(1));
 $("tuneRead").addEventListener("click", () => act.toggle());
 let swipe = null;

@@ -6,13 +6,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.13: Web app with 33 stations, dashboard, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.14: Web app with 33 stations, dashboard, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.14 | 2026-11-02 | Desktop dial arrows, listening timer | [link](updates/2026-11-02-dial-arrows-timer.md) |
 | v0.13 | 2026-11-02 | Phone tuner: full-width art, arrows, swipe; dial desktop only | [link](updates/2026-11-02-tuner.md) |
 | v0.12 | 2026-11-02 | iPhone volume note, art and dial swapped on phones | [link](updates/2026-11-02-mobile-volume-swap.md) |
 | v0.11 | 2026-11-02 | Progress bar fix, station descriptions, Kool FM, WQXR, Chillhop | [link](updates/2026-11-02-stations-progress.md) |
