@@ -441,12 +441,12 @@
         #fff4dc calc(var(--rip) - 30px), transparent var(--rip)),
       radial-gradient(circle at var(--rx) var(--ry), transparent calc(var(--rip) - 230px),
         #ffd88acc calc(var(--rip) - 185px), transparent calc(var(--rip) - 140px));
-    animation: ripple 2.4s cubic-bezier(.2, .6, .3, 1);
+    animation: ripple 4.6s cubic-bezier(.25, .5, .35, 1);  /* slow, so it reads as a swell rather than a flash */
   }
   @keyframes ripple { 0% { --rip: 0px; opacity: 1; } 70% { opacity: 1; } 100% { --rip: 820px; opacity: 0; } }
   .shimmer.sweep {
     background: linear-gradient(110deg, transparent 36%, #ffd88a99 44%, #fff4dc 50%, #ffd88a99 56%, transparent 64%) 0 0 / 300% 100%;
-    animation: sweep 1.9s ease-in-out;
+    animation: sweep 3.6s ease-in-out;
   }
   @keyframes sweep { 0% { background-position: 100% 0; opacity: 1; } 100% { background-position: 0 0; opacity: 1; } }
 

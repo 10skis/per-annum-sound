@@ -14,3 +14,6 @@
 
 ## Next steps
 - See TODO.md.
+
+## Follow-up (same version)
+- The shimmer itself is slower, not just less frequent: the ripple now takes 4.6 s to cross the art (was 2.4 s) and the sweep 3.6 s (was 1.9 s).
