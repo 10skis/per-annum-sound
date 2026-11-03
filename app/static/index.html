@@ -254,6 +254,7 @@
   .line.scroll.held { -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
                       mask-image: linear-gradient(90deg, #000 92%, transparent); }
   #line1 { cursor: pointer; }
+  #line2.tuning .run { animation: blink 1s steps(1) infinite; }  /* until the stream starts */
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
   .tags { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1061,6 +1062,21 @@ const audio = new Audio();
 audio.preload = "none";
 const local = { id: null, playing: false, volume: 80, desc: null };
 let hls = null;
+/* Tuning: from the tap until sound starts, the line under the title blinks TUNING. A stream that
+   hasn't started after 15 s, or whose playlist the host refuses, says NO SIGNAL instead (a
+   station off air, like The Lot between shows). */
+let tuning = null, tuneTimer = null;
+function startTuning(id) {
+  tuning = { id, off: false };
+  clearTimeout(tuneTimer);
+  tuneTimer = setTimeout(() => noSignal(id), 15000);
+}
+function noSignal(id) {
+  if (!tuning || tuning.id !== id) return;
+  tuning.off = true;
+  phoneRender();
+}
+function stopTuning() { tuning = null; clearTimeout(tuneTimer); }
 // iPhones only allow the hardware buttons to set volume; detect that so the bar can say so.
 const canSetVolume = (() => { const a = new Audio(); a.volume = 0.5; return a.volume === 0.5; })();
 const needsHlsJs = !audio.canPlayType("application/vnd.apple.mpegurl");
@@ -1091,12 +1107,15 @@ async function phoneDescribe() {
 async function phonePlay(id) {
   if (hls) { hls.destroy(); hls = null; }
   local.id = id;
+  startTuning(id);
+  setNote("");  // a failure note from the last station doesn't carry over
   store.set("piRadioLast", id);
   const url = URLS[id];
   // Start playback inside the tap: iPhones block audio that starts later.
   if (url.includes(".m3u8") && needsHlsJs) {
     await loadHlsJs();
     hls = new Hls();
+    hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) noSignal(id); });
     hls.loadSource(url);
     hls.attachMedia(audio);
   } else {
@@ -1114,6 +1133,7 @@ async function phonePlay(id) {
 }
 
 function phoneStop() {
+  stopTuning();
   if (hls) { hls.destroy(); hls = null; }
   audio.pause();
   audio.removeAttribute("src");
@@ -1122,9 +1142,10 @@ function phoneStop() {
   phoneRender();
 }
 
-audio.addEventListener("playing", () => setNote(""));
+audio.addEventListener("playing", () => { setNote(""); if (tuning) { stopTuning(); phoneRender(); } });
 audio.addEventListener("error", () => {
   if (!local.playing || (audio.error && audio.error.code === 1)) return;  // 1: aborted by the next station
+  if (tuning && tuning.id === local.id) return noSignal(local.id);  // never started: off air or refused, shown under the title
   local.playing = false;
   setNote("STREAM FAILED ON THIS DEVICE. TRY ANOTHER STATION.");
   phoneRender();
@@ -1310,7 +1331,9 @@ function render(s) {
 
   const title = [s.station.name, s.now.title].filter(Boolean).join(" · ");
   setLine($("line1"), title.toUpperCase());
-  setLine($("line2"), (s.now.subtitle || s.station.group).toUpperCase());
+  const tune = on && s.player === "phone" && tuning && tuning.id === id ? tuning : null;
+  setLine($("line2"), tune ? (tune.off ? "NO SIGNAL · OFF AIR OR UNREACHABLE" : "TUNING") : (s.now.subtitle || s.station.group).toUpperCase());
+  $("line2").classList.toggle("tuning", !!tune && !tune.off);
   drawDetail(s.now);
   if (on && s.now && s.now.title && (STN[id] || {}).kind === "radio") logTrack(id, s.now.title);
   drawNext();
