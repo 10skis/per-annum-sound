@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wide Tape Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@600&family=VT323&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+  /* Mockup only, not part of the app: one way to fill the signal panel's empty space. */
+  :root { --bg: #0b0906; --amber: #ffb02e; --mid: #d08c26; --dim: #9c6c22; --ghost: #241907; --line: #4a3616; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--mid); font-family: "VT323", monospace; padding: 24px;
+         background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px); background-size: 7px 7px; }
+  .note { max-width: 1240px; margin: 0 auto 12px; font: 600 13px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .unit { max-width: 1240px; margin: 0 auto; border: 1px solid var(--line); padding: 20px; display: grid; gap: 18px 24px;
+          grid-template-columns: 1fr 1.65fr 1fr; grid-template-areas: "head head head" "art sig ctl" "tape tape ctl"; }
+  .head { grid-area: head; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 8px;
+          font-size: 18px; color: var(--dim); letter-spacing: .08em; }
+  .head .brand { font: 12px "Michroma", sans-serif; letter-spacing: .28em; color: var(--mid); }
+  .screen { border: 1px solid var(--line); background: #070503; position: relative; }
+  .tab { position: absolute; top: 0; right: 0; background: var(--dim); color: var(--bg); padding: 1px 8px 2px; font: 600 11px "Saira Condensed", sans-serif; letter-spacing: .16em; }
+  .tab b { opacity: .6; margin-right: 6px; }
+  .label { font: 600 12px "Saira Condensed", sans-serif; letter-spacing: .16em; color: var(--dim); text-transform: uppercase; }
+  .art { grid-area: art; aspect-ratio: 1; padding: 8px; align-self: start; }
+  .art div { width: 100%; height: 100%; background: radial-gradient(circle, var(--amber) 36%, transparent 40%) 0 0 / 10px 10px;
+    -webkit-mask: radial-gradient(ellipse at 45% 50%, #000 15%, #000a 35%, #0004 60%, #000b 80%); mask: radial-gradient(ellipse at 45% 50%, #000 15%, #000a 35%, #0004 60%, #000b 80%); }
+  .sig { grid-area: sig; padding: 30px 26px 20px; display: grid; gap: 14px; align-content: start; }
+  .sig .t1 { font-size: 46px; line-height: 1; color: var(--amber); text-shadow: 0 0 8px #ffb02e66; letter-spacing: .02em; white-space: nowrap; overflow: hidden; }
+  .sig .t2 { font-size: 24px; color: var(--mid); }
+  .sig .desc { font-size: 21px; line-height: 1.2; color: var(--mid); max-width: 640px; }
+  .ctl { grid-area: ctl; display: grid; gap: 14px; align-content: start; }
+  .presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .presets div { height: 50px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 22px; line-height: .9; text-align: center; }
+  .presets div small { font-size: 13px; color: var(--dim); display: block; }
+  .presets .e { border-style: dashed; border-color: var(--line); color: var(--dim); }
+  .ps { display: grid; grid-template-columns: 1fr 1fr; } .ps div { height: 48px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 24px; }
+  .ps div + div { border-left: 0; } .ps .on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .dialrow { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; justify-items: center; }
+  .key { width: 44px; height: 44px; border: 1px solid var(--dim); display: grid; place-items: center; font-size: 20px; }
+  .dial { position: relative; width: 176px; aspect-ratio: 1; }
+  .dial::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed var(--line); }
+  .dial i { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px; text-align: center; font: 12px/16px "Hiragino Sans", "MS Gothic", monospace; font-style: normal; color: var(--dim); }
+  .dial i.lit { color: var(--amber); font-size: 15px; text-shadow: 0 0 6px var(--amber); }
+  .dial .rd { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .dial .rd b { font-weight: 400; font-size: 46px; line-height: .85; color: var(--amber); text-shadow: 0 0 8px #ffb02e88; }
+  .dial .rd span { font-size: 16px; color: var(--dim); }
+  .tape { position: relative; overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); height: 74px;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+  .tape::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .run { position: absolute; left: 50%; top: 0; height: 100%; }
+  .t { position: absolute; top: 0; width: 16px; margin-left: -8px; text-align: center; }
+  .t .gl { display: block; margin-top: 6px; height: 15px; font: 13px/15px "Hiragino Sans", "MS Gothic", monospace; color: var(--dim); }
+  .t .tk { display: block; margin: 3px auto 0; width: 1px; height: 11px; background: var(--line); }
+  .t.maj .tk { height: 17px; background: var(--dim); } .t .n { display: block; font-size: 12px; color: var(--dim); }
+  .t.cur .gl { color: var(--amber); text-shadow: 0 0 8px var(--amber); } .t.cur .tk { background: var(--amber); width: 2px; }
+  .seg { position: absolute; bottom: 3px; height: 13px; border-top: 2px solid var(--line); padding-left: 3px; overflow: hidden; white-space: nowrap;
+         font: 600 10px/11px "Saira Condensed", sans-serif; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+  .seg.on { border-top-color: var(--amber); color: var(--amber); }
+  .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+  .bar { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; height: 20px; } .bar i { background: var(--ghost); } .bar i.on { background: var(--amber); }
+  .caption { max-width: 1240px; margin: 14px auto 0; font: 14px/1.5 "IBM Plex Mono", monospace; color: var(--dim); }
+  .ghost { position: relative; isolation: isolate; } .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; z-index: -1; }
+  .tape.wide { height: 84px; }
+  .tape.wide .t .gl { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="note">Mockup · 2 · full-width tape tuner · not built</div>
+<div class="unit">
+  <div class="head"><span class="brand">PER ANNUM SOUND</span><span>22:24 <span style="color:var(--amber)">● ON AIR 0:04</span> ZZ</span></div>
+  <div class="screen art"><span class="tab"><b>01</b>ART</span><div></div></div>
+  <div class="screen sig"><span class="tab"><b>02</b>SIGNAL</span>
+    <div><div class="t1">TURN ON, TUNE IN, DROP OUT.</div><div class="t2">INFINITE MIXTAPE</div></div>
+    <div class="desc">Turn back the clock and lose yourself in a world of counter-cultural folk, LSD-laced psychedelia, sweet soul and raw garage rock.</div>
+
+  </div>
+  <div class="ctl">
+    <div class="presets"><div>1<small>NTS 1</small></div><div>2<small>NTS 2</small></div><div class="e">3<small>--</small></div><div class="e">4<small>--</small></div><div class="e">5<small>--</small></div><div class="e">6<small>--</small></div></div>
+    <div class="ps"><div class="on">PLAY</div><div>STOP</div></div>
+    <div class="dialrow"><div class="key">◀</div><div class="dial" id="dial"><div class="rd"><b class="ghost" data-ghost="88">06</b><span>/53</span></div></div><div class="key">▶</div></div>
+
+    <div class="label" style="text-align:center">Turn · Press</div>
+    <div class="vol"><span class="label">Vol</span><div class="bar" id="bar"></div><span style="font-size:26px;color:var(--amber)">80</span></div>
+  </div>
+  <div class="tape wide" style="grid-area:tape"><div class="run"></div></div>
+</div>
+<p class="caption">Option 2: the tape tuner moves out of the right column into a full-width band under ART and SIGNAL. The right column gets shorter, so SIGNAL stops stretching, and the tape gets about three times the room: you can see around 50 stations at once and the group bands read in full.</p>
+<script>
+const ST = [["NTS 1", "NTS Live"], ["NTS 2", "NTS Live"], ["Poolside", "Infinite Mixtapes"], ["Slow Focus", "Infinite Mixtapes"], ["Low Key", "Infinite Mixtapes"], ["Memory Lane", "Infinite Mixtapes"], ["4 To The Floor", "Infinite Mixtapes"], ["Island Time", "Infinite Mixtapes"], ["The Tube", "Infinite Mixtapes"], ["Sheet Music", "Infinite Mixtapes"], ["Feelings", "Infinite Mixtapes"], ["Expansions", "Infinite Mixtapes"], ["Rap House", "Infinite Mixtapes"], ["Labyrinth", "Infinite Mixtapes"], ["Sweat", "Infinite Mixtapes"], ["Otaku", "Infinite Mixtapes"], ["The Pit", "Infinite Mixtapes"], ["Field Recordings", "Infinite Mixtapes"], ["The Lot Radio", "Terrascan FM"], ["Dublab", "Terrascan FM"], ["Refuge Worldwide", "Terrascan FM"], ["Kiosk Radio", "Terrascan FM"], ["Cashmere Radio", "Terrascan FM"], ["Noods Radio", "Terrascan FM"], ["Radio alHara", "Terrascan FM"], ["Rinse FM", "Terrascan FM"], ["Kool FM", "Terrascan FM"], ["Worldwide FM", "Terrascan FM"], ["WFMU", "Terrascan FM"], ["KEXP", "Terrascan FM"], ["FIP", "Terrascan FM"], ["FIP Jazz", "Terrascan FM"], ["WQXR", "Terrascan FM"], ["Chillhop Radio", "Terrascan FM"], ["Chante France 60s", "Genre Radio"], ["Radio Italia Anni 60", "Genre Radio"], ["Reprezent Radio", "Genre Radio"], ["triple j Unearthed", "Genre Radio"], ["Yumi Co. Radio", "Genre Radio"], ["Folk Alley", "Genre Radio"], ["Christmas Vinyl HD", "Genre Radio"], ["Resonance FM", "Deep Cuts"], ["Oroko Radio", "Deep Cuts"], ["Ha Noi Community Radio", "Deep Cuts"], ["Bangkok Community Radio", "Deep Cuts"], ["Mutant Radio", "Deep Cuts"], ["Super45.fm", "Deep Cuts"], ["stegi.radio", "Deep Cuts"], ["Radio 80000", "Deep Cuts"], ["Give the Drummer Radio", "Deep Cuts"], ["Radio Raheem", "Deep Cuts"], ["Ambient Sleeping Pill", "Deep Cuts"], ["Nightride FM", "Deep Cuts"]], IDX = 5;
+const GL = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔"], N = ST.length, pad = n => String(n).padStart(2, "0");
+const bar = document.getElementById("bar");
+for (let i = 0; i < 20; i++) { const x = document.createElement("i"); if (i < 16) x.className = "on"; bar.appendChild(x); }
+const dial = document.getElementById("dial");
+for (let off = -6; off <= 6; off++) {
+  const i = (IDX + off + N) % N, a = -off * 21, e = document.createElement("i");
+  e.textContent = GL[i % GL.length]; e.className = off ? "" : "lit";
+  e.style.transform = `rotate(${a}deg) translateY(-82px) rotate(${-a}deg)`; e.style.opacity = 1 - Math.abs(off) / 7 * .85;
+  dial.appendChild(e);
+}
+document.querySelectorAll(".run").forEach(run => {
+  const W = 16;
+  run.innerHTML = ST.map((s, i) => { const maj = (i + 1) % 5 === 0 || i === 0;
+    return `<div class="t${maj ? " maj" : ""}${i === IDX ? " cur" : ""}" style="left:${i * W}px"><span class="gl">${GL[i % GL.length]}</span><span class="tk"></span>${maj ? `<span class="n">${pad(i + 1)}</span>` : ""}</div>`; }).join("");
+  let from = 0;
+  ST.forEach((s, i) => { if (i === N - 1 || ST[i + 1][1] !== s[1]) {
+    const d = document.createElement("div"); d.className = "seg" + (IDX >= from && IDX <= i ? " on" : "");
+    d.style.left = (from * W - 6) + "px"; d.style.width = ((i + 1 - from) * W - 4) + "px"; d.textContent = s[1]; run.appendChild(d); from = i + 1; } });
+  run.style.transform = `translateX(${-IDX * W}px)`;
+});
+
+</script>
+</body>
+</html>

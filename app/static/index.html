@@ -210,7 +210,7 @@
   .vis canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; cursor: pointer; }  /* no size feedback into the grid */
   .vis-name { cursor: pointer; }
   .vis-idx { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .08em; }
-  .map canvas { width: 100%; aspect-ratio: 2.4 / 1; display: block; cursor: crosshair; touch-action: manipulation; }
+  .map canvas { width: 100%; aspect-ratio: 2.4 / 1; display: block; cursor: crosshair; touch-action: pan-y; }
   .map .seg button { height: 24px; padding: 0 8px; font-size: 16px; }
   .map-foot { min-height: 30px; display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none;
               font-family: var(--dot); font-size: 17px; color: var(--amber-mid); white-space: nowrap; }
@@ -1743,7 +1743,7 @@ function drawMap(t) {
 function setMapRange(rng) {
   mapRange = rng;
   mapZ = { z: 1, target: 1, fx: 0, fy: 0, px: 0, py: 0 };
-  $("navMap").style.touchAction = "manipulation";
+  $("navMap").style.touchAction = "pan-y";
   store.set("piRadioMapRange", rng);
   $("rngWorld").classList.toggle("on", rng === "world");
   $("rngEurope").classList.toggle("on", rng === "europe");
@@ -1758,7 +1758,7 @@ $("navMap").addEventListener("click", e => {
     mapSel = null; drawMapFoot();
     if (mapZ.target > 1) mapZ.target = 1;
     else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; mapZ.px = mapZ.py = 0; } mapZ.target = MAP_ZOOM; }
-    $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "manipulation";  // zoomed: a finger drag pans the map, not the page
+    $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "pan-y";  // zoomed: any finger drag pans the map; unzoomed: only sideways
     return;
   }
   if (best.cities.length > 1 && mapRange === "world" && best.cities.every(ci => inRange(RANGES.europe, ci))) {
@@ -1776,10 +1776,11 @@ $("navMap").addEventListener("pointermove", e => {
   let best = null, bd = 14;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
   mapHoverKey = best ? best.cities[0].name : null;
-  $("navMap").style.cursor = best ? "pointer" : mapZ.target > 1 ? (mapDrag ? "grabbing" : "grab") : "crosshair";
+  $("navMap").style.cursor = best ? "pointer" : mapZ.target > 1 || mapRange === "world" ? (mapDrag ? "grabbing" : "grab") : "crosshair";
 });
-/* While zoomed, drag or two-finger scroll moves around the map. In the world view sideways
-   movement turns the globe (it wraps); everything else stays inside the map's edges. */
+/* Drag or two-finger scroll moves around the map. Unzoomed, sideways movement turns the world
+   view's globe (it wraps) and vertical scrolling is left to the page; zoomed, it moves in both
+   directions, staying inside the map's edges except the world view's sideways wrap. */
 function panMap(dx, dy) {
   const w = $("navMap").clientWidth || 1;
   if (mapRange === "world") mapPan = (mapPan + dx / mapZ.z / w * 360) % 360;
@@ -1787,7 +1788,7 @@ function panMap(dx, dy) {
   mapZ.py += dy;  // clamped when drawn
 }
 $("navMap").addEventListener("pointerdown", e => {
-  if (mapZ.target <= 1 || e.button > 0) return;
+  if (e.button > 0) return;
   mapDrag = { x: e.clientX, y: e.clientY, moved: false };
   try { $("navMap").setPointerCapture(e.pointerId); } catch (_) {}
 });
@@ -1801,7 +1802,8 @@ $("navMap").addEventListener("pointermove", e => {
 $("navMap").addEventListener("pointerup", () => { mapDragMoved = !!(mapDrag && mapDrag.moved); mapDrag = null; });
 $("navMap").addEventListener("pointercancel", () => { mapDrag = null; });
 $("navMap").addEventListener("wheel", e => {
-  if (mapZ.target <= 1) return;  // not zoomed: the page scrolls as usual
+  // Not zoomed: only a sideways swipe moves the map; up and down still scroll the page
+  if (mapZ.target <= 1 && Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
   e.preventDefault();
   panMap(-e.deltaX, -e.deltaY);
 }, { passive: false });
