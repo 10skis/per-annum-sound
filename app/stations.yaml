@@ -37,6 +37,8 @@ places:
   Milan: [45.46, 9.19]
   North Pole: [90.0, 0.0]
   Pittsburgh: [40.44, -80.00]
+  Vancouver: [49.28, -123.12]
+  Dublin: [53.35, -6.26]
 
 # Airport-style code for each map label, shown on the map and in the middle of the sigil.
 # A label not listed falls back to its first three letters.
@@ -66,6 +68,8 @@ codes:
   Mid-Pacific: MPC
   Point Nemo: NMO
   Pittsburgh: PIT
+  Vancouver: YVR
+  Dublin: DUB
 
 # Time zone for each place, for the local-time readout.
 timezones:
@@ -79,6 +83,8 @@ timezones:
   New York: America/New_York
   New Jersey: America/New_York
   Pittsburgh: America/New_York
+  Vancouver: America/Vancouver
+  Dublin: Europe/Dublin
   Los Angeles: America/Los_Angeles
   Seattle: America/Los_Angeles
   Bologna: Europe/Rome
@@ -585,3 +591,57 @@ groups:
         founded: 1932
         notable: ["Newshour", "The Documentary", "Outlook"]
         profile: "Began in December 1932 as the BBC Empire Service, broadcasting by shortwave. Based at Bush House for 70 years, it moved into Broadcasting House in 2012. Radio 4 isn't streamable outside the UK; this is the BBC's English talk station for listeners abroad."
+      - id: monocle
+        name: "Monocle Radio"
+        kind: radio
+        genre: "Global affairs and culture"
+        place: "London"
+        url: "https://playerservices.streamtheworld.com/api/livestream-redirect/MONOCLE_24.mp3"
+        about: "Monocle magazine's mostly spoken station. Global affairs, business, design and cities, with music between the shows."
+        site: "https://monocle.com/radio"
+        founded: 2011
+        notable: ["The Globalist", "The Briefing", "The Urbanist"]
+        profile: "Went on air as Monocle 24 on 17 October 2011 with four live weekday shows, from studios at Midori House, Monocle's headquarters in London. Some of its output also runs overnight on CBC Radio One."
+      - id: abc-rn
+        name: "ABC Radio National"
+        kind: radio
+        genre: "Ideas and talk"
+        place: "Sydney"
+        url: "https://abc.streamguys1.com/live/rnnsw/icecast.audio"
+        about: "The Australian Broadcasting Corporation's national talk network. Ideas, science, arts and documentaries rather than breaking news."
+        site: "https://www.abc.net.au/listen/live/radionational"
+        notable: ["Late Night Live", "The Science Show", "Big Ideas"]
+        profile: "Traces back to Sydney's 2FC, on air from January 1924. It ran as the ABC's Radio 2 from 1947 and became Radio National in 1985, heard across Australia."
+      - id: cbc-radio-one
+        name: "CBC Radio One"
+        kind: radio
+        genre: "News and talk"
+        place: "Vancouver"
+        url: "https://27033.live.streamtheworld.com/CBU2FM_CBC_SC"
+        about: "Canada's public broadcaster, here from its Vancouver station. National news, interviews and documentaries, with local shows for British Columbia."
+        site: "https://www.cbc.ca/listen/live-radio"
+        founded: 1936
+        notable: ["As It Happens", "The Current", "Ideas"]
+        profile: "The Canadian Broadcasting Corporation was set up in 1936, and its English talk network has carried the Radio One name since 1997. This stream is CBU, CBC Vancouver."
+      - id: rte-radio-1
+        name: "RTÉ Radio 1"
+        kind: radio
+        genre: "News and talk"
+        place: "Dublin"
+        url: "https://icecast.rte.ie/radio1"
+        about: "Ireland's national broadcaster, mostly speech. News, current affairs, phone-ins and documentaries, with some music."
+        site: "https://www.rte.ie/radio/radio1"
+        founded: 1926
+        notable: ["Morning Ireland", "Liveline", "Drivetime"]
+        profile: "Began on 1 January 1926 as 2RN, Ireland's first radio station, and is run by the state broadcaster RTÉ. The most listened-to station in the country."
+      - id: lbc
+        name: "LBC"
+        kind: radio
+        genre: "Phone-in talk"
+        place: "London"
+        url: "https://media-ice.musicradio.com/LBCUK"
+        about: "London's commercial talk station, now national. Phone-ins and opinion around the day's news."
+        site: "https://www.lbc.co.uk"
+        founded: 1973
+        notable: ["Nick Ferrari at Breakfast", "James O'Brien"]
+        profile: "Launched on 8 October 1973 as the UK's first licensed commercial radio station. Owned by Global, it went national on digital radio in 2014."

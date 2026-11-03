@@ -1655,7 +1655,7 @@ document.addEventListener("keydown", e => {
 
 /* Tape tuner under the dial and the phone tuner: slides so the current station sits at the needle. */
 const TAPE_STEP = 16;
-const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔⎈⏁⏂⏆⏇⏈"];  // one per station; add more when stations pass 60
+const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔⎈⏁⏂⏆⏇⏈⌘⌗⌕⍝⍢⍣⍤⍥⎊⎋"];  // one per station; add more when stations pass 70
 let tapeSegs = [];
 function buildTapes() {
   // Group bands: where each group starts and ends in dial order

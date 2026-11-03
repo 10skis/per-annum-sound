@@ -1,13 +1,13 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.39 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.40 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.39 |
+| Version | v0.40 |
 | Owner | Robert |
 | Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
@@ -57,7 +57,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Layering | The art image's drop-shadow filter paints it as its own layer. Anything meant to sit on top (`.shimmer`) needs a z-index, or it's hidden. The shimmer was invisible from v0.17 to v0.33 because of this |
 | `hidden` ignored | `[hidden] { display: none !important }` exists because class display rules override the attribute |
 | Patching | Edits are scripted string replacements with `assert count == 1`. Comment markers often appear twice (CSS and JS); match the longer, unique form |
-| Streams | Must be HTTPS (Netlify page). HLS is only detected by `.m3u8` in the URL; a playlist at a bare address (wyep.org/stream) fails, so use a direct MP3/AAC stream. More than 60 stations needs more `DIAL_GLYPHS`. BBC Radio 4 is UK-only; World Service plays abroad. Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them |
+| Streams | Must be HTTPS (Netlify page). HLS is only detected by `.m3u8` in the URL; a playlist at a bare address (wyep.org/stream) fails, so use a direct MP3/AAC stream. More than 70 stations needs more `DIAL_GLYPHS`. BBC Radio 4 is UK-only; World Service plays abroad. Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them |
 | Wikimedia art | Needs a descriptive user agent (`UA` in `art.py`) or it returns 429 and the build quietly drops the FIP logos. Check `web/art/` after a build |
 | Track titles | Some feeds send file names (250119_0258). `fileLike()` in the page filters them; prefer a feed's show name over its track title |
 | iPhone | Pages can't set volume; the bar becomes a "use the volume buttons" note |
@@ -65,7 +65,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify for v0.39. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- Robert re-drags `app/web` to Netlify for v0.40. v0.34 was deployed and tested on the iPhone 2026-11-03.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.
