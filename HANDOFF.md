@@ -1,13 +1,13 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.36 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.37 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.36 |
+| Version | v0.37 |
 | Owner | Robert |
 | Live site | https://spiffy-elf-9ebf5d.netlify.app (v0.34 deployed 2026-11-03; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
@@ -40,6 +40,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Volume | Two-finger swipe right = louder |
 | Phones | Tuner strip instead of the dial; no clock in the header (status bar has it); ? in the header; brand shows P·A·S |
 | Art shimmer | Exactly the v0.25 settings: one ring over 1.8 s, 1.5 s sweep, every 5 to 14 s. Artwork only |
+| Hold | Tap the art to hold shimmer and sigil rotation; tap the title to stop its scroll. Tap again resumes; remembered per device. About opens from the line under the title and the description, not the title |
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), faint dot matrix behind, no shimmer |
 | Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. WORLD and EUROPE ranges |
 | Signal panel | Every station gets: what's on (NTS timeline or recent tracks), day and night bar, nearby and similar, your listening |
@@ -64,7 +65,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- Robert re-drags `app/web` to Netlify for v0.36. v0.34 was deployed and tested on the iPhone 2026-11-03.
+- Robert re-drags `app/web` to Netlify for v0.37. v0.34 was deployed and tested on the iPhone 2026-11-03.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.

@@ -243,6 +243,10 @@
   .line.small { font-size: clamp(17px, 5vw, 21px); color: var(--amber-mid); }
   .line .run { display: inline-block; }
   .line.scroll .run { animation: marquee var(--dur, 12s) linear infinite; }
+  .line.scroll.held .run { animation: none; }
+  .line.scroll.held { -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
+                      mask-image: linear-gradient(90deg, #000 92%, transparent); }
+  #line1 { cursor: pointer; }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
   .tags { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -704,6 +708,7 @@
     </dl>
     <dl>
       <dt>SWIPE</dt><dd>Art left or right to tune</dd>
+      <dt>TAP</dt><dd>Art or title to hold its motion; again to resume</dd>
       <dt>HOLD</dt><dd>A preset key to save to it</dd>
       <dt>TAP</dt><dd>A city on the map for its stations</dd>
       <dt>+CAL</dt><dd>Add an NTS show to your calendar</dd>
@@ -1001,7 +1006,7 @@ function drawSigil(t) {
   if (!fit) return;
   const [g, w] = fit, dt = Math.min(100, t - (sigil.t || t)) / 1000;
   sigil.t = t;
-  if (S && S.playing && !reduceMotion) for (const r of sigil.model.rings) r.rot += r.speed * dt;
+  if (S && S.playing && !reduceMotion && !artHeld) for (const r of sigil.model.rings) r.rot += r.speed * dt;
   drawSigilOn(g, w, sigil.model, null);  // no ripple or sweep on the sigil; those are for real artwork
 }
 
@@ -1534,6 +1539,7 @@ $("artScreen").addEventListener("pointerup", e => {
   const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
   swipe = null;
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) stepPlay(dx < 0 ? 1 : -1);  // swipe left = next
+  else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) holdArt(!artHeld);  // a tap holds or resumes
 });
 $("artScreen").addEventListener("pointercancel", () => { swipe = null; });
 
@@ -2018,10 +2024,24 @@ let fall = [], fallLast = 0;
 
 /* Art shimmer: every so often a ripple from a random point, or a sweep, runs across the art's dots. */
 $("art").addEventListener("load", () => $("artScreen").style.setProperty("--art", `url("${$("art").src}")`));
+/* Tap the art or the title to hold its motion (shimmer and turning sigil; title scroll), tap again
+   to resume. Remembered on this device. */
+let artHeld = store.get("piRadioArtHeld", false);
+function holdArt(on) {
+  artHeld = on;
+  store.set("piRadioArtHeld", on);
+  if (on) $("shimmer").className = "shimmer";  // stop a ripple mid-run
+}
+function holdTitle(on) {
+  $("line1").classList.toggle("held", on);
+  store.set("piRadioTitleHeld", on);
+}
+holdTitle(store.get("piRadioTitleHeld", false));
+$("line1").addEventListener("click", () => holdTitle(!$("line1").classList.contains("held")));
 function shimmerSoon() {
   setTimeout(() => {
     const el = $("shimmer");
-    if (S && S.playing && !reduceMotion && !document.hidden) {
+    if (S && S.playing && !reduceMotion && !document.hidden && !artHeld) {
       const ripple = Math.random() < .6;
       el.className = "shimmer";
       el.style.setProperty("--rx", Math.round(15 + Math.random() * 70) + "%");
@@ -2321,7 +2341,7 @@ function openAbout() {
   $("aboutClose").focus();
 }
 function closeAbout() { if (!$("about").hidden) { $("about").hidden = true; } }
-["line1", "line2", "desc"].forEach(x => $(x).addEventListener("click", openAbout));
+["line2", "desc"].forEach(x => $(x).addEventListener("click", openAbout));  // the title holds its scroll instead
 $("aboutClose").addEventListener("click", closeAbout);
 $("about").addEventListener("click", e => { if (e.target === $("about")) closeAbout(); });
 

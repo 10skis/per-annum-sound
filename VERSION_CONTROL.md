@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.36: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.37: Per Annum Sound web app with 53 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://spiffy-elf-9ebf5d.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.37 | 2026-11-03 | Tap the art or title to hold its motion; tap again to resume | [link](updates/2026-11-03-tap-to-hold.md) |
 | v0.36 | 2026-11-03 | Radiocult stations show the show's name, not the file name | [link](updates/2026-11-03-radiocult-show-names.md) |
 | v0.35 | 2026-11-03 | Profiles for every station, twelve corrected; city codes shared by server and page; FIP logos back | [link](updates/2026-11-03-profiles-city-codes.md) |
 | v0.34 | 2026-11-03 | Scroll to tune on the dial | [link](updates/2026-11-03-dial-scroll.md) |
