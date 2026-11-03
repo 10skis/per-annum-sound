@@ -476,6 +476,8 @@
   .tape-run .maj .tk { height: 17px; background: var(--amber-dim); }
   .tape-run .n { display: block; font: 12px/1 var(--dot); color: var(--amber-dim); margin-top: 1px; }
   .tape-run .cur .gl { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+  .tape-run .gl svg, #dial svg { vertical-align: -0.1em; }
+  .tape-run .cur .gl svg { filter: drop-shadow(0 0 4px var(--amber)); }
   .tape-run .cur .tk { background: var(--amber); width: 2px; }
   .tape-run .seg { position: absolute; bottom: 3px; height: 13px; border-top: 2px solid var(--line); padding-left: 3px; overflow: hidden;
                    white-space: nowrap; font: 600 10px/11px var(--cond); letter-spacing: .14em; color: var(--amber-dim); text-transform: uppercase; }
@@ -1355,7 +1357,7 @@ async function build() {
   // One glyph per station around the dial; drawRing() turns the ring to the current one.
   order.forEach((_, i) => {
     const d = document.createElement("i");
-    d.textContent = DIAL_GLYPHS[i % DIAL_GLYPHS.length];
+    d.innerHTML = glyphFor(i);
     $("dial").appendChild(d);
   });
   for (let i = 0; i < 20; i++) $("bar").insertBefore(document.createElement("i"), $("vol"));
@@ -1655,6 +1657,13 @@ document.addEventListener("keydown", e => {
 
 /* Tape tuner under the dial and the phone tuner: slides so the current station sits at the needle. */
 const TAPE_STEP = 16;
+/* A station can set glyph: in stations.yaml to swap its slot's glyph for a drawn one. Drawn in
+   currentColor so it dims and lights like the text glyphs. */
+const GLYPH_ART = {
+  tree: '<svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M8 1.5 4.6 5.6h2L3.6 9.6h2.4l-3.3 4.1h10.6L10 9.6h2.4L9.4 5.6h2z"/><path d="M8 13.7v1.8"/></svg>',
+};
+const glyphFor = (i) => GLYPH_ART[(STN[order[i]] || {}).glyph] || esc(DIAL_GLYPHS[i % DIAL_GLYPHS.length]);
 const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔⎈⏁⏂⏆⏇⏈⏀⌗⌕⍝⍢⍣⍤⍥⎊⎋"];  // one per station; add more when stations pass 70
 let tapeSegs = [];
 function buildTapes() {
@@ -1668,7 +1677,7 @@ function buildTapes() {
   document.querySelectorAll(".tape-run").forEach(run => {
     run.innerHTML = order.map((_, i) => {
       const maj = (i + 1) % 5 === 0 || i === 0;
-      return `<div class="t${maj ? " maj" : ""}" style="left:${i * TAPE_STEP}px"><span class="gl">${DIAL_GLYPHS[i % DIAL_GLYPHS.length]}</span>` +
+      return `<div class="t${maj ? " maj" : ""}" style="left:${i * TAPE_STEP}px"><span class="gl">${glyphFor(i)}</span>` +
         `<span class="tk"></span>${maj ? `<span class="n">${pad(i + 1)}</span>` : ""}</div>`;
     }).join("") + tapeSegs.map(g =>
       `<div class="seg" style="left:${g.from * TAPE_STEP - 6}px;width:${(g.to - g.from) * TAPE_STEP - 4}px">${esc(g.name)}</div>`).join("");

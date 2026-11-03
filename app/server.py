@@ -160,7 +160,7 @@ def stations():
             return " · ".join(x for x in (s.get("genre"), s.get("place")) if x)
         return ""  # NTS live: the page fills this from the schedule
     keep = ("id", "name", "url", "kind", "place", "geo", "city", "code", "info", "tz", "group", "genre", "about", "art",
-            "profile", "founded", "notable", "site")
+            "profile", "founded", "notable", "site", "glyph")
     return [{"name": g["name"], "stations": [{**{k: s[k] for k in keep if k in s}, "sub": sub(s)}
                                              for s in g["stations"]]}
             for g in GROUPS]

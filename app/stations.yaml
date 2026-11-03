@@ -420,6 +420,7 @@ groups:
       - id: christmas-vinyl
         name: Christmas Vinyl HD
         kind: radio
+        glyph: tree  # drawn instead of its dial glyph (GLYPH_ART in the page)
         genre: Christmas, all year
         place: North Pole
         url: "https://icecast.walmradio.com:8443/christmas"
