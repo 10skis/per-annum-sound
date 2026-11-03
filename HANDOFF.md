@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.53 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.54 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.53 |
+| Version | v0.54 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.45 deployed 2026-11-03, v0.53 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.54 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -56,7 +56,8 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 |---|---|
 | Canvases inflating the layout | A canvas with height 100% in a grid or flex row feeds its own size back. Use `contain: size` on the canvas, and on `.artcol` and `.strip`, so the right-hand controls set the top row's height |
 | Class name clashes | It's one 2,500-line file. The ticker once used `.tk`, the tape's tick class, and turned the ticks into a solid line. Grep a class name before using it |
-| Phone header | The full header needs about 460 px, so below 560 px it shows P·A·S and drops the clock and "ON AIR". Anything wider than the screen widens the whole page on iPhone and knocks the art and tape out of line |
+| Phone header | The full header needs about 460 px, so below 960 px (where the unit is at most 420 wide) it shows P·A·S and drops the clock and "ON AIR". Anything wider than the screen widens the whole page on iPhone and knocks the art and tape out of line |
+| Known dead stream | The Lot Radio (`lot`): its HLS is locked to their own player since at least 2026-11-03. Waiting on Robert's call |
 | Spectrum screens (03) | New displays go at the end of `VIS_MODES`: the saved choice is an index |
 | Layering | The art image's drop-shadow filter paints it as its own layer. Anything meant to sit on top (`.shimmer`) needs a z-index, or it's hidden. The shimmer was invisible from v0.17 to v0.33 because of this |
 | `hidden` ignored | `[hidden] { display: none !important }` exists because class display rules override the attribute |
