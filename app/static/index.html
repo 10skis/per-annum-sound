@@ -2114,7 +2114,7 @@ function shimmerSoon() {
       if (!sigil && !startDotRipple(ripple)) el.classList.add(ripple ? "ripple" : "sweep");
     }
     shimmerSoon();
-  }, 5000 + Math.random() * 9000);  // every 5 to 14 seconds
+  }, 7000 + Math.random() * 9000);  // every 7 to 16 seconds, so a 5 s swell never overlaps the next
 }
 shimmerSoon();
 
@@ -2319,7 +2319,7 @@ function drawLevel(t) {
 
 /* Goniometer as a slow phosphor scope: a short window of stereo "signal" (low, mid and high
    partials at the current band levels, the sides widening with the highs) plotted as dots on a
-   buffer that fades slowly, so the figure drifts and leaves long trails. The window slides at a
+   buffer that fades over about a quarter second, so the figure drifts and leaves long trails. The window slides at a
    fifth of real time, so it moves like an analog scope rather than flickering. Mid is up, L and R
    on the diagonals. Small LO and HI scopes either side show the bass and the treble alone; a
    correlation bar runs along the bottom. */
@@ -2330,7 +2330,7 @@ function drawGonio(g, w, h, t, dt) {
   const b = gonioBuf.getContext("2d");
   b.setTransform(dpr, 0, 0, dpr, 0, 0);
   b.globalCompositeOperation = "destination-out";
-  b.fillStyle = `rgba(0,0,0,${Math.min(1, dt * 2.6).toFixed(3)})`;  // slow phosphor decay, frame-rate independent
+  b.fillStyle = `rgba(0,0,0,${Math.min(1, dt * 4).toFixed(3)})`;  // slow phosphor decay, frame-rate independent
   b.fillRect(0, 0, w, h);
   b.globalCompositeOperation = "source-over";
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
@@ -2352,9 +2352,9 @@ function drawGonio(g, w, h, t, dt) {
     for (let i = -r; i <= r; i += 6) { g.fillRect(x0, y0 + i, 1, 2); g.fillRect(x0 + i, y0, 2, 1); }
     b.fillStyle = "#ffb02e"; b.shadowColor = "#ffb02e"; b.shadowBlur = glow;
     for (let i = 0; i < n; i++) {
-      const [m, sd] = fn(slow + i / n * .05);  // 50 ms of "audio"
+      const [m, sd] = fn(slow + i / n * .022);  // 22 ms of "audio": a few turns of each partial, not a solid block
       if (fn === signal.all) { sm += m * m; ss += sd * sd; }
-      b.fillRect(x0 + Math.tanh(sd * gain) * r * .95 - dot / 2, y0 - Math.tanh(m * gain) * r * .95 - dot / 2, dot, dot);
+      b.fillRect(x0 + Math.tanh(sd * gain * .7) * r - dot / 2, y0 - Math.tanh(m * gain * .7) * r - dot / 2, dot, dot);
     }
     b.shadowBlur = 0;
   };
