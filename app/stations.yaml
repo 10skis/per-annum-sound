@@ -141,6 +141,7 @@ groups:
       - id: lot
         name: The Lot Radio
         kind: radio
+        genre: "Live DJs, every genre"
         place: Brooklyn
         url: "https://livepeercdn.studio/hls/85c28sa2o8wppm58/14_0/index.m3u8"
         art: "https://cdn.prod.website-files.com/5f4bdfc87623ea5cc5d24cf3/606da84551eef3d5fa8c0cb9_icon.png"
@@ -150,6 +151,7 @@ groups:
       - id: dublab
         name: Dublab
         kind: radio
+        genre: "Future roots"
         place: Los Angeles
         url: "https://dublab.out.airtime.pro/dublab_a"
         info: "airtime:dublab"
@@ -161,6 +163,7 @@ groups:
       - id: refuge
         name: Refuge Worldwide
         kind: radio
+        genre: "Club and experimental"
         place: Berlin
         url: "https://streaming.radio.co/s3699c5e49/listen"
         art: "https://refugeworldwide.com/apple-touch-icon.png"
@@ -172,6 +175,7 @@ groups:
       - id: kiosk
         name: Kiosk Radio
         kind: radio
+        genre: "Community radio"
         place: Brussels
         url: "https://kioskradiobxl.out.airtime.pro/kioskradiobxl_b"
         art: "https://kioskradio.com/favicon.png"
@@ -183,6 +187,7 @@ groups:
       - id: cashmere
         name: Cashmere Radio
         kind: radio
+        genre: "Experimental"
         place: Berlin
         url: "https://cashmereradio.out.airtime.pro/cashmereradio_b"
         info: "airtime:cashmereradio"
@@ -192,6 +197,7 @@ groups:
       - id: noods
         name: Noods Radio
         kind: radio
+        genre: "Leftfield, dub and bass"
         place: Bristol
         url: "https://noods-radio.radiocult.fm/stream"
         info: "radiocult:noods-radio"
@@ -202,6 +208,7 @@ groups:
       - id: alhara
         name: Radio alHara
         kind: radio
+        genre: "Community radio"
         place: Bethlehem
         url: "https://stream.radioalhara.net/ra"
         art: "https://radioalhara.net/img/radio-alhara-logo-512.png"
@@ -212,6 +219,7 @@ groups:
       - id: rinse
         name: Rinse FM
         kind: radio
+        genre: "Garage, grime and dance"
         place: London
         url: "https://admin.stream.rinse.fm/proxy/rinse_uk/stream"
         about: "Began as a London pirate station in 1994 and helped launch UK garage, grime and dubstep. Licensed since 2010 and still the home of UK club music."
@@ -222,6 +230,7 @@ groups:
       - id: kool
         name: Kool FM
         kind: radio
+        genre: "Jungle and drum & bass"
         place: London
         url: "https://admin.stream.rinse.fm/proxy/kool/stream"
         about: "London's jungle and drum & bass station, on air since it started as a pirate in 1991. Selectors and MCs from the original scene to now, broadcast through Rinse."
@@ -232,6 +241,7 @@ groups:
       - id: worldwide-fm
         name: Worldwide FM
         kind: radio
+        genre: "Jazz, soul and global"
         place: London
         url: "https://worldwide-fm.radiocult.fm/stream"
         info: "radiocult:worldwide-fm"
@@ -243,6 +253,7 @@ groups:
       - id: wfmu
         name: WFMU
         kind: radio
+        genre: "Freeform"
         place: New Jersey
         url: "https://stream0.wfmu.org/freeform-high.aac"
         about: "Listener-supported freeform radio from Jersey City since 1958, the longest-running freeform station in the US. DJs play whatever they want, and it shows."
@@ -253,6 +264,7 @@ groups:
       - id: kexp
         name: KEXP
         kind: radio
+        genre: "Indie and eclectic"
         place: Seattle
         url: "https://kexp.streamguys1.com/kexp160.aac"
         info: "kexp"
@@ -264,6 +276,7 @@ groups:
       - id: fip
         name: FIP
         kind: radio
+        genre: "Eclectic"
         place: Paris
         url: "https://icecast.radiofrance.fr/fip-hifi.aac"
         art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"
@@ -275,6 +288,7 @@ groups:
       - id: fip-jazz
         name: FIP Jazz
         kind: radio
+        genre: "Jazz"
         place: Paris
         url: "https://icecast.radiofrance.fr/fipjazz-hifi.aac"
         art: "https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/250px-FIP_logo_2005.svg.png"
@@ -285,6 +299,7 @@ groups:
       - id: wqxr
         name: WQXR
         kind: radio
+        genre: "Classical"
         place: New York
         url: "https://stream.wqxr.org/wqxr-web"
         about: "New York's classical station, listener-supported and on air since 1936. Orchestral, chamber music and opera, plus live performances from around the city."
@@ -294,6 +309,7 @@ groups:
       - id: chillhop
         name: Chillhop Radio
         kind: radio
+        genre: "Lo-fi hip-hop"
         place: Berlin
         url: "https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/"
         about: "FluxFM's lo-fi hip-hop channel from Berlin. Mellow beats for working, reading or winding down."
