@@ -17,13 +17,13 @@ from datetime import datetime
 from pathlib import Path
 
 import httpx
-import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import art
+import catalog
 import nts
 from player import make_player
 from vis import Spectrum
@@ -34,7 +34,7 @@ HERE = Path(__file__).parent
 STATE_FILE = HERE / "state.json"
 HISTORY_FILE = HERE / "history.json"
 
-GROUPS = yaml.safe_load((HERE / "stations.yaml").read_text())["groups"]
+GROUPS = catalog.load(HERE / "stations.yaml")["groups"]
 STATIONS = [dict(s, group=g["name"]) for g in GROUPS for s in g["stations"]]
 BY_ID = {s["id"]: s for s in STATIONS}
 
@@ -159,7 +159,8 @@ def stations():
         if s["kind"] == "radio":
             return s.get("place", "")
         return ""  # NTS live: the page fills this from the schedule
-    return [{"name": g["name"], "stations": [{"id": s["id"], "name": s["name"], "sub": sub(s), "url": s["url"]}
+    keep = ("id", "name", "url", "kind", "place", "geo", "city", "info")
+    return [{"name": g["name"], "stations": [{**{k: s[k] for k in keep if k in s}, "sub": sub(s)}
                                              for s in g["stations"]]}
             for g in GROUPS]
 

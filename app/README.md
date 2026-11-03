@@ -10,8 +10,10 @@ Control service and web app for Pi Radio. See `../SCOPE.md` for the full design.
 | `art.py` | Renders art as an amber halftone (show and mixtape art) or 1-bit (station logos); 512px for the web, 128px for the OLED |
 | `vis.py` | Spectrum analyser reading MPD's FIFO output |
 | `stations.yaml` | The station list, in dial order |
+| `catalog.py` | Loads `stations.yaml` and fills in each station's place and map position |
+| `make_map.py` | Builds `static/worldmap.js`, the land mask for the map, from Natural Earth data in `dev/` |
 | `build_static.py` | Builds the no-server version into `web/` |
-| `static/` | The web app |
+| `static/` | The web app; `static/sw.js` keeps the no-server version usable offline |
 
 ## Run on the Mac
 
@@ -58,4 +60,4 @@ The machine at home has to be on and running `run.sh`.
 
 ## Adding a station
 
-Add a line under "Elsewhere" in `stations.yaml` with an id, name, place and stream URL (find streams at radio-browser.info), then restart `run.sh`.
+Add an entry under "Elsewhere" in `stations.yaml` with an id, name, place, stream URL and a short `about` (find streams at radio-browser.info). If the place is new, add it under `places:` with its latitude and longitude so it shows on the map. If the station publishes what's playing in a format the app knows (`kexp`, `airtime:`, `radioco:`, `radiocult:`), add an `info:` line. Then restart `run.sh`, and rebuild with `build_static.py` for the Netlify version.

@@ -12,7 +12,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Michroma&family=Saira+Condensed:wght@500;600&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0b0906;
@@ -23,6 +23,8 @@
     --line: #4a3616;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
     --dot: "VT323", ui-monospace, Menlo, monospace;
+    --wide: "Michroma", "Eurostile", sans-serif;          /* the one wide display face: the brand */
+    --cond: "Saira Condensed", "Arial Narrow", sans-serif; /* instrument labels */
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }  /* class display rules would otherwise override it */
@@ -31,6 +33,14 @@
     min-height: 100vh;
     padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
     display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  body {
+    background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px);
+    background-size: 7px 7px;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9;
+    background: radial-gradient(ellipse at center, transparent 55%, #00000073 100%);
   }
   body::after {
     /* scanlines over everything */
@@ -56,7 +66,8 @@
   .head .clock { color: var(--amber-mid); }
   .head .timer { color: var(--amber-mid); text-shadow: none; }
   .head .clock i { font-style: normal; animation: blink 2s steps(1) infinite; }
-  .label { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--amber-dim); }
+  .label { font-family: var(--cond); font-weight: 600; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--amber-dim); }
+  .head .brand { font-family: var(--wide); font-size: 12px; letter-spacing: .28em; color: var(--amber-mid); }
 
   /* Keys row */
   .top { display: grid; gap: 10px; }
@@ -170,11 +181,22 @@
   .prog-bar i.lit { background: var(--amber); }
   .prog-left { color: var(--amber-dim); font-family: var(--dot); font-size: 17px; text-align: right; }
 
-  /* Spectrum */
-  .vis { display: grid; gap: 6px; }
-  .vis-head { display: flex; justify-content: space-between; }
+  /* Bottom deck: two stacked visualizers (spectrum over waterfall) beside the nav map */
+  .deck { display: grid; gap: 16px; }
+  .vis, .map { padding: 22px 12px 10px; display: grid; gap: 6px; align-content: start; }
+  .vis { grid-template-rows: auto 64px auto 44px; }
+  .vis-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .vis-src { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .1em; }
-  .vis canvas { width: 100%; height: 64px; display: block; }
+  .vis canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; }  /* no size feedback into the grid */
+  .map canvas { width: 100%; aspect-ratio: 2.4 / 1; display: block; cursor: crosshair; touch-action: manipulation; }
+  .map .seg button { height: 24px; padding: 0 8px; font-size: 16px; }
+  .map-foot { min-height: 30px; display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none;
+              font-family: var(--dot); font-size: 17px; color: var(--amber-mid); white-space: nowrap; }
+  .map-foot::-webkit-scrollbar { display: none; }
+  .map-foot .city { color: var(--bg); background: var(--amber); padding: 0 6px; }
+  .map-foot .geo { color: var(--amber-dim); }
+  .map-foot button { flex: none; border: 1px solid var(--amber-dim); padding: 1px 7px; font-family: var(--dot); font-size: 17px; color: var(--amber-mid); }
+  .map-foot button.on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
 
   /* Volume: segmented bar with an invisible range input on top for touch and keys */
   .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
@@ -217,6 +239,9 @@
   .log { width: 100%; display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 10px; align-items: baseline;
          text-align: left; padding: 5px 4px; font-family: var(--dot); font-size: 19px; color: var(--amber-mid); }
   .log .t { color: var(--amber-dim); }
+  .sched-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+  .cal { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); border: 1px solid var(--line); padding: 0 6px; line-height: 1.3; }
+  .cal:hover, .cal:focus-visible { color: var(--amber); border-color: var(--amber-dim); }
   .log .x { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .log .x small { font-size: 16px; color: var(--amber-dim); }
   .log.now { color: var(--amber); }
@@ -233,10 +258,89 @@
   .blink { animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
+  /* ---- Console styling ----
+     Chamfered frames: two opposite corners cut, the diagonal drawn in the frame colour. */
+  .cham {
+    --cut: 12px; --edge: var(--line);
+    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+    background-image:
+      linear-gradient(135deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
+      linear-gradient(315deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px));
+    background-position: top left, bottom right;
+    background-size: var(--cut) var(--cut);
+    background-repeat: no-repeat;
+  }
+  .unit.cham, .list.cham { --cut: 20px; }
+  .key.cham, .preset.cham { --cut: 7px; --edge: var(--amber-dim); }
+  .key.cham.on, .preset.cham.on { --edge: var(--amber); }
+  .preset.cham.empty { --edge: var(--line); }
+  .tuner-read.cham { --cut: 8px; }
+
+  /* Registration brackets inside the console's two square corners */
+  .unit { position: relative; }
+  .unit::before {
+    content: ""; position: absolute; inset: 6px; pointer-events: none;
+    background:
+      linear-gradient(var(--amber-dim), var(--amber-dim)) top right / 14px 2px no-repeat,
+      linear-gradient(var(--amber-dim), var(--amber-dim)) top right / 2px 14px no-repeat,
+      linear-gradient(var(--amber-dim), var(--amber-dim)) bottom left / 14px 2px no-repeat,
+      linear-gradient(var(--amber-dim), var(--amber-dim)) bottom left / 2px 14px no-repeat;
+  }
+
+  /* Instrument tabs: an inverse code plate in each screen's square corner */
+  .tab {
+    position: absolute; top: 0; right: 0; z-index: 1; padding: 1px 8px 2px;
+    background: var(--amber-dim); color: var(--bg);
+    font-family: var(--cond); font-weight: 600; font-size: 11px; letter-spacing: .16em; line-height: 1.2; text-transform: uppercase;
+  }
+  .tab b { font-weight: 600; opacity: .6; margin-right: 6px; }
+  .strip { padding-top: 22px; }
+
+  /* VFD digits: an unlit 8 behind every lit numeral */
+  .ghost { position: relative; isolation: isolate; }
+  .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; text-shadow: none; z-index: -1; }
+
+  /* Tuning tape: one tick per station, a number every fifth, a fixed caret in the middle */
+  .tape { position: relative; height: 22px; width: 100%; overflow: hidden;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+                  mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent); }
+  .tape::after { content: ""; position: absolute; left: 50%; top: 0; width: 0; height: 0; margin-left: -4px;
+                 border: 4px solid transparent; border-top: 5px solid var(--amber); }
+  .tape-run { position: absolute; left: 50%; top: 6px; display: flex; transition: transform .25s steps(4); }
+  .tape-run i { width: 10px; height: 16px; flex: none; border-left: 1px solid var(--line); margin-left: -5px; margin-right: 5px;
+                font: 11px/1 var(--dot); font-style: normal; color: var(--amber-dim); padding: 7px 0 0 2px; height: 16px; }
+  .tape-run i.maj { border-left-color: var(--amber-dim); }
+  .tape-run i.cur { border-left: 2px solid var(--amber); }
+
+  /* Help */
+  .help-btn {
+    position: fixed; z-index: 20; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom));
+    width: 30px; height: 30px; background: var(--bg); color: var(--amber); font-family: var(--dot); font-size: 22px; line-height: 1;
+    border: 1px solid var(--amber-dim);
+  }
+  .help { position: fixed; inset: 0; z-index: 30; background: #0b0906eb; display: grid; place-items: center; padding: 16px; }
+  .help-card { width: 100%; max-width: 440px; padding: 30px 22px 18px; display: grid; gap: 14px; }
+  .help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-family: var(--dot); font-size: 19px; }
+  .help dt { color: var(--amber); text-align: right; }
+  .help dd { margin: 0; color: var(--amber-mid); }
+  .help .key { height: 36px; font-size: 19px; }
+
+  /* Power-on: panels light up in sequence, once per load */
+  @keyframes boot { 0% { opacity: 0; } 40% { opacity: .35; } 55% { opacity: .1; } 100% { opacity: 1; } }
+  .unit > *, .list, .deck > * { animation: boot .7s steps(6) both; }
+  .unit > :nth-child(2) { animation-delay: .06s; } .unit > :nth-child(3) { animation-delay: .12s; }
+  .unit > :nth-child(4) { animation-delay: .18s; } .unit > :nth-child(5) { animation-delay: .24s; }
+  .unit > :nth-child(6) { animation-delay: .30s; } .unit > :nth-child(7) { animation-delay: .36s; }
+  .deck > :nth-child(2) { animation-delay: .42s; } .list { animation-delay: .5s; }
+  @media (prefers-reduced-motion: reduce) {
+    .unit > *, .list, .deck > * { animation: none; }
+    .tape-run { transition: none; }
+  }
+
   /* Desktop: a wide now-playing deck above a station board */
   @media (min-width: 960px) {
     .mid .dial-wrap { display: grid; }
-    .tuner, .tuner-hint { display: none; }
+    .tuner, .tuner-hint, .tuner-tape { display: none; }
     body { max-width: 1360px; margin: 0 auto; padding: 32px; align-items: stretch; }
     .note, .unit, .list { max-width: none; }
     .unit {
@@ -247,7 +351,7 @@
         "art  info keys"
         "art  info dial"
         "art  info vol"
-        "vis  vis  vis";
+        "deck deck deck";
       column-gap: 24px; row-gap: 16px; padding: 20px;
     }
     .head { grid-area: head; }
@@ -262,8 +366,8 @@
     .dial-wrap { grid-area: dial; }
     .dial { max-width: 150px; }
     .vol { grid-area: vol; align-self: end; }
-    .vis { grid-area: vis; }
-    .vis canvas { height: 90px; }
+    .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+    .vis { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); align-content: stretch; }
     .list { border: 1px solid var(--line); padding: 16px 20px; }
     .list-head { display: flex; }
     .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 20px; align-items: start; }
@@ -277,11 +381,11 @@
 
 <div class="note" id="note"></div>
 
-<main class="unit" aria-label="Radio controls">
+<main class="unit cham" aria-label="Radio controls">
   <div class="head">
-    <span>PI RADIO</span>
+    <span class="brand">PI RADIO</span>
     <span class="sig" id="sig"></span>
-    <span class="clock" id="clock"></span>
+    <span class="clock ghost" id="clock" data-ghost="88:88"></span>
     <span id="status">--</span>
     <button class="sleep" id="sleepBtn" hidden aria-label="Sleep timer" title="Sleep timer: tap for 15, 30, 60, 90 min, off">ZZ</button>
   </div>
@@ -303,28 +407,32 @@
   </div>
 
   <div class="mid">
-    <div class="screen art off" id="artScreen">
+    <div class="screen art off cham" id="artScreen">
+      <span class="tab" aria-hidden="true"><b>01</b>Art</span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
     </div>
     <div class="dial-wrap">
       <div class="dial-row">
-        <button class="key" id="dialPrev" aria-label="Previous station">◀</button>
+        <button class="key cham" id="dialPrev" aria-label="Previous station">◀</button>
         <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
-          <div class="dial-read"><b class="glow" id="dialNum">--</b><span id="dialOf">/--</span></div>
+          <div class="dial-read"><b class="glow ghost" id="dialNum" data-ghost="88">--</b><span id="dialOf">/--</span></div>
         </div>
-        <button class="key" id="dialNext" aria-label="Next station">▶</button>
+        <button class="key cham" id="dialNext" aria-label="Next station">▶</button>
       </div>
+      <div class="tape" aria-hidden="true"><div class="tape-run"></div></div>
       <span class="label">Turn · Press</span>
     </div>
     <div class="tuner">
-      <button class="key" id="tunePrev" aria-label="Previous station">◀</button>
-      <button class="tuner-read" id="tuneRead" aria-label="Play or stop"><b class="glow" id="tuneNum">--</b><span id="tuneOf">/--</span></button>
-      <button class="key" id="tuneNext" aria-label="Next station">▶</button>
+      <button class="key cham" id="tunePrev" aria-label="Previous station">◀</button>
+      <button class="tuner-read cham" id="tuneRead" aria-label="Play or stop"><b class="glow ghost" id="tuneNum" data-ghost="88">--</b><span id="tuneOf">/--</span></button>
+      <button class="key cham" id="tuneNext" aria-label="Next station">▶</button>
     </div>
+    <div class="tape tuner-tape" aria-hidden="true"><div class="tape-run"></div></div>
     <span class="label tuner-hint">Swipe art to tune</span>
   </div>
 
-  <div class="screen strip off" id="strip">
+  <div class="screen strip off cham" id="strip">
+    <span class="tab" aria-hidden="true"><b>02</b>Signal</span>
     <div class="detail">
       <div class="tags" id="tags"></div>
       <div class="desc" id="desc"></div>
@@ -341,20 +449,36 @@
     </div>
   </div>
 
-  <div class="vis">
-    <div class="vis-head"><span class="label">Spectrum</span><span class="vis-src" id="visSrc"></span></div>
-    <canvas id="vis" aria-hidden="true"></canvas>
+  <div class="deck">
+    <div class="screen vis cham">
+      <span class="tab" aria-hidden="true"><b>03</b>Spectrum</span>
+      <div class="vis-head"><span class="label">Spectrum</span><span class="vis-src" id="visSrc"></span></div>
+      <canvas id="vis" aria-hidden="true"></canvas>
+      <div class="vis-head"><span class="label">Waterfall</span></div>
+      <canvas id="fall" aria-hidden="true"></canvas>
+    </div>
+    <div class="screen map cham">
+      <span class="tab" aria-hidden="true"><b>04</b>Nav</span>
+      <div class="vis-head">
+        <span class="label">Stations by city</span>
+        <div class="seg" role="group" aria-label="Map range">
+          <button id="rngWorld">WORLD</button><button id="rngEurope">EUROPE</button>
+        </div>
+      </div>
+      <canvas id="navMap" role="img" aria-label="Map of station cities. Tap a city to list its stations."></canvas>
+      <div class="map-foot" id="mapFoot"></div>
+    </div>
   </div>
 
   <div class="vol">
     <span class="label">Vol</span>
     <div class="bar" id="bar"><input type="range" id="vol" min="0" max="100" step="5" aria-label="Volume"></div>
-    <span class="vol-read glow" id="volRead">--</span>
+    <span class="vol-read glow ghost" id="volRead" data-ghost="88">--</span>
     <span class="vol-hw">USE THE PHONE'S VOLUME BUTTONS</span>
   </div>
 </main>
 
-<nav class="list" aria-label="Stations">
+<nav class="list cham" aria-label="Stations">
   <div class="list-head"><span>STATIONS</span><span id="listCount">--</span></div>
   <div class="cols">
     <div id="colLive"></div>
@@ -366,6 +490,30 @@
   </div>
 </nav>
 
+<button class="help-btn cham" id="helpBtn" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
+<div class="help" id="help" hidden role="dialog" aria-modal="true" aria-label="Keys and gestures">
+  <div class="help-card screen cham">
+    <span class="tab" aria-hidden="true"><b>00</b>Keys</span>
+    <dl>
+      <dt>SPACE</dt><dd>Play / stop</dd>
+      <dt>◀ ▶</dt><dd>Previous / next station</dd>
+      <dt>1–6</dt><dd>Play a preset</dd>
+      <dt>SHIFT 1–6</dt><dd>Save this station to a preset</dd>
+      <dt>S</dt><dd>Sleep timer: 15, 30, 60, 90 min, off</dd>
+      <dt>M</dt><dd>Map: world / Europe</dd>
+      <dt>?</dt><dd>This panel</dd>
+    </dl>
+    <dl>
+      <dt>SWIPE</dt><dd>Art left or right to tune</dd>
+      <dt>HOLD</dt><dd>A preset key to save to it</dd>
+      <dt>TAP</dt><dd>A city on the map for its stations</dd>
+      <dt>+CAL</dt><dd>Add an NTS show to your calendar</dd>
+    </dl>
+    <button class="key cham" id="helpClose">CLOSE</button>
+  </div>
+</div>
+
+<script src="static/worldmap.js"></script>
 <!-- static-flag -->
 <script>
 const $ = (id) => document.getElementById(id);
@@ -386,18 +534,54 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
 };
 
+/* GET JSON with a cache; if a fetch fails, keep serving the last good copy. */
+const jsonCache = {};
+async function cachedJSON(url, ttl) {
+  const c = jsonCache[url];
+  if (c && Date.now() - c.at < ttl) return c.data;
+  try {
+    const d = await (await fetch(url)).json();
+    jsonCache[url] = { at: Date.now(), data: d };
+    return d;
+  } catch (_) { return c ? c.data : {}; }
+}
+const decodeHTML = (t) => { const el = document.createElement("textarea"); el.innerHTML = t || ""; return el.value.trim(); };
+
+/* What's on now, from stations that publish it to browsers (stations.yaml info:).
+   Each returns { title, note }; anything that fails just leaves the title blank. */
+const LIVE_INFO = {
+  async kexp() {
+    const p = ((await cachedJSON("https://api.kexp.org/v2/plays/?limit=1", 20000)).results || [])[0];
+    if (!p) return {};
+    return p.play_type === "trackplay" ? { title: [p.artist, p.song].filter(Boolean).join(" - "), note: p.comment || "" } : { title: "Air break" };
+  },
+  async airtime(sub) {
+    const d = await cachedJSON(`https://${sub}.airtime.pro/api/live-info-v2`, 30000);
+    const show = (d.shows || {}).current, track = (d.tracks || {}).current;
+    return { title: decodeHTML((show && show.name) || (track && track.name) || "") };
+  },
+  async radioco(id) {
+    const d = await cachedJSON(`https://public.radio.co/stations/${id}/status`, 20000);
+    return { title: (d.current_track || {}).title || "" };
+  },
+  async radiocult(slug) {
+    const r = (await cachedJSON(`https://api.radiocult.fm/api/station/${slug}/schedule/live`, 30000)).result || {};
+    return { title: (r.metadata || {}).title || (r.content || {}).title || "" };
+  },
+};
+async function addLiveInfo(now, st) {
+  if (!st || !st.info || now.title) return now;
+  const [kind, arg] = st.info.split(":");
+  try {
+    const li = LIVE_INFO[kind] ? await LIVE_INFO[kind](arg) : {};
+    if (li.title) now.title = li.title;
+    if (li.note) now.description = `DJ: ${li.note}  ·  ${now.description || ""}`;
+  } catch (_) {}
+  return now;
+}
+
 const ntsFeed = (() => {
-  const cache = {};
-  async function get(url, ttl) {
-    const c = cache[url];
-    if (c && Date.now() - c.at < ttl) return c.data;
-    try {
-      const d = await (await fetch(url)).json();
-      cache[url] = { at: Date.now(), data: d };
-      return d;
-    } catch (_) { return c ? c.data : {}; }  // keep the last good copy
-  }
-  const unescape = (t) => { const el = document.createElement("textarea"); el.innerHTML = t || ""; return el.value.trim(); };
+  const get = cachedJSON, unescape = decodeHTML;
   const show = (b) => {
     const det = (b.embeds || {}).details || {};
     return {
@@ -429,16 +613,22 @@ let STN = {};  // static mode: station id -> full station record from stations.j
 /* Where the page gets its data: the server, or (static) NTS and stations.json directly. */
 const DATA = {
   async stations() {
-    if (!STATIC) return (await fetch("/api/stations")).json();
-    const { groups } = await (await fetch("stations.json")).json();
-    for (const g of groups) for (const st of g.stations) {
-      STN[st.id] = { ...st, group: g.name };
-      st.sub = st.kind === "radio" ? st.place || "" : st.kind === "nts_mixtape" ? (await ntsFeed.mixtape(st.id)).subtitle || "" : "";
+    let groups;
+    if (!STATIC) groups = await (await fetch("/api/stations")).json();
+    else {
+      ({ groups } = await (await fetch("stations.json")).json());
+      for (const g of groups) for (const st of g.stations)
+        st.sub = st.kind === "radio" ? st.place || "" : st.kind === "nts_mixtape" ? (await ntsFeed.mixtape(st.id)).subtitle || "" : "";
     }
+    for (const g of groups) for (const st of g.stations) STN[st.id] = { ...st, group: g.name };
     return groups;
   },
   async now(id) {
-    if (!STATIC) return api(`/api/now/${id}`);
+    if (!STATIC) {
+      const d = await api(`/api/now/${id}`);
+      if (d) await addLiveInfo(d.now, STN[id]);
+      return d;
+    }
     const st = STN[id];
     if (!st) return null;
     let now = { title: "", subtitle: st.place || "", description: st.about || "", art: st.art || "" };
@@ -447,6 +637,7 @@ const DATA = {
       const m = await ntsFeed.mixtape(id);
       now = { title: m.subtitle || "", subtitle: "Infinite Mixtape", description: m.description || "", art: m.art || "" };
     }
+    if (st.kind === "radio") await addLiveInfo(now, st);
     const codec = /\.m3u8/.test(st.url) ? "HLS" : /aac/i.test(st.url) ? "AAC" : /mp3|mpeg/i.test(st.url) ? "MP3" : "";
     return {
       station: { id, name: st.name, group: st.group, url: st.url },
@@ -780,6 +971,8 @@ function render(s) {
 
   const idx = order.indexOf(id);
   $("dialNum").textContent = $("tuneNum").textContent = idx >= 0 ? pad(idx + 1) : "--";
+  if (idx >= 0) drawTapes(idx);
+  if (!mapSel) drawMapFoot();
   [...$("dial").querySelectorAll("i")].forEach((d, i) => {
     const dist = Math.min(Math.abs(i - idx), order.length - Math.abs(i - idx));
     d.className = i === idx ? "lit" : dist === 1 ? "near" : "";
@@ -849,14 +1042,19 @@ async function loadSchedule() {
   for (const [ch, shows] of Object.entries(d)) {
     html += `<div class="ch">${ch}</div>`;
     shows.slice(0, 4).forEach((s, i) => {
-      html += `<button class="log${i === 0 ? " now" : ""}" data-ch="${ids[ch]}"><span class="t">${i === 0 ? "NOW" : hhmm(s.start)}</span>` +
-        `<span class="x">${esc(s.title.toUpperCase())}</span></button>`;
+      html += `<div class="sched-row"><button class="log${i === 0 ? " now" : ""}" data-ch="${ids[ch]}"><span class="t">${i === 0 ? "NOW" : hhmm(s.start)}</span>` +
+        `<span class="x">${esc(s.title.toUpperCase())}</span></button>` +
+        (i && s.start ? `<button class="cal" data-cal="${esc(ch)}|${i}" aria-label="Add ${esc(s.title)} to your calendar">+CAL</button>` : "") + `</div>`;
     });
     const sub = document.querySelector(`[data-sub="${ids[ch]}"]`);
     if (sub && shows[0]) sub.textContent = shows[0].title.toUpperCase();
   }
   $("sched").innerHTML = html || `<div class="empty">NO SCHEDULE</div>`;
   $("sched").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => act.play(b.dataset.ch));
+  $("sched").querySelectorAll("[data-cal]").forEach(b => b.onclick = () => {
+    const [ch, i] = b.dataset.cal.split("|");
+    downloadReminder(ch, schedule[ch][+i]);
+  });
 }
 
 async function loadRecent() {
@@ -979,7 +1177,7 @@ function shortName(id) {
 function selectedId() { return (mode === "phone" && local.id) || (S && S.station.id) || null; }
 function buildPresets() {
   presets = presets.map(id => (id && URLS[id] ? id : null));  // drop stations that no longer exist
-  $("presets").innerHTML = presets.map((_, i) => `<button class="preset" data-slot="${i}"><b>${i + 1}</b><small></small></button>`).join("");
+  $("presets").innerHTML = presets.map((_, i) => `<button class="preset cham" data-slot="${i}"><b>${i + 1}</b><small></small></button>`).join("");
   [...$("presets").children].forEach((b, i) => {
     let hold = null;
     b.addEventListener("pointerdown", () => {
@@ -1073,7 +1271,248 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     e.shiftKey ? savePreset(+slot[1] - 1) : pressPreset(+slot[1] - 1);
   } else if (e.key === "s" || e.key === "S") cycleSleep();
+  else if (e.key === "m" || e.key === "M") setMapRange(mapRange === "world" ? "europe" : "world");
+  else if (e.key === "?") toggleHelp();
+  else if (e.key === "Escape") toggleHelp(false);
 });
+
+/* Tuning tape under the dial and the tuner: slides so the current station sits at the caret. */
+const TAPE_STEP = 10;
+function buildTapes() {
+  document.querySelectorAll(".tape-run").forEach(run => {
+    run.innerHTML = order.map((_, i) => (i + 1) % 5 === 0 || i === 0 ? `<i class="maj">${i + 1}</i>` : "<i></i>").join("");
+  });
+}
+function drawTapes(idx) {
+  document.querySelectorAll(".tape-run").forEach(run => {
+    run.style.transform = `translateX(${-idx * TAPE_STEP}px)`;
+    [...run.children].forEach((t, i) => t.classList.toggle("cur", i === idx));
+  });
+}
+
+/* Nav map: dot-matrix land with a marker per city. Tap a city to list its stations; in WORLD
+   range, tapping the European cluster zooms to EUROPE. Land from static/worldmap.js. */
+const RANGES = {
+  world: { lon0: -180, lon1: 180, lat0: 80, lat1: -58, grid: 30 },
+  europe: { lon0: -22, lon1: 60, lat0: 62, lat1: 28, grid: 10 },
+};
+const CITY_CODE = { London: "LON", Bristol: "BRS", Paris: "PAR", Brussels: "BRU", Berlin: "BER", Bethlehem: "BTH",
+                    "New York": "NYC", "Los Angeles": "LAX", Seattle: "SEA" };
+const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
+function decodeLand() {
+  const W = window.WORLD;
+  if (!W) return null;
+  const a = new Uint8Array(W.w * W.h);
+  W.rows.split("/").forEach((row, y) => {
+    let x = 0, v = 0;
+    for (const n of row.split(",")) { const len = parseInt(n, 36); if (v) a.fill(1, y * W.w + x, y * W.w + x + len); x += len; v ^= 1; }
+  });
+  return a;
+}
+function isLand(lat, lon) {
+  const W = window.WORLD, x = Math.floor((lon + 180) * W.res), y = Math.floor((W.latTop - lat) * W.res);
+  return x >= 0 && x < W.w && y >= 0 && y < W.h && LAND[y * W.w + x] === 1;
+}
+function buildCities() {
+  const by = {};
+  order.forEach(id => {
+    const st = STN[id];
+    if (!st || !st.geo) return;
+    const c = by[st.city] = by[st.city] || { name: st.city, lat: 0, lon: 0, ids: [] };
+    c.lat += st.geo[0]; c.lon += st.geo[1]; c.ids.push(id);
+  });
+  CITIES = Object.values(by).map(c => ({ ...c, lat: c.lat / c.ids.length, lon: c.lon / c.ids.length,
+                                         code: CITY_CODE[c.name] || c.name.slice(0, 3).toUpperCase() }));
+}
+function project(r, lat, lon, w, h) {
+  return [(lon - r.lon0) / (r.lon1 - r.lon0) * w, (r.lat0 - lat) / (r.lat0 - r.lat1) * h];
+}
+function mapBaseLayer(c, w, h, dpr) {
+  const key = [mapRange, w, h, dpr].join();
+  if (mapBase && mapBase.key === key) return mapBase.canvas;
+  const r = RANGES[mapRange], off = document.createElement("canvas");
+  off.width = w * dpr; off.height = h * dpr;
+  const g = off.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cols = Math.floor(w / MAP_PITCH), rows = Math.floor(h / MAP_PITCH);
+  const ox = (w - cols * MAP_PITCH) / 2 + MAP_PITCH / 2, oy = (h - rows * MAP_PITCH) / 2 + MAP_PITCH / 2;
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const x = ox + i * MAP_PITCH, y = oy + j * MAP_PITCH;
+    const lon = r.lon0 + x / w * (r.lon1 - r.lon0), lat = r.lat0 - y / h * (r.lat0 - r.lat1);
+    const step = (r.lon1 - r.lon0) / cols;
+    const onGrid = Math.abs(((lon % r.grid) + r.grid) % r.grid) < step || Math.abs(((lat % r.grid) + r.grid) % r.grid) < step * h / w * 2.4;
+    if (isLand(lat, lon)) { g.fillStyle = "#5c3e10"; g.fillRect(x - 1.5, y - 1.5, 3, 3); }
+    else if (onGrid) { g.fillStyle = "#2a1d0a"; g.fillRect(x - .5, y - .5, 1.5, 1.5); }
+  }
+  // Corner coordinates, like a plotter's frame
+  const fmt = (v, p, n) => Math.abs(Math.round(v)) + (v >= 0 ? p : n);
+  g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textBaseline = "top";
+  g.fillText(`${fmt(r.lat0, "N", "S")} ${fmt(r.lon0, "E", "W")}`, 2, 1);
+  g.textAlign = "right"; g.textBaseline = "bottom";
+  g.fillText(`${fmt(r.lat1, "N", "S")} ${fmt(r.lon1, "E", "W")}`, w - 2, h - 1);
+  mapBase = { key, canvas: off };
+  return off;
+}
+function drawMap(t) {
+  const c = $("navMap");
+  if (!c || !LAND) return;
+  const dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  const g = c.getContext("2d"), r = RANGES[mapRange];
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, c.width, c.height);
+  g.drawImage(mapBaseLayer(c, w, h, dpr), 0, 0);
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Sweep: a slow scan line with a fading wake
+  if (!reduceMotion) {
+    const sx = ((t / 9000) % 1) * (w + 60) - 30;
+    const grad = g.createLinearGradient(sx - 60, 0, sx, 0);
+    grad.addColorStop(0, "#ffb02e00"); grad.addColorStop(1, "#ffb02e1f");
+    g.fillStyle = grad; g.fillRect(sx - 60, 0, 60, h);
+    g.fillStyle = "#ffb02e55"; g.fillRect(sx, 0, 1, h);
+  }
+
+  // Cities, clustered where they'd overlap at this range
+  const cur = selectedId(), playing = S && S.playing;
+  const pts = CITIES.map(ci => ({ ci, p: project(r, ci.lat, ci.lon, w, h) }))
+    .filter(o => o.p[0] >= -4 && o.p[0] <= w + 4 && o.p[1] >= -4 && o.p[1] <= h + 4)
+    .sort((a, b) => b.ci.ids.length - a.ci.ids.length);
+  const clusters = [];
+  for (const o of pts) {
+    const near = clusters.find(k => Math.hypot(k.x - o.p[0], k.y - o.p[1]) < 16);
+    if (near) near.cities.push(o.ci);
+    else clusters.push({ x: o.p[0], y: o.p[1], cities: [o.ci] });
+  }
+  mapHits = clusters;
+  const labels = [];
+  g.font = "15px VT323, monospace"; g.textBaseline = "middle";
+  for (const k of clusters) {
+    const ids = k.cities.flatMap(ci => ci.ids), live = playing && ids.includes(cur);
+    const sel = k.cities.some(ci => ci.name === mapSel);
+    const x = Math.round(k.x), y = Math.round(k.y);
+    if (live && !reduceMotion) {
+      const ph = (t % 1600) / 1600, rad = 5 + ph * 12;
+      g.strokeStyle = `rgba(255,176,46,${(1 - ph) * .8})`; g.lineWidth = 1;
+      g.strokeRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    g.fillStyle = live || sel ? "#ffb02e" : "#d08c26";
+    g.shadowColor = "#ffb02e"; g.shadowBlur = live ? 8 : 0;
+    g.fillRect(x - 3, y - 3, 7, 7);
+    g.shadowBlur = 0;
+    const text = (k.cities.length > 1 ? k.cities[0].code + "+" : k.cities[0].code) + " " + ids.length;
+    const tw = g.measureText(text).width + 6;
+    // Try right, left, above, below; take the first spot that doesn't hit another label or run off the edge
+    const spots = [[x + 7, y - 8], [x - 7 - tw, y - 8], [x + 5, y + 4], [x + 5, y - 20], [x - 5 - tw, y + 4],
+                   [x - 5 - tw, y - 20], [x - tw / 2, y - 24], [x - tw / 2, y + 8]];
+    const spot = spots.find(([lx, ly]) => lx >= 0 && lx + tw <= w && ly >= 0 && ly + 16 <= h &&
+      !labels.some(b => lx < b[0] + b[2] && lx + tw > b[0] && ly < b[1] + 16 && ly + 16 > b[1])) || spots[0];
+    labels.push([spot[0], spot[1], tw]);
+    if (sel) { g.fillStyle = "#ffb02e"; g.fillRect(spot[0], spot[1], tw, 16); g.fillStyle = "#0b0906"; }
+    else g.fillStyle = live ? "#ffb02e" : "#d08c26";
+    g.fillText(text, spot[0] + 3, spot[1] + 8);
+  }
+}
+function setMapRange(rng) {
+  mapRange = rng;
+  store.set("piRadioMapRange", rng);
+  $("rngWorld").classList.toggle("on", rng === "world");
+  $("rngEurope").classList.toggle("on", rng === "europe");
+}
+function inRange(r, ci) { return ci.lon >= r.lon0 && ci.lon <= r.lon1 && ci.lat <= r.lat0 && ci.lat >= r.lat1; }
+$("navMap").addEventListener("click", e => {
+  const b = $("navMap").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+  let best = null, bd = 22;
+  for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
+  if (!best) { mapSel = null; drawMapFoot(); return; }
+  if (best.cities.length > 1 && mapRange === "world" && best.cities.every(ci => inRange(RANGES.europe, ci))) {
+    setMapRange("europe");
+    return;
+  }
+  mapSel = best.cities[0].name;
+  drawMapFoot();
+});
+$("rngWorld").addEventListener("click", () => setMapRange("world"));
+$("rngEurope").addEventListener("click", () => setMapRange("europe"));
+function geoText(geo) {
+  if (!geo) return "";
+  const [la, lo] = geo;
+  return `${Math.abs(la).toFixed(2)}${la >= 0 ? "N" : "S"} ${Math.abs(lo).toFixed(2)}${lo >= 0 ? "E" : "W"}`;
+}
+function drawMapFoot() {
+  const foot = $("mapFoot"), cur = selectedId();
+  const city = CITIES.find(ci => ci.name === mapSel);
+  if (city) {
+    foot.innerHTML = `<span class="city">${esc(city.name.toUpperCase())}</span>` +
+      city.ids.map(id => `<button data-id="${id}" class="${id === cur && S && S.playing ? "on" : ""}">${esc((NAMES[id] || id).toUpperCase())}</button>`).join("") +
+      `<button data-close aria-label="Close city">×</button>`;
+    foot.querySelectorAll("[data-id]").forEach(b => b.onclick = () => act.play(b.dataset.id));
+    foot.querySelector("[data-close]").onclick = () => { mapSel = null; drawMapFoot(); };
+  } else {
+    const st = STN[cur];
+    foot.innerHTML = st ? `<span>▸ ${esc((st.name || "").toUpperCase())} · ${esc((st.city || "").toUpperCase())}</span><span class="geo">${geoText(st.geo)}</span>`
+                        : `<span class="geo">TAP A CITY</span>`;
+  }
+}
+
+/* Waterfall: the spectrum's recent history, newest at the top, in four brightness steps. */
+let fall = [], fallLast = 0;
+const FALL_TIERS = ["#1c1407", "#3d2a0c", "#7a5419", "#c4841f", "#ffb02e"];
+function drawFall(t) {
+  if (t - fallLast > 90) { fallLast = t; fall.unshift(visLevels.slice()); if (fall.length > 60) fall.length = 60; }
+  const c = $("fall"), dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  const g = c.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const gap = 3, bw = (w - gap * (BANDS - 1)) / BANDS, ch = 3, rows = Math.floor((h + 2) / (ch + 2));
+  for (let j = 0; j < rows; j++) {
+    const lv = fall[j];
+    for (let i = 0; i < BANDS; i++) {
+      const v = lv ? lv[i] * (1 - j / (rows * 1.6)) : 0;
+      g.fillStyle = FALL_TIERS[v < .12 ? 0 : v < .35 ? 1 : v < .6 ? 2 : v < .85 ? 3 : 4];
+      g.fillRect(i * (bw + gap), j * (ch + 2), bw, ch);
+    }
+  }
+}
+
+/* Keys and gestures panel */
+function toggleHelp(show) {
+  const open = show === undefined ? $("help").hidden : show;
+  $("help").hidden = !open;
+  if (open) $("helpClose").focus(); else $("helpBtn").focus({ preventScroll: true });
+}
+$("helpBtn").addEventListener("click", () => toggleHelp(true));
+$("helpClose").addEventListener("click", () => toggleHelp(false));
+$("help").addEventListener("click", e => { if (e.target === $("help")) toggleHelp(false); });
+
+/* Calendar reminder for an upcoming NTS show: a one-event .ics with a 5-minute alert. */
+function downloadReminder(ch, show) {
+  if (!show || !show.start) return;
+  const when = d => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const txt = v => String(v || "").replace(/\\/g, "\\\\").replace(/([,;])/g, "\\$1").replace(/\n/g, "\\n");
+  const end = show.end || new Date(new Date(show.start).getTime() + 3600e3).toISOString();
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Pi Radio//EN", "BEGIN:VEVENT",
+    `UID:${when(show.start)}-${ch.replace(/\W/g, "")}@pi-radio`, `DTSTAMP:${when(Date.now())}`,
+    `DTSTART:${when(show.start)}`, `DTEND:${when(end)}`, `SUMMARY:${txt(ch + ": " + show.title)}`,
+    `DESCRIPTION:${txt((show.description || "").slice(0, 400))}`, "URL:https://www.nts.live",
+    "BEGIN:VALARM", "TRIGGER:-PT5M", "ACTION:DISPLAY", `DESCRIPTION:${txt(show.title + " on " + ch)}`, "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = `${ch.replace(/\W/g, "").toLowerCase()}-${show.title.replace(/\W+/g, "-").toLowerCase().slice(0, 40)}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* Offline: the no-server version keeps its shell in a service worker; say so plainly when the signal drops. */
+function offlineNote() { if (!navigator.onLine) setNote("NO SIGNAL · OFFLINE. STATIONS COME BACK WHEN YOU RECONNECT"); }
+window.addEventListener("offline", offlineNote);
+window.addEventListener("online", () => { setNote(""); poll(); loadSchedule(); });
+if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 /* Volume: update the bar live, send after a short pause. */
 let volTimer;
@@ -1132,6 +1571,8 @@ async function visLoop(t) {
   }
   $("visSrc").textContent = !playing ? "" : visSource === "mpd" && S.player !== "phone" ? "LIVE" : "SIM";
   drawVis();
+  drawFall(t);
+  drawMap(t);
   requestAnimationFrame(visLoop);
 }
 
@@ -1142,6 +1583,12 @@ async function poll() {
 }
 build().then(async () => {
   buildPresets();
+  buildTapes();
+  LAND = decodeLand();
+  buildCities();
+  setMapRange(mapRange);
+  drawMapFoot();
+  offlineNote();
   drawMode();
   if (STATIC) {
     // Start on the last station played here, stopped, until a station is tapped.

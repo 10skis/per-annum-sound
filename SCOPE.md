@@ -117,7 +117,12 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
 | Presets | Six preset keys, car-radio style: tap to play, hold to save the current station. Kept per device for now; candidates for six physical buttons on the Pi |
 | Listening and sleep timers | Time on the current station next to ON AIR; ZZ sets a 15, 30, 60 or 90 minute sleep timer that fades out where the device allows |
-| Keyboard | Space play/stop, left/right tune, 1-6 presets, shift+1-6 save, S sleep |
+| Keyboard | Space play/stop, left/right tune, 1-6 presets, shift+1-6 save, S sleep, M map range, ? help panel |
+| Nav map | Dot-matrix world map (Natural Earth land data) with a marker per city; WORLD and EUROPE ranges; tap a city to list its stations |
+| Waterfall | A second visualizer under the spectrum: its recent history, scrolling down |
+| Track info | Now-playing from stations that publish it to browsers: KEXP (with DJ notes), Dublab, Kiosk, Cashmere, Refuge, Noods |
+| Show reminders | +CAL on upcoming NTS shows downloads a calendar event with a 5-minute alert |
+| Offline | The no-server version keeps its shell cached and says NO SIGNAL when the connection drops |
 
 The visual style is flat retro digital: amber on near-black, dot-matrix type, an LED-ring dial and a segmented volume bar. Changed from mechanical-looking controls on 2026-11-02.
 

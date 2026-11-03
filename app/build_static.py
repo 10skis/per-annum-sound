@@ -7,9 +7,9 @@ import json
 import shutil
 from pathlib import Path
 
-import yaml
 
 import art
+import catalog
 
 HERE = Path(__file__).parent
 OUT = HERE / "web"
@@ -18,7 +18,7 @@ if OUT.exists():
     shutil.rmtree(OUT)
 (OUT / "static").mkdir(parents=True)
 
-stations = yaml.safe_load((HERE / "stations.yaml").read_text())
+stations = catalog.load(HERE / "stations.yaml")
 
 # Pre-dither station logos into the folder. Some logo hosts block browsers from reading
 # their images, so the page can't dither those itself.
@@ -38,9 +38,10 @@ assert "<!-- static-flag -->" in page
 page = page.replace("<!-- static-flag -->", "<script>window.PI_RADIO_STATIC = true;</script>")
 (OUT / "index.html").write_text(page)
 
-for name in ("icon-180.png", "icon-512.png"):
+for name in ("icon-180.png", "icon-512.png", "worldmap.js"):
     shutil.copy(HERE / "static" / name, OUT / "static" / name)
 shutil.copy(HERE / "static" / "manifest.webmanifest", OUT / "manifest.webmanifest")
+shutil.copy(HERE / "static" / "sw.js", OUT / "sw.js")  # offline shell; must sit at the root to cover the site
 
 count = sum(len(g["stations"]) for g in stations["groups"])
 print(f"Built {OUT} with {count} stations.")
