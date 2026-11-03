@@ -36,6 +36,7 @@ places:
   Munich: [48.14, 11.58]
   Milan: [45.46, 9.19]
   North Pole: [90.0, 0.0]
+  Pittsburgh: [40.44, -80.00]
 
 # Airport-style code for each map label, shown on the map and in the middle of the sigil.
 # A label not listed falls back to its first three letters.
@@ -64,6 +65,7 @@ codes:
   North Pacific: NPC
   Mid-Pacific: MPC
   Point Nemo: NMO
+  Pittsburgh: PIT
 
 # Time zone for each place, for the local-time readout.
 timezones:
@@ -76,6 +78,7 @@ timezones:
   Brooklyn: America/New_York
   New York: America/New_York
   New Jersey: America/New_York
+  Pittsburgh: America/New_York
   Los Angeles: America/Los_Angeles
   Seattle: America/Los_Angeles
   Bologna: Europe/Rome
@@ -273,6 +276,16 @@ groups:
         founded: 1972
         notable: ["John Richards", "Street Sounds", "Audioasis"]
         profile: "Began in 1972 as KCMU, the University of Washington's student station, and became KEXP in 2001. Run by the non-profit Friends of KEXP, on 90.3 FM from studios at Seattle Center, opened in 2015."
+      - id: wyep
+        name: "WYEP"
+        kind: radio
+        genre: "Indie and roots"
+        place: "Pittsburgh"
+        url: "https://ais-sa3.cdnstream1.com/2557_128.mp3"
+        about: "Pittsburgh's independent, listener-supported music station. Indie rock, Americana, blues and roots, chosen by its own hosts."
+        site: "https://www.wyep.org"
+        founded: 1974
+        profile: "First on air on 30 April 1974 with an all-volunteer staff, from the basement of a former police horse stable in South Oakland, on 91.5 FM before moving to 91.3 in 1983. Run by the non-profit Pittsburgh Community Broadcasting, which also runs WESA."
       - id: fip
         name: FIP
         kind: radio
@@ -296,6 +309,15 @@ groups:
         site: "https://www.radiofrance.fr/fip/radio-jazz"
         founded: 2016
         profile: "One of six web stations FIP put online on 5 January 2016 for its 45th birthday, first called FIP autour du jazz. Jazz around the clock with the same light-touch presentation as the main station."
+      - id: wzum
+        name: "WZUM"
+        kind: radio
+        genre: "Jazz"
+        place: "Pittsburgh"
+        url: "https://pubmusic.streamguys1.com/wzum-aac"
+        about: "The Pittsburgh Jazz Channel. Straight-ahead and contemporary jazz with local hosts, for a city with a deep jazz history."
+        site: "https://www.wzum.org"
+        profile: "Started by former staff of WDUQ after Duquesne University sold that station in 2011 and its jazz programming ended. It signed on as WYZR 88.1 in August 2013, and is run by the non-profit Pittsburgh Public Media, now also on 101.1 FM and 1550 AM in Pittsburgh."
       - id: wqxr
         name: WQXR
         kind: radio
@@ -306,6 +328,16 @@ groups:
         site: "https://www.wqxr.org"
         notable: ["New Sounds", "Operavore"]
         profile: "A classical station run by the non-profit New York Public Radio since 2009, on 105.9 FM from Hudson Square, with its transmitter on the Empire State Building. Its lineage goes back to the experimental W2XR of 1929."
+      - id: wqed
+        name: "WQED-FM"
+        kind: radio
+        genre: "Classical"
+        place: "Pittsburgh"
+        url: "https://ice-1.streamhoster.com/lv_wqed--893"
+        about: "Pittsburgh's classical station. Orchestral, chamber and choral music, with regular Pittsburgh Symphony broadcasts."
+        site: "https://www.wqed.org/fm"
+        founded: 1973
+        profile: "Signed on at 89.3 FM on 25 January 1973. Owned by WQED Multimedia, whose WQED-TV was the first community-sponsored educational television station in the US in 1954 and the home of Mister Rogers' Neighborhood."
       - id: chillhop
         name: Chillhop Radio
         kind: radio
@@ -487,6 +519,16 @@ groups:
         site: "https://wfmu.org/drummer"
         founded: 2010
         profile: "A 24-hour WFMU radio and streaming channel created in 2010 by longtime WFMU DJ Doug Schulkind, who still hosts its Friday morning show, Give The Drummer Some."
+      - id: wrct
+        name: "WRCT"
+        kind: radio
+        genre: "College freeform"
+        place: "Pittsburgh"
+        url: "https://stream.wrct.org/wrct-hi.mp3"
+        about: "Carnegie Mellon's volunteer-run freeform station. Programming you won't find elsewhere on the Pittsburgh dial, from experimental to local bands."
+        site: "https://wrct.org"
+        founded: 1949
+        profile: "Started in 1949 by engineering students at Carnegie Tech as a carrier-current AM station heard only on campus. It moved to 88.3 FM on 1 March 1974 and is run by students, staff and community volunteers from the basement of CMU's University Center."
       - id: raheem
         name: Radio Raheem
         kind: radio
@@ -519,3 +561,27 @@ groups:
         about: "Synthwave in 320 kbps: retrowave, darksynth and outrun. It runs sister channels for each style."
         site: "https://nightride.fm"
         profile: "'The Home of Synthwave Radio', streaming at 320 kbps, with sister channels including Chillsynth, Datawave, Spacesynth and Darksynth, plus live DJ sets, interviews and an archive of past shows."
+
+  - name: Talk Radio
+    stations:
+      - id: wesa
+        name: "WESA"
+        kind: radio
+        genre: "News and talk"
+        place: "Pittsburgh"
+        url: "https://ais-sa3.cdnstream1.com/2556_128.aac"
+        about: "Pittsburgh's NPR news station. Morning Edition, All Things Considered and local reporting on the city and region."
+        site: "https://www.wesa.fm"
+        founded: 2011
+        profile: "Formerly Duquesne University's WDUQ. Duquesne sold the station in 2011 to a subsidiary of Pittsburgh Community Broadcasting, which renamed it WESA and later merged it with sister station WYEP under one non-profit."
+      - id: bbc-world-service
+        name: "BBC World Service"
+        kind: radio
+        genre: "News and talk"
+        place: "London"
+        url: "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service"
+        about: "The BBC's international English service. World news on the hour, plus documentaries, science, business and culture programmes."
+        site: "https://www.bbc.co.uk/sounds/play/live:bbc_world_service"
+        founded: 1932
+        notable: ["Newshour", "The Documentary", "Outlook"]
+        profile: "Began in December 1932 as the BBC Empire Service, broadcasting by shortwave. Based at Bush House for 70 years, it moved into Broadcasting House in 2012. Radio 4 isn't streamable outside the UK; this is the BBC's English talk station for listeners abroad."
