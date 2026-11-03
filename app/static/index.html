@@ -469,10 +469,12 @@
     .vis { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); align-content: stretch; }
     .list { border: 1px solid var(--line); padding: 16px 20px; }
     .list-head { display: flex; }
-    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 20px; align-items: start; }
+    .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "a b" "a c"; grid-template-rows: auto 1fr;
+            column-gap: 32px; row-gap: 20px; align-items: start; }
+    #colA { grid-area: a; } #colB { grid-area: b; } #colC { grid-area: c; }  /* two columns: the third goes under the second */
   }
   @media (min-width: 1280px) {
-    .cols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cols { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: "a b c"; grid-template-rows: auto; }
   }
 </style>
 </head>
@@ -1571,7 +1573,8 @@ let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [
 let mapPan = 0, mapHover = false, mapT = 0, labelSpot = {}, labelP = {}, mapHoverKey = null;
 // Click-to-zoom: a click off the dots zooms in about that point; the next one zooms back out.
 const MAP_ZOOM = 1.9;
-let mapZ = { z: 1, target: 1, fx: 0, fy: 0 };
+let mapZ = { z: 1, target: 1, fx: 0, fy: 0, px: 0, py: 0 };  // px/py: panning while zoomed
+let mapDrag = null, mapDragMoved = false;
 const PAN_DEG_PER_S = 1.5;
 function decodeLand() {
   const W = window.WORLD;
@@ -1636,11 +1639,17 @@ function drawMap(t) {
   mapT = t;
   mapZ.z += (mapZ.target - mapZ.z) * Math.min(1, mdt * 9);  // eased zoom
   if (Math.abs(mapZ.target - mapZ.z) < .002) mapZ.z = mapZ.target;
-  const z = mapZ.z, zx = v => mapZ.fx + (v - mapZ.fx) * z, zy = v => mapZ.fy + (v - mapZ.fy) * z;
+  const z = mapZ.z;
+  if (mapZ.target === 1) { const k = 1 - Math.min(1, mdt * 9); mapZ.px *= k; mapZ.py *= k; }  // panning eases out with the zoom
+  // Keep the zoomed map covering the frame: vertically always, horizontally unless the world view (which wraps)
+  const tx0 = mapZ.fx * (1 - z), ty0 = mapZ.fy * (1 - z);
+  mapZ.py = Math.max(h * (1 - z) - ty0, Math.min(-ty0, mapZ.py));
+  if (mapRange !== "world") mapZ.px = Math.max(w * (1 - z) - tx0, Math.min(-tx0, mapZ.px));
+  const tx = tx0 + mapZ.px, ty = ty0 + mapZ.py, zx = v => v * z + tx, zy = v => v * z + ty;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
   const base = mapBaseLayer(c, w, h, dpr);
-  g.setTransform(dpr * z, 0, 0, dpr * z, dpr * mapZ.fx * (1 - z), dpr * mapZ.fy * (1 - z));  // zoom about the focus point
+  g.setTransform(dpr * z, 0, 0, dpr * z, dpr * tx, dpr * ty);  // zoom about the focus point, plus any panning
   if (mapRange === "world") {  // two copies side by side so the world wraps
     const off = (((mapPan / 360) % 1) + 1) % 1 * w;  // fractional, so the drift is smooth
     g.drawImage(base, off, 0, w, h);
@@ -1652,8 +1661,8 @@ function drawMap(t) {
   const wrap = v => ((v + 540) % 360) - 180;
   const unLon = x => r.lon0 + x / w * (r.lon1 - r.lon0) - (mapRange === "world" ? mapPan : 0);
   const unLat = y => r.lat0 - y / h * (r.lat0 - r.lat1);
-  const left = wrap(unLon(mapZ.fx * (1 - 1 / z))), right = wrap(unLon(mapZ.fx + (w - mapZ.fx) / z) - .01);
-  const top = unLat(mapZ.fy * (1 - 1 / z)), bottom = unLat(mapZ.fy + (h - mapZ.fy) / z);
+  const left = wrap(unLon(-tx / z)), right = wrap(unLon((w - tx) / z) - .01);
+  const top = unLat(-ty / z), bottom = unLat((h - ty) / z);
   g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textAlign = "left"; g.textBaseline = "top";
   g.fillText(`${fmt(top, "N", "S")} ${fmt(left, "E", "W")}${z > 1.01 ? `  ×${z.toFixed(1)}` : ""}`, 2, 1);
   g.textAlign = "right"; g.textBaseline = "bottom";
@@ -1733,20 +1742,23 @@ function drawMap(t) {
 }
 function setMapRange(rng) {
   mapRange = rng;
-  mapZ = { z: 1, target: 1, fx: 0, fy: 0 };
+  mapZ = { z: 1, target: 1, fx: 0, fy: 0, px: 0, py: 0 };
+  $("navMap").style.touchAction = "manipulation";
   store.set("piRadioMapRange", rng);
   $("rngWorld").classList.toggle("on", rng === "world");
   $("rngEurope").classList.toggle("on", rng === "europe");
 }
 function inRange(r, ci) { return ci.lon >= r.lon0 && ci.lon <= r.lon1 && ci.lat <= r.lat0 && ci.lat >= r.lat1; }
 $("navMap").addEventListener("click", e => {
+  if (mapDragMoved) { mapDragMoved = false; return; }  // that was the end of a pan, not a click
   const b = $("navMap").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
   let best = null, bd = 16;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
   if (!best) {
     mapSel = null; drawMapFoot();
     if (mapZ.target > 1) mapZ.target = 1;
-    else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; } mapZ.target = MAP_ZOOM; }
+    else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; mapZ.px = mapZ.py = 0; } mapZ.target = MAP_ZOOM; }
+    $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "manipulation";  // zoomed: a finger drag pans the map, not the page
     return;
   }
   if (best.cities.length > 1 && mapRange === "world" && best.cities.every(ci => inRange(RANGES.europe, ci))) {
@@ -1764,8 +1776,35 @@ $("navMap").addEventListener("pointermove", e => {
   let best = null, bd = 14;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
   mapHoverKey = best ? best.cities[0].name : null;
-  $("navMap").style.cursor = best ? "pointer" : "crosshair";
+  $("navMap").style.cursor = best ? "pointer" : mapZ.target > 1 ? (mapDrag ? "grabbing" : "grab") : "crosshair";
 });
+/* While zoomed, drag or two-finger scroll moves around the map. In the world view sideways
+   movement turns the globe (it wraps); everything else stays inside the map's edges. */
+function panMap(dx, dy) {
+  const w = $("navMap").clientWidth || 1;
+  if (mapRange === "world") mapPan = (mapPan + dx / mapZ.z / w * 360) % 360;
+  else mapZ.px += dx;
+  mapZ.py += dy;  // clamped when drawn
+}
+$("navMap").addEventListener("pointerdown", e => {
+  if (mapZ.target <= 1 || e.button > 0) return;
+  mapDrag = { x: e.clientX, y: e.clientY, moved: false };
+  try { $("navMap").setPointerCapture(e.pointerId); } catch (_) {}
+});
+$("navMap").addEventListener("pointermove", e => {
+  if (!mapDrag) return;
+  const dx = e.clientX - mapDrag.x, dy = e.clientY - mapDrag.y;
+  if (!mapDrag.moved && Math.hypot(dx, dy) < 4) return;
+  mapDrag.moved = true; mapDrag.x = e.clientX; mapDrag.y = e.clientY;
+  panMap(dx, dy);
+});
+$("navMap").addEventListener("pointerup", () => { mapDragMoved = !!(mapDrag && mapDrag.moved); mapDrag = null; });
+$("navMap").addEventListener("pointercancel", () => { mapDrag = null; });
+$("navMap").addEventListener("wheel", e => {
+  if (mapZ.target <= 1) return;  // not zoomed: the page scrolls as usual
+  e.preventDefault();
+  panMap(-e.deltaX, -e.deltaY);
+}, { passive: false });
 $("rngEurope").addEventListener("click", () => setMapRange("europe"));
 function geoText(geo) {
   if (!geo) return "";
