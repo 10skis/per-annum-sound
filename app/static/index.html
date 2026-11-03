@@ -476,7 +476,8 @@
   .tape-run .maj .tk { height: 17px; background: var(--amber-dim); }
   .tape-run .n { display: block; font: 12px/1 var(--dot); color: var(--amber-dim); margin-top: 1px; }
   .tape-run .cur .gl { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
-  .tape-run .gl svg, #dial svg { vertical-align: -0.1em; }
+  .tape-run .gl svg { vertical-align: -0.1em; }
+  .dial i svg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }  /* centred like the text glyphs */
   .tape-run .cur .gl svg { filter: drop-shadow(0 0 4px var(--amber)); }
   .tape-run .cur .tk { background: var(--amber); width: 2px; }
   .tape-run .seg { position: absolute; bottom: 3px; height: 13px; border-top: 2px solid var(--line); padding-left: 3px; overflow: hidden;
@@ -1088,7 +1089,8 @@ async function phonePlay(id) {
   }
   audio.volume = local.volume / 100;
   local.playing = true;
-  audio.play().catch(() => setNote("TAP PLAY TO START AUDIO ON THIS DEVICE."));
+  // A blocked start just shows as stopped; an interrupted one (fast scrolling) is ignored.
+  audio.play().catch((e) => { if (e.name === "NotAllowedError" && local.playing) { local.playing = false; phoneRender(); } });
   local.desc = local.desc && local.desc.station.id === id ? local.desc :
     { ...(local.desc || {}), station: { id, name: NAMES[id] || id, group: "" }, now: { title: "", subtitle: "" }, signal: {},
       art: STATIC ? "name:" + (NAMES[id] || id) : `/api/art/${id}`, artSrc: "" };
@@ -1107,7 +1109,7 @@ function phoneStop() {
 
 audio.addEventListener("playing", () => setNote(""));
 audio.addEventListener("error", () => {
-  if (!local.playing) return;
+  if (!local.playing || (audio.error && audio.error.code === 1)) return;  // 1: aborted by the next station
   local.playing = false;
   setNote("STREAM FAILED ON THIS DEVICE. TRY ANOTHER STATION.");
   phoneRender();

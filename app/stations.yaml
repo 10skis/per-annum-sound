@@ -43,7 +43,7 @@ places:
 # Airport-style code for each map label, shown on the map and in the middle of the sigil.
 # A label not listed falls back to its first three letters.
 codes:
-  London: LON
+  London: LDN  # LON is the IATA code; LDN reads better
   Bristol: BRS
   Paris: PAR
   Brussels: BRU
@@ -366,6 +366,24 @@ groups:
         about: "The 1960s channel of Chante France, a Paris station that plays only French song. Sixties chanson and variété, all day."
         site: "https://www.chantefrance.com"
         profile: "One of the web channels of Chante France, a Paris station founded in 1994 and devoted to French-language song. The 60s channel launched in 2013 alongside 70s, 80s and other themed streams."
+      - id: chante-france-70s
+        name: Chante France 70s
+        kind: radio
+        genre: French pop, 70s
+        place: Paris
+        url: "https://chantefrance70s.ice.infomaniak.ch/chantefrance70s-128.mp3"
+        about: "The 1970s channel of Chante France. Seventies variété and French pop, from the big ballads to the disco years."
+        site: "https://www.chantefrance.com"
+        profile: "One of the decade channels of Chante France, the Paris station founded in 1994 that plays only French-language song. This one covers the 1970s."
+      - id: chante-france-80s
+        name: Chante France 80s
+        kind: radio
+        genre: French pop, 80s
+        place: Paris
+        url: "https://chantefrance80s.ice.infomaniak.ch/chantefrance80s-128.mp3"
+        about: "The 1980s channel of Chante France. Eighties French pop and synth-era variété, all day."
+        site: "https://www.chantefrance.com"
+        profile: "One of the decade channels of Chante France, the Paris station founded in 1994 that plays only French-language song. This one covers the 1980s."
       - id: italia-anni-60
         name: Radio Italia Anni 60
         kind: radio
