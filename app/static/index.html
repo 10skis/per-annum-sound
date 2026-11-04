@@ -531,13 +531,6 @@
       linear-gradient(var(--amber-dim), var(--amber-dim)) bottom left / 2px 14px no-repeat;
   }
 
-  /* Instrument tabs: an inverse code plate in each screen's square corner */
-  .tab {
-    position: absolute; top: 0; right: 0; z-index: 2; padding: 1px 8px 2px;
-    background: var(--amber-dim); color: var(--bg);
-    font-family: var(--cond); font-weight: 600; font-size: 11px; letter-spacing: .16em; line-height: 1.2; text-transform: uppercase;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 5px 100%, 0 calc(100% - 5px));  /* the inner corner cut, like the keys */
-  }
   .strip { padding-top: 22px; }
 
   /* Art shimmer: now and then a ripple or a sweep runs across the dots */
@@ -586,7 +579,8 @@
   .tape-run .n { display: block; font: 12px/1 var(--dot); color: var(--amber-dim); margin-top: 1px; }
   .tape-run .cur .gl { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
   .tape-run .gl svg { vertical-align: -0.1em; }
-  .dial i svg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }  /* centred like the text glyphs */
+  .dial i svg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; }  /* centred like the text glyphs */
+  .dial i.lit svg { width: 16px; height: 16px; }  /* even sizes: at 1em (15 px) the drawing's half-pixel edge snapped, leaving it off the caret */
   .tape-run .cur .gl svg { filter: drop-shadow(0 0 4px var(--amber)); }
   .tape-run .cur .tk { background: var(--amber); width: 2px; }
   .tape-run .seg { position: absolute; bottom: 3px; height: 13px; border-top: 2px solid var(--line); padding-left: 3px; overflow: hidden;
@@ -713,14 +707,12 @@
   <div class="mid">
     <div class="artcol">
     <div class="screen art off cham" id="artScreen">
-      <span class="tab" aria-hidden="true">Art</span>
       <span class="shimmer" id="shimmer" aria-hidden="true"></span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
       <canvas id="sigil" class="sigil" hidden aria-hidden="true"></canvas>
       <canvas id="artDots" class="sigil" hidden aria-hidden="true"></canvas>
     </div>
     <div class="screen lvl cham">
-      <span class="tab" aria-hidden="true">Level</span>
       <div class="vis-head"><button class="label vis-name" id="lvlName">Trace</button><span class="vis-idx" id="lvlIdx"></span></div>
       <canvas id="lvl" title="Click for the next display" aria-hidden="true" style="cursor:pointer"></canvas>
     </div>
@@ -746,7 +738,6 @@
   </div>
 
   <div class="screen strip off cham" id="strip">
-    <span class="tab" aria-hidden="true">Signal</span>
     <div class="detail">
       <div class="tags" id="tags"></div>
       <div class="line desc" id="desc"><span class="run"></span></div>
@@ -773,7 +764,6 @@
   <div class="deck">
     <div class="swipe" id="swipe">
     <div class="screen vis cham">
-      <span class="tab" aria-hidden="true">Spectrum</span>
       <div class="vis-head"><button class="label vis-name" id="visName0" data-slot="0">Spectrum</button><span><span class="vis-src" id="visSrc"></span> <span class="vis-idx" id="visIdx0"></span></span></div>
       <canvas id="vis" data-slot="0" title="Click for the next display" aria-hidden="true"></canvas>
       <div class="vis-head"><button class="label vis-name" id="visName1" data-slot="1">Waterfall</button><span class="vis-idx" id="visIdx1"></span></div>
@@ -782,7 +772,6 @@
     </div>
     <div class="swipe-dots" id="swipeDots" aria-hidden="true"><i class="on"></i><i></i></div>
     <div class="screen map cham">
-      <span class="tab" aria-hidden="true">Nav</span>
       <div class="vis-head">
         <span class="label">Stations by city</span>
         <div class="seg" role="group" aria-label="Map range">
@@ -811,7 +800,6 @@
 
 <div class="help" id="about" hidden role="dialog" aria-modal="true" aria-label="About this station">
   <div class="help-card about-card screen cham">
-    <span class="tab" aria-hidden="true">About</span>
     <div id="aboutBody" style="display:grid;gap:14px"></div>
     <button class="key cham" id="aboutClose">CLOSE</button>
   </div>
@@ -820,7 +808,6 @@
 <button class="help-btn cham" id="helpBtn" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
 <div class="help" id="help" hidden role="dialog" aria-modal="true" aria-label="Keys and gestures">
   <div class="help-card screen cham">
-    <span class="tab" aria-hidden="true">Keys</span>
     <dl>
       <dt>SPACE</dt><dd>Play / stop</dd>
       <dt>◀ ▶</dt><dd>Previous / next station</dd>
