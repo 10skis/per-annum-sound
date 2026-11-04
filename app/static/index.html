@@ -319,11 +319,11 @@
            scrollbar-width: none; margin-bottom: -8px; }
   .swipe::-webkit-scrollbar { display: none; }
   .swipe > .screen { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
-  .swipe .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 22px 12px 10px; gap: 6px; }
+  .swipe .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 12px; gap: 6px; }
   .swipe-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: -6px; }
   .swipe-dots i { width: 6px; height: 6px; border: 1px solid var(--amber-dim); transition: background .2s; }
   .swipe-dots i.on { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 6px var(--glow); }
-  .vis, .map { padding: 22px 12px 10px; display: grid; gap: 6px; align-content: start; }
+  .vis, .map { padding: 12px; display: grid; gap: 6px; align-content: start; }  /* even all round: the top no longer clears a name tab */
   .vis { grid-template-rows: auto 64px auto 44px; }
   .vis-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .vis-src { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .1em; }
@@ -531,7 +531,6 @@
       linear-gradient(var(--amber-dim), var(--amber-dim)) bottom left / 2px 14px no-repeat;
   }
 
-  .strip { padding-top: 22px; }
 
   /* Art shimmer: now and then a ripple or a sweep runs across the dots */
   @property --rip { syntax: "<length>"; inherits: false; initial-value: 0px; }
@@ -595,7 +594,7 @@
     border: 1px solid var(--amber-dim);
   }
   .help { position: fixed; inset: 0; z-index: 30; background: var(--scrim); display: grid; place-items: center; padding: 16px; }
-  .help-card { width: 100%; max-width: 440px; padding: 30px 22px 18px; display: grid; gap: 14px; }
+  .help-card { width: 100%; max-width: 440px; padding: 18px 22px; display: grid; gap: 14px; }
   .help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-family: var(--dot); font-size: 19px; }
   .help dt { color: var(--amber); text-align: right; }
   .help dd { margin: 0; color: var(--amber-mid); }
@@ -641,8 +640,8 @@
        instead of the level canvas pushing the whole row taller */
     .artcol { grid-area: art; display: flex; flex-direction: column; gap: 16px; min-height: 0; contain: size; }
     .artcol .art { flex: none; }
-    .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); flex: 1; min-height: 0; padding: 22px 12px 10px; gap: 6px; }
-    .strip { grid-area: info; aspect-ratio: auto; padding: 28px 24px 18px; align-content: start; gap: 16px; min-width: 0;
+    .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); flex: 1; min-height: 0; padding: 12px; gap: 6px; }
+    .strip { grid-area: info; aspect-ratio: auto; padding: 18px 24px; align-content: start; gap: 16px; min-width: 0;
              contain: size; overflow: hidden; }
     .strip > div:last-child { order: -1; }  /* the station name leads; description and progress under it */
     .detail { display: grid; gap: 12px; }
