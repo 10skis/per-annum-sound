@@ -3020,19 +3020,26 @@ function drawRidges(g, w, h, t, slot) {
   st.sm = st.sm || visLevels.slice();
   st.sm = st.sm.map((v, i) => v + (visLevels[i] - v) * (1 - Math.exp(-dt * 8)));  // eased levels: no flicker
   st.rows = st.rows || [];
-  if (!st.last || t - st.last > STEP) { st.last = t; st.rows.unshift(st.sm.slice()); if (st.rows.length > 16) st.rows.length = 16; }
-  const frac = Math.min(1, (t - st.last) / STEP), gap = (h - 8) / 15;
-  const rows = [st.sm].concat(st.rows.slice(0, 14));  // the live row first, then the history
-  for (let r = rows.length - 1; r >= 0; r--) {  // oldest at the back, newest in front at the bottom
-    const lv = rows[r], base = h - 4 - (r - 1 + frac) * gap, pts = [];  // every row glides back a step between samples
-    if (base > h + gap) continue;
+  if (!st.last || t - st.last > STEP * 4) st.last = t;  // first frame, or back after a pause
+  while (t - st.last >= STEP) {  // sample on an exact beat, so the blend below never skips
+    st.last += STEP;
+    st.rows.unshift(st.sm.slice());
+    if (st.rows.length > 15) st.rows.length = 15;
+  }
+  if (!st.rows.length) st.rows.unshift(st.sm.slice());
+  // Each ridge stays put; its shape blends from its sample toward the newer one in front, so the
+  // heights flow back through the rows smoothly without anything sliding by fractions of a pixel
+  const frac = Math.min(1, (t - st.last) / STEP), gap = (h - 8) / 15, rows = Math.min(14, st.rows.length);
+  for (let r = rows - 1; r >= 0; r--) {  // oldest at the back, newest in front at the bottom
+    const a = st.rows[r], b = r ? st.rows[r - 1] : st.sm, base = h - 4 - r * gap, pts = [];
     for (let x = 0; x <= w; x += 3) {
-      const f = x / w * (BANDS - 1), i0 = Math.floor(f), v = lv[i0] + ((lv[i0 + 1] ?? lv[i0]) - lv[i0]) * (f - i0);
-      pts.push([x, base - v * Math.pow(Math.sin(Math.PI * x / w), 1.5) * gap * 3.4]);
+      const f = x / w * (BANDS - 1), i0 = Math.floor(f), i1 = Math.min(BANDS - 1, i0 + 1);
+      const at = lv => lv[i0] + (lv[i1] - lv[i0]) * (f - i0), v = at(a) + (at(b) - at(a)) * frac;
+      pts.push([x, Math.round(base - v * Math.pow(Math.sin(Math.PI * x / w), 1.5) * gap * 3.4)]);
     }
     g.fillStyle = "#070503";
     g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(w, h); g.closePath(); g.fill();
-    g.fillStyle = tier(1 - Math.max(0, r - 1 + frac) / 14 * .75);
+    g.fillStyle = tier(1 - r / rows * .75);
     pts.forEach(([x, y]) => g.fillRect(x, y, 2, 2));
   }
 }

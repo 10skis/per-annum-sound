@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.59 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.60 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.59 |
+| Version | v0.60 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.59 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.60 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -60,6 +60,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Off-air stations | The Lot Radio (`lot`) goes off air at times; its playlist then answers #EXT-X-ERROR and the page shows NO SIGNAL under the title. Check their site before calling a stream dead |
 | Testing | `dev/check_streams.py` (data and every stream, server-side) and `dev/selftest.js` (run in the page: `selfTest.core()`, `play(from, to)` in slices of 11, `layout()` per width). Neither is shipped in `web/` |
 | Display modes | `data-theme` on `<html>`: night, dusk, bright (header key or T, stored as piRadioTheme, set before first paint). Robert rejected a light Day mode: modes change brightness, never the dark background. New colours should be variables, or they'll ignore the mode |
+| Smooth motion | Don't slide dot rows by fractions of a pixel: 2 px dots shimmer as they cross pixel lines (Ridges in v0.59). Keep rows fixed and blend values, and round positions. Measure jitter as the share of pixels changing per frame |
 | Presets | Twelve in one row: six show, swipe or scroll for 7-12 (snaps by six). Two rows were tried and rejected: too tall for a laptop screen |
 | Desktop fit | `fitDesktop()` scales `.note`, `.unit` and `.list` with CSS zoom (floor 70%) until the console fits the window height. Pointer code measuring distances must divide by `scaleOf(el)` |
 | 05 Level on phones | Shares 03's spot in `#swipe`: native scroll-snap, dots under it. `placeLevel()` moves the panel there below 960 px and back under the art above. Robert chose this over a separate panel |
