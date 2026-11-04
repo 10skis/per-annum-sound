@@ -14,4 +14,4 @@
 
 ## Next steps
 - Re-drag `app/web` to Netlify. See TODO.md.
-- Galaxy map view still waiting on Robert's call.
+- Galaxy map view built in v0.70.

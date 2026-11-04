@@ -26,7 +26,9 @@ window.selfTest = {
       tryit(`spectrum display ${m}`, () => frames(() => drawVisScreen($(slot ? "fall" : "vis"), slot, t)));
     }
     LEVEL_MODES.forEach((m, k) => { lvlMode = k; tryit(`level display ${m}`, () => frames(() => drawLevel(t))); });
-    tryit("map", () => { setMapRange("europe"); drawMap(t); setMapRange("world"); drawMap(t); });
+    const savedRange = mapRange;
+  for (const r of MAP_ORDER) tryit(`map ${r}`, () => { setMapRange(r); drawMap(t); drawMap(t + 5000); });
+  setMapRange(savedRange);
     tryit("ripple", () => { if (startDotRipple(true)) { drawArtDots(performance.now()); endDotRipple(); } });
     const aboutFails = [];
     for (const id of order) {
@@ -49,7 +51,7 @@ window.selfTest = {
     const cur = local.id; key("#", "Digit3", { shiftKey: true }); await wait(200);
     act.play(order[0]); await wait(300); key("3", "Digit3"); await wait(400); controls.preset = local.id === cur;
     key("s"); controls.sleepOn = $("sleepBtn").textContent !== "ZZ"; for (let i = 0; i < 4; i++) key("s"); controls.sleepOff = $("sleepBtn").textContent === "ZZ";
-    key("m"); controls.mapKey = mapRange === "europe"; key("m");
+    const r0 = mapRange; key("m"); controls.mapKey = mapRange === MAP_ORDER[(MAP_ORDER.indexOf(r0) + 1) % 4]; setMapRange(r0);
     key("?"); controls.helpOpens = !$("help").hidden; key("Escape"); controls.helpCloses = $("help").hidden;
     holdTitle(true); controls.titleHold = $("line1").classList.contains("held"); holdTitle(false);
     holdArt(true); controls.artHold = artHeld; holdArt(false);

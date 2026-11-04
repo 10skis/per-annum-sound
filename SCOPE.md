@@ -120,7 +120,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Presets | Twelve preset keys in one row, six showing and a swipe for 7-12, car-radio style: tap to play, hold to save the current station. Kept per device for now; the first six are candidates for physical buttons on the Pi |
 | Listening and sleep timers | Time on the current station next to ON AIR; ZZ sets a 15, 30, 60 or 90 minute sleep timer that fades out where the device allows |
 | Keyboard | Space play/stop, left/right tune, R random, T display mode, presets 1-12 on 1-9, 0, -, = (shift saves), S sleep, M map range, ? help panel |
-| Nav map | Dot-matrix world map (Natural Earth land data) with a marker per city; WORLD and EUROPE ranges; the world view drifts east until hovered; tap a city to list its stations |
+| Nav map | Dot-matrix world map (Natural Earth land data) with a marker per city; USA, EUROPE, TERRA and GALAXY ranges (M steps through them); the world view drifts east until hovered; tap a city to list its stations |
 | Station board | Collapsible groups (NTS Live with the schedule, Infinite Mixtapes, Worldwide FM, Genre Radio, Deep Cuts); recently played as a ticker along the bottom |
 | Visualizers | Two stacked screens, each cycling on click through 11 displays (Spectrum, Waterfall, Scope, VU, Polar, Mirror, Ridges, Glyph Rain, Lissajous, Starfield, Tunnel); NO CARRIER on a flat line when stopped |
 | Track info | Now-playing from stations that publish it to browsers: KEXP (with DJ notes), Dublab, Kiosk, Cashmere, Refuge, Noods, and seven of the Deep Cuts |

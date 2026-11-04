@@ -322,7 +322,13 @@
   .vis-name { cursor: pointer; }
   .vis-idx { font-family: var(--dot); font-size: 15px; color: var(--amber-dim); letter-spacing: .08em; }
   .map canvas { width: 100%; aspect-ratio: 2.4 / 1; display: block; cursor: crosshair; touch-action: pan-y; }
+  .map .seg { grid-template-columns: repeat(4, auto); }
   .map .seg button { height: 24px; padding: 0 8px; font-size: 16px; }
+  @media (max-width: 459px) {  /* four range keys need the row: the label gives way */
+    .map .vis-head .label { display: none; }
+    .map .seg { flex: 1; }
+    .map .seg button { padding: 0 4px; }
+  }
   .map-foot { min-height: 30px; display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none;
               font-family: var(--dot); font-size: 17px; color: var(--amber-mid); white-space: nowrap; }
   .map-foot::-webkit-scrollbar { display: none; }
@@ -771,7 +777,7 @@
       <div class="vis-head">
         <span class="label">Stations by city</span>
         <div class="seg" role="group" aria-label="Map range">
-          <button id="rngEurope">EUROPE</button><button id="rngWorld">WORLD</button>
+          <button id="rngUsa">USA</button><button id="rngEurope">EUROPE</button><button id="rngWorld">TERRA</button><button id="rngGalaxy">GALAXY</button>
         </div>
       </div>
       <canvas id="navMap" role="img" aria-label="Map of station cities. Tap a city to list its stations."></canvas>
@@ -814,7 +820,7 @@
       <dt>S</dt><dd>Sleep timer: 15, 30, 60, 90 min, off</dd>
       <dt>R</dt><dd>Random station</dd>
       <dt>T</dt><dd>Display mode: night, dusk, bright</dd>
-      <dt>M</dt><dd>Map: world / Europe</dd>
+      <dt>M</dt><dd>Map: USA / Europe / Terra / Galaxy</dd>
       <dt>?</dt><dd>This panel</dd>
       <dt>CLICK</dt><dd>A visualizer for its next display</dd>
     </dl>
@@ -1856,7 +1862,7 @@ document.addEventListener("keydown", e => {
   } else if (e.key === "s" || e.key === "S") cycleSleep();
   else if (e.key === "r" || e.key === "R") randomPlay();
   else if (e.key === "t" || e.key === "T") cycleTheme();
-  else if (e.key === "m" || e.key === "M") setMapRange(mapRange === "world" ? "europe" : "world");
+  else if (e.key === "m" || e.key === "M") setMapRange(MAP_ORDER[(MAP_ORDER.indexOf(mapRange) + 1) % MAP_ORDER.length]);
   else if (e.key === "?") toggleHelp();
   else if (e.key === "Escape") { toggleHelp(false); closeAbout(); }
 });
@@ -1989,12 +1995,16 @@ function drawRing(idx) {
   });
 }
 
-/* Nav map: dot-matrix land with a marker per city. Tap a city to list its stations; in WORLD
-   range, tapping the European cluster zooms to EUROPE. Land from static/worldmap.js. */
+/* Nav map: dot-matrix land with a marker per city. Tap a city to list its stations; in TERRA
+   (the world range, "world" in code and storage), tapping the European or North American cluster
+   zooms to EUROPE or USA. Land from static/worldmap.js. GALAXY is the fourth range, drawn by
+   drawGalaxy below. */
 const RANGES = {
-  world: { lon0: -180, lon1: 180, lat0: 80, lat1: -58, grid: 30 },
+  usa: { lon0: -128, lon1: -62, lat0: 52, lat1: 24.5, grid: 10 },
   europe: { lon0: -22, lon1: 60, lat0: 62, lat1: 28, grid: 10 },
+  world: { lon0: -180, lon1: 180, lat0: 80, lat1: -58, grid: 30 },
 };
+const MAP_ORDER = ["usa", "europe", "world", "galaxy"];
 const MAP_PITCH = 5, reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let mapRange = store.get("piRadioMapRange", "world"), mapSel = null, mapHits = [], mapBase = null, LAND = null, CITIES = [];
 // The world range drifts slowly (content moving left) until the pointer is over the map.
@@ -2055,6 +2065,7 @@ function mapBaseLayer(c, w, h, dpr) {
   return off;
 }
 function drawMap(t) {
+  if (mapRange === "galaxy") return drawGalaxy(t);
   const c = $("navMap");
   if (!c || !LAND) return;
   const dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
@@ -2173,11 +2184,12 @@ function setMapRange(rng) {
   mapZ = { z: 1, target: 1, fx: 0, fy: 0, px: 0, py: 0 };
   $("navMap").style.touchAction = "pan-y";
   store.set("piRadioMapRange", rng);
-  $("rngWorld").classList.toggle("on", rng === "world");
-  $("rngEurope").classList.toggle("on", rng === "europe");
+  for (const r of MAP_ORDER) $("rng" + r[0].toUpperCase() + r.slice(1)).classList.toggle("on", r === rng);
+  galHover = null;
 }
 function inRange(r, ci) { return ci.lon >= r.lon0 && ci.lon <= r.lon1 && ci.lat <= r.lat0 && ci.lat >= r.lat1; }
 $("navMap").addEventListener("click", e => {
+  if (mapRange === "galaxy") { const id = galaxyHit(e); if (id) act.play(id); return; }
   if (mapDragMoved) { mapDragMoved = false; return; }  // that was the end of a pan, not a click
   const b = $("navMap").getBoundingClientRect(), k = scaleOf($("navMap")), x = (e.clientX - b.left) / k, y = (e.clientY - b.top) / k;
   let best = null, bd = 16;
@@ -2189,17 +2201,18 @@ $("navMap").addEventListener("click", e => {
     $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "pan-y";  // zoomed: any finger drag pans the map; unzoomed: only sideways
     return;
   }
-  if (best.cities.length > 1 && mapRange === "world" && best.cities.every(ci => inRange(RANGES.europe, ci))) {
-    setMapRange("europe");
-    return;
+  if (best.cities.length > 1 && mapRange === "world") {
+    const zoomTo = ["europe", "usa"].find(r => best.cities.every(ci => inRange(RANGES[r], ci)));
+    if (zoomTo) { setMapRange(zoomTo); return; }
   }
   mapSel = best.cities[0].name;
   drawMapFoot();
 });
 $("rngWorld").addEventListener("click", () => setMapRange("world"));
 $("navMap").addEventListener("pointerenter", () => { mapHover = true; });
-$("navMap").addEventListener("pointerleave", () => { mapHover = false; mapHoverKey = null; });
+$("navMap").addEventListener("pointerleave", () => { mapHover = false; mapHoverKey = null; galHover = null; });
 $("navMap").addEventListener("pointermove", e => {
+  if (mapRange === "galaxy") { galHover = galaxyHit(e); $("navMap").style.cursor = galHover ? "pointer" : "default"; return; }
   const b = $("navMap").getBoundingClientRect(), k = scaleOf($("navMap")), x = (e.clientX - b.left) / k, y = (e.clientY - b.top) / k;
   let best = null, bd = 14;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
@@ -2216,7 +2229,7 @@ function panMap(dx, dy) {
   mapZ.py += dy;  // clamped when drawn
 }
 $("navMap").addEventListener("pointerdown", e => {
-  if (e.button > 0) return;
+  if (e.button > 0 || mapRange === "galaxy") return;
   mapDrag = { x: e.clientX, y: e.clientY, moved: false };
   try { $("navMap").setPointerCapture(e.pointerId); } catch (_) {}
 });
@@ -2231,11 +2244,151 @@ $("navMap").addEventListener("pointerup", () => { mapDragMoved = !!(mapDrag && m
 $("navMap").addEventListener("pointercancel", () => { mapDrag = null; });
 $("navMap").addEventListener("wheel", e => {
   // Not zoomed: only a sideways swipe moves the map; up and down still scroll the page
-  if (mapZ.target <= 1 && Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+  if (mapRange === "galaxy" || (mapZ.target <= 1 && Math.abs(e.deltaX) <= Math.abs(e.deltaY))) return;
   e.preventDefault();
   panMap(-e.deltaX, -e.deltaY);
 }, { passive: false });
 $("rngEurope").addEventListener("click", () => setMapRange("europe"));
+$("rngUsa").addEventListener("click", () => setMapRange("usa"));
+$("rngGalaxy").addEventListener("click", () => setMapRange("galaxy"));
+
+/* Galaxy: the collection as a barred spiral, from mockups/galaxy-map.html (v0.70). NTS and the
+   mixtapes ring the bulge; each other group is one arm, as bright as the group is big, with its
+   stations placed along it by longitude so a city's stations cluster, joined like a
+   constellation. The disc is a halftone on a fixed grid: as it turns the dots grow and shrink in
+   place, never slide. Its light is worked out once on a polar table and looked up each frame. */
+const GAL_ARMS = ["Terrascan FM", "Deep Cuts", "Genre Radio", "Talk Radio"];  // the big arms opposite each other
+const GAL_LABEL = { "Terrascan FM": "TERRASCAN", "Genre Radio": "GENRE", "Deep Cuts": "DEEP CUTS", "Talk Radio": "TALK" };
+const GAL_PHASE = [0, Math.PI, Math.PI / 2, Math.PI * 1.5], TAU = Math.PI * 2;
+const GAL_WIND = .52 / Math.tan(14 * Math.PI / 180), GAL_R0 = .14, GAL_BAR = .17, GAL_NR = 220, GAL_NA = 1024, GAL_RMAX = 1.12;
+let GAL = null, galHover = null, galPts = [];
+const galArm = (k, r) => GAL_PHASE[k] + Math.log(Math.max(r, GAL_R0) / GAL_R0) * GAL_WIND;
+function galNoise(x, y) {  // value noise, fixed to the disc so clumps and lanes turn with it
+  const hash = (a, b) => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+  const f = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; };
+  return f(x, y) * .6 + f(x * 2.3 + 7, y * 2.3 + 3) * .3 + f(x * 5.1 + 1, y * 5.1 + 9) * .1;
+}
+function buildGalaxy() {
+  let seed = 5;
+  const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const sizes = GAL_ARMS.map(g => order.filter(id => STN[id].group === g).length), most = Math.max(1, ...sizes);
+  const strength = sizes.map(n => .55 + .45 * n / most);
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const wrapPi = a => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+  const light = (r, th) => {
+    const dx = r * Math.cos(th), dy = r * Math.sin(th);
+    let L = Math.exp(-((r / .07) ** 2)) * 2.2 + Math.exp(-r / .11) * .7;  // bulge
+    L += Math.exp(-((dx / GAL_BAR) ** 2) - (dy / .045) ** 2) * .9;      // bar
+    const env = smooth(GAL_R0 * .7, GAL_R0 * 1.4, r) * (1 - smooth(.82, 1.04, r));
+    L += Math.exp(-r / .3) * .16 * (.4 + 1.2 * galNoise(dx * 7 + 20, dy * 7 + 20));  // disc between the arms
+    for (let k = 0; k < 4; k++) {
+      const d = wrapPi(th - galArm(k, r)), w = .2 + .1 * r;
+      const arm = Math.exp(-((d / w) ** 2)), lane = Math.exp(-(((d + w * .55) / (w * .22)) ** 2));  // dust lane on the inner edge
+      const knots = Math.max(0, galNoise(dx * 13 + k * 5, dy * 13) - .52) * 6;                     // star-forming clumps
+      L += env * strength[k] * (arm * (.5 + knots) - lane * .7);
+    }
+    return Math.max(0, L);
+  };
+  const table = new Float32Array(GAL_NR * GAL_NA);
+  for (let i = 0; i < GAL_NR; i++) for (let j = 0; j < GAL_NA; j++) table[i * GAL_NA + j] = light((i + .5) / GAL_NR * GAL_RMAX, j / GAL_NA * TAU);
+  const stars = [], core = order.filter(id => !GAL_ARMS.includes(STN[id].group));
+  core.forEach((id, i) => {  // live channels innermost, the mixtapes in a ring round the bulge
+    const live = STN[id].kind === "nts_live";
+    stars.push({ id, k: -1, r: live ? .03 : .085 + (i % 2) * .012, a: live ? i * Math.PI : i / core.length * TAU });
+  });
+  GAL_ARMS.forEach((g, k) => order.filter(id => STN[id].group === g).forEach(id => {
+    const lon = STN[id].geo ? STN[id].geo[1] : 200;  // no place: out at the tip
+    const r = .24 + .7 * (lon + 180) / 380 + (rnd() - .5) * .012;
+    stars.push({ id, k, r, a: galArm(k, r) + (rnd() - .5) * .07 });
+  }));
+  GAL = { table, stars, counts: sizes };
+}
+function galaxyHit(e) {
+  const b = $("navMap").getBoundingClientRect(), s = scaleOf($("navMap")), x = (e.clientX - b.left) / s, y = (e.clientY - b.top) / s;
+  let best = null, bd = 12;
+  for (const p of galPts) { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p.id; } }
+  return best;
+}
+function drawGalaxy(t) {
+  const c = $("navMap");
+  if (!c || !order.length) return;
+  if (!GAL) buildGalaxy();
+  const dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+  if (!W || !H) return;
+  if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+  const g = c.getContext("2d"), css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
+  const A = v("--amber"), MID = v("--amber-mid"), DIM = v("--amber-dim"), GHOST = v("--amber-ghost"), LINE = v("--line"), BG = v("--bg");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const tilt = .5, R = Math.min(W * .44, (H - 30) * .5 / tilt), cx = W / 2, cy = H / 2 + 3;
+  const spin = reduceMotion ? 0 : (t / 1000) * TAU / 300;  // one turn every five minutes
+  const at = (r, a) => [cx + R * r * Math.cos(a + spin), cy + R * r * Math.sin(a + spin) * tilt];
+  // Orbit rings and bearing ticks, like the map's plotter frame
+  g.strokeStyle = LINE; g.lineWidth = 1; g.setLineDash([1, 3]);
+  for (const rr of [.33, .66, 1]) { g.beginPath(); g.ellipse(cx, cy, R * rr, R * rr * tilt, 0, 0, TAU); g.stroke(); }
+  g.setLineDash([]);
+  for (let i = 0; i < 36; i++) { const a = i * TAU / 36, k = i % 3 ? 1.03 : 1.06;
+    g.beginPath(); g.moveTo(cx + R * Math.cos(a), cy + R * Math.sin(a) * tilt); g.lineTo(cx + R * k * Math.cos(a), cy + R * k * Math.sin(a) * tilt); g.stroke(); }
+  // The disc, in four fills: ghost, dim, mid, amber
+  const CELL = W < 400 ? 3.5 : 4, paths = [new Path2D(), new Path2D(), new Path2D(), new Path2D()], T = GAL.table;
+  const dot = (k, x, y, r) => { paths[k].moveTo(x + r, y); paths[k].arc(x, y, r, 0, TAU); };
+  for (let y = CELL / 2; y < H; y += CELL) for (let x = CELL / 2; x < W; x += CELL) {
+    const dx = (x - cx) / R, dy = (y - cy) / (R * tilt), r = Math.hypot(dx, dy);
+    let L = 0;
+    if (r < GAL_RMAX) {
+      const ri = Math.min(GAL_NR - 1, Math.floor(r / GAL_RMAX * GAL_NR)), af = ((Math.atan2(dy, dx) - spin) / TAU % 1 + 1) % 1 * GAL_NA;
+      const a0 = Math.floor(af) % GAL_NA, a1 = (a0 + 1) % GAL_NA, f = af - Math.floor(af);
+      L = T[ri * GAL_NA + a0] * (1 - f) + T[ri * GAL_NA + a1] * f;  // blended round the circle, so the turn is smooth
+    }
+    if (dy < 0) L *= .8;  // far side, a little dimmer
+    if (L < .1) { dot(0, x, y, .55); continue; }
+    dot(L > 1.7 ? 3 : L > .8 ? 2 : 1, x, y, Math.min(CELL * .6, .35 + Math.sqrt(L) * CELL * .3));
+  }
+  [GHOST, DIM, MID, A].forEach((col, k) => { g.fillStyle = col; g.fill(paths[k]); });
+  // Constellation lines along each arm, then the stars
+  const cur = selectedId(), playing = S && S.playing, hov = galHover && STN[galHover];
+  galPts = GAL.stars.map(s => { const [x, y] = at(s.r, s.a); return { ...s, x, y }; });
+  g.strokeStyle = DIM; g.globalAlpha = .55;
+  for (let k = 0; k < 4; k++) { const arm = galPts.filter(p => p.k === k).sort((a, b) => a.r - b.r);
+    g.beginPath(); arm.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.stroke(); }
+  g.globalAlpha = 1;
+  for (const p of galPts) {
+    const lit = p.id === cur, sib = hov && hov.city && STN[p.id].city === hov.city;
+    const s = lit || sib ? 5 : p.k < 0 ? 2 : 3;  // the NTS ring smaller, so the core stays a core
+    g.fillStyle = BG; g.fillRect(p.x - s / 2 - 1.5, p.y - s / 2 - 1.5, s + 3, s + 3);  // a dark gap so each star reads as a marker
+    g.fillStyle = A; g.shadowColor = A; g.shadowBlur = lit ? 10 : 4;
+    g.fillRect(p.x - s / 2, p.y - s / 2, s, s); g.shadowBlur = 0;
+    if (lit && playing && !reduceMotion) {
+      const k = (t / 2400) % 1;  // slow breathing ring
+      g.strokeStyle = A; g.globalAlpha = 1 - k;
+      g.beginPath(); g.arc(p.x, p.y, 4 + k * 12, 0, TAU); g.stroke(); g.globalAlpha = 1;
+    }
+  }
+  // Arm names past each arm's outermost star
+  g.font = "12px VT323, monospace"; g.fillStyle = MID; g.textBaseline = "middle";
+  GAL_ARMS.forEach((name, k) => {
+    const tip = galPts.filter(p => p.k === k).sort((a, b) => b.r - a.r)[0]; if (!tip) return;
+    const [x, y] = at(tip.r + .1, tip.a + .08);
+    g.textAlign = x < cx ? "right" : "left";
+    g.fillText(`${GAL_LABEL[name]} ${GAL.counts[k]}`, Math.max(2, Math.min(W - 2, x)), Math.max(16, Math.min(H - 14, y)));
+  });
+  // Hover: name and city on a leader line
+  const h = galPts.find(p => p.id === galHover);
+  if (h) {
+    const st = STN[h.id], label = `${st.name} · ${st.city || "ONLINE"}`.toUpperCase(), right = h.x < W - 150;
+    const lx = h.x + (right ? 18 : -18), ly = Math.max(14, h.y - 14);
+    g.strokeStyle = A; g.beginPath(); g.moveTo(h.x, h.y); g.lineTo(lx, ly); g.stroke();
+    g.strokeRect(h.x - 5.5, h.y - 5.5, 11, 11);
+    g.font = "14px VT323, monospace"; g.textAlign = right ? "left" : "right"; g.textBaseline = "bottom";
+    const tw = g.measureText(label).width; g.fillStyle = BG; g.fillRect(right ? lx : lx - tw - 4, ly - 14, tw + 4, 14);
+    g.fillStyle = A; g.fillText(label, lx + (right ? 2 : -2), ly);
+  }
+  // Plotter corners
+  g.font = "12px VT323, monospace"; g.fillStyle = DIM;
+  g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${galPts.length} STARS · ${W < 400 ? "SBC" : "SBC · 14° PITCH"}`, 2, 1);
+  g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`ROT ${String(Math.round((spin * 180 / Math.PI) % 360)).padStart(3, "0")}°`, W - 2, H - 1);
+}
 function geoText(geo) {
   if (!geo) return "";
   const [la, lo] = geo;

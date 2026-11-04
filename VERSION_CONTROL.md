@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.69: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.70: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.70 | 2026-11-04 | Map ranges USA, EUROPE, TERRA, GALAXY; TERRA zooms to USA or EUROPE; galaxy view built in | [link](updates/2026-11-04-map-usa-terra-galaxy.md) |
 | v0.69 | 2026-11-04 | Map switch reads EUROPE then WORLD; two-way switches and corner tabs chamfered like the keys | [link](updates/2026-11-04-switches-tabs-chamfered.md) |
 | v0.68 | 2026-11-04 | 13 worldwide stations (79 in all); each group sorted by place, A to Z | [link](updates/2026-11-04-worldwide-stations-sorted.md) |
 | v0.67 | 2026-11-04 | Phosphor sizes to its panel: scaled glow, balanced figure, side scopes in short panels | [link](updates/2026-11-04-phosphor-scale.md) |
