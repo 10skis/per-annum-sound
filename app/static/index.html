@@ -493,6 +493,17 @@
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%); background-position: bottom right; background-size: 7px 7px; background-repeat: no-repeat;
     background-image: linear-gradient(315deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px));
   }
+  /* Two-way switches (map range, output) are chamfered the same way: one key in two halves */
+  .seg button { --edge: var(--amber-dim); --c: 6px; }
+  .seg button.on { --edge: var(--amber); }
+  .seg button:first-child {
+    clip-path: polygon(var(--c) 0, 100% 0, 100% 100%, 0 100%, 0 var(--c)); background-position: top left; background-size: var(--c) var(--c); background-repeat: no-repeat;
+    background-image: linear-gradient(135deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px));
+  }
+  .seg button:last-child {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%); background-position: bottom right; background-size: var(--c) var(--c); background-repeat: no-repeat;
+    background-image: linear-gradient(315deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px));
+  }
 
   /* Registration brackets inside the console's two square corners */
   .unit { position: relative; }
@@ -510,6 +521,7 @@
     position: absolute; top: 0; right: 0; z-index: 2; padding: 1px 8px 2px;
     background: var(--amber-dim); color: var(--bg);
     font-family: var(--cond); font-weight: 600; font-size: 11px; letter-spacing: .16em; line-height: 1.2; text-transform: uppercase;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 5px 100%, 0 calc(100% - 5px));  /* the inner corner cut, like the keys */
   }
   .strip { padding-top: 22px; }
 
@@ -759,7 +771,7 @@
       <div class="vis-head">
         <span class="label">Stations by city</span>
         <div class="seg" role="group" aria-label="Map range">
-          <button id="rngWorld">WORLD</button><button id="rngEurope">EUROPE</button>
+          <button id="rngEurope">EUROPE</button><button id="rngWorld">WORLD</button>
         </div>
       </div>
       <canvas id="navMap" role="img" aria-label="Map of station cities. Tap a city to list its stations."></canvas>

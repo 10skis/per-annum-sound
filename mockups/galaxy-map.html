@@ -99,7 +99,7 @@ function prepare(frame) {
   const css = n => w.getComputedStyle(d.documentElement).getPropertyValue(n).trim();
   let on = true, hover = null, pts = [];
   const key = d.createElement("button"); key.id = "rngGalaxy"; key.textContent = "GALAXY";
-  d.getElementById("rngEurope").after(key);
+  d.getElementById("rngWorld").after(key);
   const fix = d.createElement("style"); fix.textContent = ".map .seg { display: flex; flex-wrap: nowrap; } .map .seg button { white-space: nowrap; }"; d.head.appendChild(fix);
   const mark = () => { key.classList.toggle("on", on); if (on) { d.getElementById("rngWorld").classList.remove("on"); d.getElementById("rngEurope").classList.remove("on"); } else run("setMapRange(mapRange)"); };
   key.onclick = () => { on = true; mark(); };
