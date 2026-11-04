@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galaxy Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --amber: #ffb02e; --dim: #9c6c22; }
+  body { margin: 0; background: #050403; color: var(--amber); font-family: "Saira Condensed", sans-serif; padding: 24px 16px; }
+  h1 { font: 400 16px "Michroma", sans-serif; letter-spacing: .2em; margin: 0 0 6px; }
+  p { color: var(--dim); margin: 0 0 20px; font-size: 17px; max-width: 900px; }
+  .row { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
+  .opt h2 { font-weight: 600; font-size: 18px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 10px; }
+  iframe { border: 1px solid #3a2a10; background: #0e0c0a; display: block; }
+  #desk { width: 1280px; max-width: calc(100vw - 32px); height: 800px; }
+  #phone { width: 390px; height: 1500px; border-radius: 28px; }
+</style>
+</head>
+<body>
+<h1>GALAXY MAP</h1>
+<p>The real app with a third map range, GALAXY, switched on. NTS and the mixtapes sit in the core; each other group is one arm, with its stations placed along it by longitude, so a city's stations cluster. The disc turns once every five minutes and the playing station pulses. Hover a star for its name, click to play. WORLD and EUROPE still work as before.</p>
+<div class="row">
+  <div class="opt"><h2>Desktop</h2><iframe id="desk" src="index.html?mock=galaxy"></iframe></div>
+  <div class="opt"><h2>Phone</h2><iframe id="phone" src="index.html?mock=galaxy-phone"></iframe></div>
+</div>
+<script>
+// Both frames are this build, so the mockup reaches in: adds the GALAXY key and draws the galaxy
+// in place of the map while it's on. Nothing here is in the app itself.
+const TAU = Math.PI * 2;
+const ARMS = ["Terrascan FM", "Genre Radio", "Deep Cuts", "Talk Radio"];
+const ARM_LABEL = { "Terrascan FM": "TERRASCAN", "Genre Radio": "GENRE", "Deep Cuts": "DEEP CUTS", "Talk Radio": "TALK" };
+const TURN = 3.3;  // how far an arm winds, in radians
+
+function seeded(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function build(STN) {
+  const rnd = seeded(11), gauss = () => { let u = 0; for (let i = 0; i < 4; i++) u += rnd(); return (u - 2) / 1.15; };
+  const armAt = (k, t) => ({ r: .1 + .9 * t, a: k * TAU / 4 + t * TURN });
+  const dust = [];
+  for (let i = 0; i < 3600; i++) {
+    const k = i % 4, t = Math.pow(rnd(), .85), p = armAt(k, t), s = .03 + .07 * t;
+    dust.push({ r: p.r + gauss() * s, a: p.a + gauss() * s / Math.max(.25, p.r), b: .4 + rnd() * .6 });
+  }
+  for (let i = 0; i < 1100; i++) dust.push({ r: Math.abs(gauss()) * .14, a: rnd() * TAU, b: .6 + rnd() * .6 });
+  const stars = [];
+  for (const [id, st] of Object.entries(STN)) {
+    const k = ARMS.indexOf(st.group);
+    if (k < 0) { stars.push({ id, r: .03 + rnd() * .08, a: rnd() * TAU }); continue; }  // core
+    const lon = st.geo ? st.geo[1] : 200;  // no place: the far end of the arm
+    const p = armAt(k, .2 + .78 * (lon + 180) / 380);
+    stars.push({ id, r: p.r + gauss() * .012, a: p.a + gauss() * .025 });
+  }
+  return { dust, stars, armAt };
+}
+
+function prepare(frame) {
+  const w = frame.contentWindow, d = frame.contentDocument, run = code => w.eval(code);
+  if (!run("typeof act !== 'undefined' && order.length > 0 && typeof STN === 'object'")) return setTimeout(() => prepare(frame), 300);
+  run("audio.muted = true; act.play(order[0])");
+  const STN = run("STN"), G = build(STN), c = d.getElementById("navMap");
+  const css = n => w.getComputedStyle(d.documentElement).getPropertyValue(n).trim();
+  let on = true, hover = null, pts = [];
+  const key = d.createElement("button"); key.id = "rngGalaxy"; key.textContent = "GALAXY";
+  d.getElementById("rngEurope").after(key);
+  const fix = d.createElement("style"); fix.textContent = ".map .seg { display: flex; flex-wrap: nowrap; } .map .seg button { white-space: nowrap; }"; d.head.appendChild(fix);
+  const mark = () => { key.classList.toggle("on", on); if (on) { d.getElementById("rngWorld").classList.remove("on"); d.getElementById("rngEurope").classList.remove("on"); } else run("setMapRange(mapRange)"); };
+  key.onclick = () => { on = true; mark(); };
+  for (const id of ["rngWorld", "rngEurope"]) d.getElementById(id).addEventListener("click", () => { on = false; mark(); });
+  mark();
+  // While the galaxy shows, the map's own pointer handling is held back
+  const nearest = e => { const b = c.getBoundingClientRect(), s = b.width / c.offsetWidth, x = (e.clientX - b.left) / s, y = (e.clientY - b.top) / s;
+    let best = null, bd = 12; for (const p of pts) { const dd = Math.hypot(p.x - x, p.y - y); if (dd < bd) { bd = dd; best = p.id; } } return best; };
+  for (const ev of ["pointermove", "pointerdown", "pointerup", "wheel", "click", "pointerenter"]) c.addEventListener(ev, e => {
+    if (!on) return;
+    e.stopImmediatePropagation();
+    if (ev === "pointermove") { hover = nearest(e); c.style.cursor = hover ? "pointer" : "default"; }
+    if (ev === "click") { const id = nearest(e); if (id) run(`act.play(${JSON.stringify(id)})`); }
+  }, true);
+  c.addEventListener("pointerleave", () => { hover = null; });
+
+  const orig = w.drawMap;
+  w.drawMap = t => on ? draw(t) : orig(t);
+
+  function draw(t) {
+    const dpr = w.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+    if (!W || !H) return;
+    if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+    const g = c.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const A = css("--amber"), MID = css("--amber-mid"), DIM = css("--amber-dim"), GHOST = css("--amber-ghost");
+    const tilt = .56, R = Math.min(W * .46, H * .44 / tilt), cx = W / 2, cy = H / 2 + 4;
+    const spin = -(t / 1000) * TAU / 300;
+    const at = (r, a) => [cx + R * r * Math.cos(a + spin), cy + R * r * Math.sin(a + spin) * tilt];
+    // Dust lands in a dot-matrix grid, like the map's land
+    const CELL = 5, cols = Math.ceil(W / CELL), rows = Math.ceil(H / CELL), acc = new Float32Array(cols * rows);
+    for (const p of G.dust) { const [x, y] = at(p.r, p.a), i = Math.floor(x / CELL), j = Math.floor(y / CELL);
+      if (i >= 0 && j >= 0 && i < cols && j < rows) acc[j * cols + i] += p.b; }
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const v = acc[j * cols + i], x = i * CELL + CELL / 2, y = j * CELL + CELL / 2;
+      const [col, rad] = v > 4.5 ? [MID, 1.4] : v > 1.4 ? [DIM, 1.2] : v > .4 ? [DIM, .95] : [GHOST, .8];
+      g.fillStyle = col; g.beginPath(); g.arc(x, y, rad, 0, TAU); g.fill();
+    }
+    // Arm names at the arm tips
+    g.font = "12px VT323, monospace"; g.fillStyle = DIM; g.textBaseline = "middle";
+    ARMS.forEach((name, k) => { const p = G.armAt(k, 1.02), [x, y] = at(p.r + .06, p.a);
+      g.textAlign = x < cx ? "right" : "left"; g.fillText(ARM_LABEL[name], Math.max(4, Math.min(W - 4, x)), Math.max(10, Math.min(H - 10, y))); });
+    // Stars
+    const cur = run("selectedId()"), playing = run("!!(S && S.playing)");
+    pts = [];
+    for (const s of G.stars) {
+      const [x, y] = at(s.r, s.a); pts.push({ id: s.id, x, y });
+      const lit = s.id === cur;
+      const BG = css("--bg"), X = Math.round(x), Y = Math.round(y);
+      g.shadowBlur = 0; g.fillStyle = BG; g.fillRect(X - 3.5, Y - 3.5, 7, 7);  // a dark gap so each star reads as a marker
+      g.fillStyle = A; g.shadowColor = A; g.shadowBlur = lit ? 10 : 4;
+      g.fillRect(X - 2, Y - 2, lit ? 5 : 4, lit ? 5 : 4);
+      if (lit && playing) {
+        const k = (t / 2400) % 1;  // slow breathing ring
+        g.shadowBlur = 0; g.strokeStyle = A; g.globalAlpha = 1 - k; g.lineWidth = 1;
+        g.beginPath(); g.arc(x, y, 3 + k * 12, 0, TAU); g.stroke(); g.globalAlpha = 1;
+      }
+    }
+    g.shadowBlur = 0;
+    const h = pts.find(p => p.id === hover);
+    if (h) { const st = STN[h.id], label = `${st.name} · ${st.city || st.place || ""}`.toUpperCase();
+      g.font = "14px VT323, monospace"; g.textBaseline = "bottom"; g.textAlign = h.x > W - 120 ? "right" : "left";
+      g.fillStyle = A; g.fillText(label, h.x + (g.textAlign === "left" ? 6 : -6), h.y - 4);
+      g.strokeStyle = A; g.strokeRect(Math.round(h.x) - 4.5, Math.round(h.y) - 4.5, 9, 9); }
+    // Plotter corners, like the map's coordinates
+    g.font = "12px VT323, monospace"; g.fillStyle = DIM;
+    g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${G.stars.length} STARS · 4 ARMS`, 2, 1);
+    g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`ROT ${String(Math.round(((-spin * 180 / Math.PI) % 360 + 360) % 360)).padStart(3, "0")}°`, W - 2, H - 1);
+  }
+}
+document.querySelectorAll("iframe").forEach(f => f.addEventListener("load", () => prepare(f)));
+</script>
+</body>
+</html>

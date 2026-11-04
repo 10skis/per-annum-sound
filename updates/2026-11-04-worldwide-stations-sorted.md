@@ -32,4 +32,4 @@
 
 ## Next steps
 - Re-drag `app/web` to Netlify. See TODO.md.
-- Galaxy map view proposed, waiting on Robert.
+- Galaxy map view: mocked up in `mockups/galaxy-map.html` (serve it beside a build, like the Level mockup). NTS in the core, one arm per group, stations along each arm by longitude, slow spin, the playing star pulses. Waiting on Robert's call.
