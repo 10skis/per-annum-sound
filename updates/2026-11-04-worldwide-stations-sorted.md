@@ -32,4 +32,4 @@
 
 ## Next steps
 - Re-drag `app/web` to Netlify. See TODO.md.
-- Galaxy map view: mocked up in `mockups/galaxy-map.html` (serve it beside a build, like the Level mockup). NTS in the core, one arm per group, stations along each arm by longitude, slow spin, the playing star pulses. Waiting on Robert's call.
+- Galaxy map view: mocked up in `mockups/galaxy-map.html` (serve it beside a build, like the Level mockup). Second pass after Robert called the first one slop: a barred spiral with 14° log-spiral arms, dust lanes and clumps, drawn as a halftone on a fixed dot grid (dots change size, never slide), arm brightness by group size, NTS in a ring round the bulge, constellation lines along each arm, orbit rings with bearing ticks. Light is worked out once on a polar table and dots are drawn in four fills, about 1 ms a frame. Waiting on Robert's call.
