@@ -2070,13 +2070,13 @@ function mapBaseLayer(c, w, h, dpr) {
     if (isLand(lat, lon)) { g.fillStyle = "#86601f"; g.fillRect(x - 1.5, y - 1.5, 3, 3); }
     else if (onGrid) { g.fillStyle = "#3a2a10"; g.fillRect(x - .5, y - .5, 1.5, 1.5); }
   }
-  if (mapRange !== "world" && window.GEO) drawGeo(g, r, w, h);
+  if (mapRange !== "world" && window.GEO && w >= 460) drawGeo(g, r, w, h);  // phones: none, as plain as TERRA
   mapBase = { key, canvas: off };
   return off;
 }
 /* Geography over the USA and EUROPE ranges, from static/geo.js (make_geo.py): lakes and rivers
    etched out of the land dots; country borders, and US state and Canadian province lines, dashed alike.
-   On phones only the lakes and a fine dotted trace of country borders, to stay as plain as TERRA. Drawn
+   Desktop only: phones (map under 460 px) get none, as plain as TERRA. Drawn
    once into the cached base layer. */
 function drawGeo(g, r, w, h) {
   const path = list => {
@@ -2091,10 +2091,8 @@ function drawGeo(g, r, w, h) {
   const glass = cssVar("--screen");
   path(GEO.lakes); g.fillStyle = glass; g.fill();
   g.setLineDash([1, 2]); g.strokeStyle = "#86601f"; g.lineWidth = 1; g.stroke();
-  const phone = w < 460;  // phones keep it as plain as TERRA: lakes and country borders only
-  if (!phone) { g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke(); }
-  if (phone) { g.setLineDash([1, 2]); path(GEO.borders); g.strokeStyle = "#9c6c22"; g.lineWidth = .9; g.stroke(); }  // a fine dotted trace, not a line
-  else { g.setLineDash([4, 2]); path(GEO.states.concat(GEO.borders)); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke(); }
+  g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke();
+  g.setLineDash([4, 2]); path(GEO.states.concat(GEO.borders)); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke();
   g.restore();
 }
 /* One frame of the eased click-to-zoom and its panning, shared by the maps and the galaxy.
