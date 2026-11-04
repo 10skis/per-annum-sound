@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.81 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.82 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.81 |
+| Version | v0.82 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.81 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.82 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -46,7 +46,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), glowing dot matrix behind (a halo under each dot, v0.65; page and art.py match). Breathes with the same ripple as cover art |
 | Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. USA and EUROPE carry borders and state/province lines (both dashed amber, so the two ranges match), rivers and lakes from `static/geo.js` (`make_geo.py`, Natural Earth 1:50m), drawn once into the cached base layer. Phones (map under 460 px) get none of it, plain dots like TERRA (Robert's call). Ranges USA, EUROPE, TERRA (the world view; `world` in code and storage) and GALAXY; in TERRA, tapping the European or North American cluster zooms to that range. GALAXY (`drawGalaxy`) is the collection as a barred spiral: NTS round the bulge, one arm per group lit by group size, stations along it by longitude; a halftone on a fixed grid from a polar light table, about 1 ms a frame. Tap a star to play; tap empty space to zoom 2.6× (the grid stays put and the disc grows under it), drag or scroll to move, tap again to come out. Zoom and pan share `zoomStep`/`toggleZoom` with the maps |
 | Signal panel | Every station gets: what's on (NTS timeline or recent tracks), day and night bar, nearby and similar, your listening |
-| Board | Collapsible groups. Columns: NTS Live and Infinite Mixtapes; Terrascan FM and Genre Radio; Deep Cuts and Talk Radio (`GROUP_COL`). Two columns 960–1279 px (third column under the second), three from 1280. Recently played ticker above the columns, hover lights the row |
+| Board | Search at the end of the Recently played row (its own row on phones, v0.82): every word must match a station's name, city, place, code, genre, group, "NTS" for any NTS channel, or the row's live subtitle. Matching groups open for the search without touching the saved open state; empty groups hide; Enter plays the first match; / focuses, Esc clears. Collapsible groups. Columns: NTS Live and Infinite Mixtapes; Terrascan FM and Genre Radio; Deep Cuts and Talk Radio (`GROUP_COL`). Two columns 960–1279 px (third column under the second), three from 1280. Recently played ticker above the columns, hover lights the row |
 | Header readouts | City, position, local time, distance from NYC, signal. Scroll slower than the station title when too long |
 | Motion | Smooth easing (cubic-bezier(.3,.7,.3,1)), not stepped. Everything off with reduced motion |
 
@@ -81,7 +81,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- v0.47 is live; v0.81 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
+- v0.47 is live; v0.82 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - 79 stations but 70 `DIAL_GLYPHS`, so the last nine stations reuse glyphs from the start of the list. Add nine more glyphs if Robert notices or wants each station unique.

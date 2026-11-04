@@ -506,6 +506,29 @@ const DISPLAY = (() => {
   .rp:hover small, .rp:focus-visible small { color: var(--amber-mid); }
   .ticker .sep { color: var(--line); }
 
+  /* Station search, at the end of the ticker row (its own row on phones). Filters the board as you
+     type: every word must match a station's name, city, code, genre, group or what's on. Groups with
+     a match open for the search without changing their saved state; the rest step aside */
+  .ticker { grid-template-columns: auto minmax(0, 1fr) 240px; }
+  .st-search { position: relative; height: 30px; --cut: 7px; --edge: var(--amber-dim); border: 1px solid var(--amber-dim); }
+  .st-search:focus-within { --edge: var(--amber); border-color: var(--amber); box-shadow: 0 0 8px var(--glow-soft); }
+  .st-search input { width: 100%; height: 100%; border: 0; background: none; outline: none; padding: 0 30px 0 10px;
+                     font: 19px/1 var(--dot); color: var(--amber); letter-spacing: .06em; text-transform: uppercase; }
+  .st-search input::placeholder { color: var(--amber-dim); }
+  .st-search input::-webkit-search-cancel-button { display: none; }
+  .st-search button { position: absolute; right: 2px; top: 0; height: 100%; width: 26px; font: 19px/1 var(--dot); color: var(--amber-dim); }
+  .st-search button:hover { color: var(--amber); }
+  .list.searching .row.miss, .list.searching .group.miss, .list.searching .sub-sched { display: none; }
+  .list.searching .group > .g-body { grid-template-rows: 1fr; }
+  .list.searching .group .g-inner { opacity: 1; transform: none; }
+  .list.searching .group .chev { transform: rotate(90deg); }
+  .st-none { display: none; padding: 10px 4px; font: 19px var(--dot); color: var(--amber-dim); letter-spacing: .06em; }
+  .list.searching.empty .st-none { display: block; }
+  @media (max-width: 959px) {
+    .ticker { grid-template-columns: auto minmax(0, 1fr); }
+    .st-search { grid-column: 1 / -1; height: 36px; }
+  }
+
   /* Schedule and recently played: time column + text */
   .log { width: 100%; display: grid; grid-template-columns: 5ch minmax(0, 1fr); gap: 10px; align-items: baseline;
          text-align: left; padding: 5px 4px; font-family: var(--dot); font-size: 19px; color: var(--amber-mid); }
@@ -897,7 +920,12 @@ const DISPLAY = (() => {
   <div class="ticker" aria-label="Recently played">
     <span class="label">Recently played</span>
     <div class="ticker-win"><div class="ticker-run" id="recent"></div></div>
+    <div class="st-search cham" role="search">
+      <input type="search" id="stSearch" placeholder="SEARCH" aria-label="Search stations by name, city or genre" autocomplete="off" spellcheck="false">
+      <button id="stClear" hidden aria-label="Clear search">×</button>
+    </div>
   </div>
+  <div class="st-none">NO STATIONS MATCH</div>
   <div class="cols">
     <div id="colA"></div>
     <div id="colB"></div>
@@ -925,6 +953,7 @@ const DISPLAY = (() => {
       <dt>T</dt><dd>Display mode: Lunar, Eclipse, Solar</dd>
       <dt>[ ]</dt><dd>Brightness down / up</dd>
       <dt>M</dt><dd>Map: USA / Europe / Terra / Galaxy</dd>
+      <dt>/</dt><dd>Search stations; Enter plays the first match</dd>
       <dt>?</dt><dd>This panel</dd>
       <dt>CLICK</dt><dd>A visualizer for its next display</dd>
     </dl>
@@ -1591,6 +1620,7 @@ function stationGroup(g, startN) {
     URLS[st.id] = st.url; NAMES[st.id] = st.name;
     const b = document.createElement("button");
     b.className = "row"; b.dataset.id = st.id;
+    b.dataset.q = fold([st.name, st.city, st.place, st.code, st.genre, g.name, /^nts/.test(st.kind) && "NTS"].filter(Boolean).join(" "));  // the mixtapes are NTS's too
     b.innerHTML = `<span class="cur">&gt;</span><span class="n ghost" data-ghost="88">${pad(startN + i)}</span>` +
       `<span>${esc(st.name.toUpperCase())}<span class="sub" data-sub="${st.id}">${esc(st.sub)}</span></span>`;
     b.onclick = () => act.play(st.id);
@@ -1598,6 +1628,36 @@ function stationGroup(g, startN) {
   });
   return sec;
 }
+
+/* Station search: see .st-search in the CSS */
+const fold = t => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function searchStations() {
+  const q = fold($("stSearch").value).trim(), words = q.split(/\s+/).filter(Boolean), list = document.querySelector(".list");
+  $("stClear").hidden = !q;
+  list.classList.toggle("searching", !!words.length);
+  let hits = 0;
+  document.querySelectorAll(".list .group").forEach(sec => {
+    let n = 0;
+    sec.querySelectorAll(".row").forEach(r => {
+      const hay = r.dataset.q + " " + fold(r.querySelector(".sub").textContent);  // what's on now counts too
+      const hit = words.every(w => hay.includes(w));
+      r.classList.toggle("miss", !hit); if (hit) n++;
+    });
+    sec.classList.toggle("miss", !n);
+    const c = sec.querySelector(".g-count");
+    c.textContent = pad(words.length ? n : sec.querySelectorAll(".row").length);
+    hits += n;
+  });
+  list.classList.toggle("empty", !hits);
+  $("listCount").textContent = words.length ? pad(hits) + "/" + pad(order.length) : pad(order.length);
+}
+function clearSearch() { $("stSearch").value = ""; searchStations(); }
+$("stSearch").addEventListener("input", searchStations);
+$("stSearch").addEventListener("keydown", e => {
+  if (e.key === "Escape") { clearSearch(); $("stSearch").blur(); }
+  else if (e.key === "Enter") { const r = document.querySelector(".list.searching .row:not(.miss)"); if (r) r.click(); }  // play the first match
+});
+$("stClear").addEventListener("click", () => { clearSearch(); $("stSearch").focus(); });
 
 async function build() {
   const groups = await DATA.stations();
@@ -1992,6 +2052,7 @@ document.addEventListener("keydown", e => {
   else if (e.key === "[" || e.key === "]") setDisplay({ lum: DISPLAY.state.lum + (e.key === "]" ? 5 : -5) });
   else if (e.key === "m" || e.key === "M") setMapRange(MAP_ORDER[(MAP_ORDER.indexOf(mapRange) + 1) % MAP_ORDER.length]);
   else if (e.key === "?") toggleHelp();
+  else if (e.key === "/") { e.preventDefault(); $("stSearch").focus(); }
   else if (e.key === "Escape") { toggleHelp(false); closeAbout(); toggleDisplay(false); }
 });
 
