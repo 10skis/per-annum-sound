@@ -153,7 +153,7 @@
 
   /* Keys row */
   .top { display: grid; gap: 10px; }
-  /* Presets 1-6, like a car radio: tap to play, hold to save */
+  /* Presets 1-12 in two rows, like a car radio: tap to play, hold to save */
   .presets { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
   .preset {
     height: 52px; min-width: 0; padding: 0 3px; border: 1px solid var(--amber-dim);
@@ -756,8 +756,8 @@
     <dl>
       <dt>SPACE</dt><dd>Play / stop</dd>
       <dt>◀ ▶</dt><dd>Previous / next station</dd>
-      <dt>1–6</dt><dd>Play a preset</dd>
-      <dt>SHIFT 1–6</dt><dd>Save this station to a preset</dd>
+      <dt>1–9 0 - =</dt><dd>Play preset 1 to 12</dd>
+      <dt>SHIFT + KEY</dt><dd>Save this station to that preset</dd>
       <dt>S</dt><dd>Sleep timer: 15, 30, 60, 90 min, off</dd>
       <dt>R</dt><dd>Random station</dd>
       <dt>T</dt><dd>Display mode: night, dusk, day</dd>
@@ -1666,7 +1666,9 @@ $("artScreen").addEventListener("pointercancel", () => { swipe = null; });
 
 /* Presets 1-6, like a car radio. Tap plays the slot; hold (or tap an empty slot) stores the
    station that's selected now. Slots 1 and 2 start as NTS 1 and 2. Kept on this device. */
-var presets = store.get("piRadioPresets", ["nts1", "nts2", null, null, null, null]);
+const PRESET_COUNT = 12;  // two rows of six
+var presets = store.get("piRadioPresets", ["nts1", "nts2"]);
+presets = presets.concat(Array(PRESET_COUNT).fill(null)).slice(0, PRESET_COUNT);  // older saves had six
 const HOLD_MS = 600;
 function shortName(id) {
   return (NAMES[id] || id).replace(/^The /, "").replace(/ Radio$/, "").toUpperCase();
@@ -1763,12 +1765,14 @@ function sleepTick() {
 }
 $("sleepBtn").addEventListener("click", cycleSleep);
 
-/* Keyboard (desktop): space play/stop, left/right tune, 1-6 presets, shift+1-6 save, S sleep. */
+/* Keyboard (desktop): space play/stop, left/right tune, presets on the number row (1-9, 0, -, = for
+   1 to 12; shift saves), S sleep. */
 document.addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
   const t = e.target;
   if (t.matches && t.matches("input, textarea, select")) return;  // the volume slider keeps its arrows
-  const slot = /^Digit([1-6])$/.exec(e.code);
+  const PRESET_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0", "Minus", "Equal"];
+  const slot = PRESET_KEYS.indexOf(e.code) + 1;
   if (e.key === " " || (e.key === "Enter" && t === $("dial"))) {
     e.preventDefault();
     if (t.blur && t !== document.body) t.blur();  // or a focused button would also click on keyup
@@ -1778,7 +1782,7 @@ document.addEventListener("keydown", e => {
     stepPlay(e.key === "ArrowRight" ? 1 : -1);
   } else if (slot) {
     e.preventDefault();
-    e.shiftKey ? savePreset(+slot[1] - 1) : pressPreset(+slot[1] - 1);
+    e.shiftKey ? savePreset(slot - 1) : pressPreset(slot - 1);
   } else if (e.key === "s" || e.key === "S") cycleSleep();
   else if (e.key === "r" || e.key === "R") randomPlay();
   else if (e.key === "t" || e.key === "T") cycleTheme();

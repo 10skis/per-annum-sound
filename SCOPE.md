@@ -117,9 +117,9 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Output switch | RADIO plays on the speakers at home; THIS DEVICE plays the stream on the phone or laptop, with lock-screen controls |
 | Away from home | Until the Pi: a no-server build on a free static host (Netlify, live at https://perannum.netlify.app). With the Pi: Tailscale private network to it |
 | Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
-| Presets | Six preset keys, car-radio style: tap to play, hold to save the current station. Kept per device for now; candidates for six physical buttons on the Pi |
+| Presets | Twelve preset keys in two rows of six, car-radio style: tap to play, hold to save the current station. Kept per device for now; the first six are candidates for physical buttons on the Pi |
 | Listening and sleep timers | Time on the current station next to ON AIR; ZZ sets a 15, 30, 60 or 90 minute sleep timer that fades out where the device allows |
-| Keyboard | Space play/stop, left/right tune, 1-6 presets, shift+1-6 save, S sleep, M map range, ? help panel |
+| Keyboard | Space play/stop, left/right tune, R random, T display mode, presets 1-12 on 1-9, 0, -, = (shift saves), S sleep, M map range, ? help panel |
 | Nav map | Dot-matrix world map (Natural Earth land data) with a marker per city; WORLD and EUROPE ranges; the world view drifts east until hovered; tap a city to list its stations |
 | Station board | Collapsible groups (NTS Live with the schedule, Infinite Mixtapes, Worldwide FM, Genre Radio, Deep Cuts); recently played as a ticker along the bottom |
 | Visualizers | Two stacked screens, each cycling on click through 11 displays (Spectrum, Waterfall, Scope, VU, Polar, Mirror, Ridges, Glyph Rain, Lissajous, Starfield, Tunnel); NO CARRIER on a flat line when stopped |

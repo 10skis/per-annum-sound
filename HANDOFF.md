@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.57 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.58 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.57 |
+| Version | v0.58 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.57 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.58 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -59,7 +59,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Phone header | The full header needs about 460 px, so below 960 px (where the unit is at most 420 wide) it shows P·A·S and drops the clock and "ON AIR". Anything wider than the screen widens the whole page on iPhone and knocks the art and tape out of line |
 | Off-air stations | The Lot Radio (`lot`) goes off air at times; its playlist then answers #EXT-X-ERROR and the page shows NO SIGNAL under the title. Check their site before calling a stream dead |
 | Testing | `dev/check_streams.py` (data and every stream, server-side) and `dev/selftest.js` (run in the page: `selfTest.core()`, `play(from, to)` in slices of 11, `layout()` per width). Neither is shipped in `web/` |
-| Display modes | `data-theme` on `<html>`: night, dusk, day (header key or T, stored as piRadioTheme, set before first paint). Day keeps every `.screen` on the night palette (dark glass windows on a cream chassis), so canvas colours never need a day version. New colours should be variables, or they'll ignore the mode |
+| Display modes | `data-theme` on `<html>`: night, dusk, day (header key or T, stored as piRadioTheme, set before first paint). Day was built before Robert approved it (he'd only asked for an opinion); it's waiting on his call. Day keeps every `.screen` on the night palette (dark glass windows on a cream chassis), so canvas colours never need a day version. New colours should be variables, or they'll ignore the mode |
 | Desktop fit | `fitDesktop()` scales `.note`, `.unit` and `.list` with CSS zoom (floor 70%) until the console fits the window height. Pointer code measuring distances must divide by `scaleOf(el)` |
 | 05 Level on phones | Shares 03's spot in `#swipe`: native scroll-snap, dots under it. `placeLevel()` moves the panel there below 960 px and back under the art above. Robert chose this over a separate panel |
 | Spectrum screens (03) | New displays go at the end of `VIS_MODES`: the saved choice is an index |
