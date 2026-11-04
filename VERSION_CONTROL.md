@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.63: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.64: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.64 | 2026-11-04 | ◀ mirrored like shuffle; 01/66 readout cut at both top corners, so the tuner row is symmetrical | [link](updates/2026-11-04-mirrored-prev-readout.md) |
 | v0.63 | 2026-11-04 | Shuffle key mirrored so its notch faces PLAY's | [link](updates/2026-11-04-mirrored-shuffle.md) |
 | v0.62 | 2026-11-04 | Visual guidelines pass: panel names without numbers, plain genre text, glow tokens, one divider less | [link](updates/2026-11-04-visual-guidelines-pass.md) |
 | v0.61 | 2026-11-04 | Phone header balanced; shuffle and PLAY/STOP chamfered like the other keys | [link](updates/2026-11-04-header-chamfer-keys.md) |

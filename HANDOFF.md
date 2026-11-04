@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.63 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.64 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.63 |
+| Version | v0.64 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.63 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.64 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -62,7 +62,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Visual guidelines | `context/visual-design.md` applies, with this project's look as the agreed exception for the console, displays, halftone, dot font and caps. Still avoid: section numbers, non-interactive pills, extra dividers, and see-through colours that aren't one of the CSS tokens (`--glow`, `--glow-soft`, `--warn-glow`, `--texture`, `--vignette`, `--scanline`, `--scrim`) |
 | Display modes | `data-theme` on `<html>`: night, dusk, bright (header key or T, stored as piRadioTheme, set before first paint). Robert rejected a light Day mode: modes change brightness, never the dark background. New colours should be variables, or they'll ignore the mode |
 | Smooth motion | Don't slide dot rows by fractions of a pixel: 2 px dots shimmer as they cross pixel lines (Ridges in v0.59). Keep rows fixed and blend values, and round positions. Measure jitter as the share of pixels changing per frame |
-| Key corners | Every key is cut top-left and bottom-right except shuffle, which is mirrored (top-right, bottom-left) so its notch faces PLAY's. Robert's choice over a one-bar row, v0.63 |
+| Key corners | Keys are cut top-left and bottom-right, except shuffle and ◀ (`.key.mirror`: top-right and bottom-left) so their notch faces the key beside them, and the 01/66 readout (`.top-cut`: both top corners) so the tuner row is symmetrical. Robert's choices, v0.63-64 |
 | Presets | Twelve in one row: six show, swipe or scroll for 7-12 (snaps by six). Two rows were tried and rejected: too tall for a laptop screen |
 | Desktop fit | `fitDesktop()` scales `.note`, `.unit` and `.list` with CSS zoom (floor 70%) until the console fits the window height. Pointer code measuring distances must divide by `scaleOf(el)` |
 | Level on phones | Shares Spectrum's spot in `#swipe`: native scroll-snap, dots under it. `placeLevel()` moves the panel there below 960 px and back under the art above. Robert chose this over a separate panel |

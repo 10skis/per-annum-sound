@@ -458,17 +458,25 @@
   .key.cham, .preset.cham { --cut: 7px; --edge: var(--amber-dim); }
   .key.cham.on, .preset.cham.on { --edge: var(--amber); }
   .preset.cham.empty { --edge: var(--line); }
-  .tuner-read.cham { --cut: 8px; }
-  /* The shuffle key is the one mirrored key: cut top-right and bottom-left, so its notch faces
-     PLAY's across the gap (Robert's call, v0.63; mockups/key-row.html). The id outranks .key:active,
-     so pressing it can't reset the corners */
-  #btnRandom {
+  /* Mirrored keys, cut top-right and bottom-left: shuffle and ◀, so their notch faces the key
+     beside them (shuffle toward PLAY, ◀ toward the readout). Chosen in v0.63-64 from
+     mockups/key-row.html. :active is listed so pressing can't reset the corners */
+  .key.mirror, .key.mirror:active {
     --edge: var(--amber-dim);
     clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
     background-image:
       linear-gradient(225deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
       linear-gradient(45deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px));
     background-position: top right, bottom left; background-size: 7px 7px; background-repeat: no-repeat;
+  }
+  /* The station readout between ◀ and ▶ is cut at both top corners, so the row is symmetrical */
+  .tuner-read.top-cut {
+    --edge: var(--line);
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+    background-image:
+      linear-gradient(135deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
+      linear-gradient(225deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1.5px), transparent calc(50% + 1.5px));
+    background-position: top left, top right; background-size: 8px 8px; background-repeat: no-repeat;
   }
   /* PLAY / STOP is one key in two halves, chamfered as one: PLAY takes the top-left cut, STOP the
      bottom-right, like every other key */
@@ -663,7 +671,7 @@
   <div class="top">
     <div class="presets" id="presets" role="group" aria-label="Presets: tap to play, hold to save the current station"></div>
     <div class="ps-row">
-      <button class="key" id="btnRandom" aria-label="Random station" title="Random station (R)">
+      <button class="key mirror" id="btnRandom" aria-label="Random station" title="Random station (R)">
         <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M2 7h5l10 10h4M2 17h5l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>
       </button>
@@ -690,7 +698,7 @@
     </div>
     <div class="dial-wrap">
       <div class="dial-row">
-        <button class="key cham" id="dialPrev" aria-label="Previous station">◀</button>
+        <button class="key mirror" id="dialPrev" aria-label="Previous station">◀</button>
         <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Station dial. Turn to change station, press to play or stop">
           <div class="dial-read"><b class="glow ghost" id="dialNum" data-ghost="88">--</b><span id="dialOf">/--</span></div>
         </div>
@@ -700,8 +708,8 @@
       <span class="label">Turn · Press</span>
     </div>
     <div class="tuner">
-      <button class="key cham" id="tunePrev" aria-label="Previous station">◀</button>
-      <button class="tuner-read cham" id="tuneRead" aria-label="Play or stop"><b class="glow ghost" id="tuneNum" data-ghost="88">--</b><span id="tuneOf">/--</span></button>
+      <button class="key mirror" id="tunePrev" aria-label="Previous station">◀</button>
+      <button class="tuner-read top-cut" id="tuneRead" aria-label="Play or stop"><b class="glow ghost" id="tuneNum" data-ghost="88">--</b><span id="tuneOf">/--</span></button>
       <button class="key cham" id="tuneNext" aria-label="Next station">▶</button>
     </div>
     <div class="tape tuner-tape" title="Tap or drag to tune"><div class="tape-run" aria-hidden="true"></div></div>
