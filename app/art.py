@@ -127,9 +127,9 @@ def placeholder(name: str, size: int = 512, city: str = "", code: str = "") -> b
         x = pitch / 2
         while x < W:
             f = 1 - min(1, math.hypot(x - cx, y - cy) / (W * .72))
-            a = .12 + f * .22
+            a = .09 + f * .17
             h = 1.2 * S * 2.6
-            d.ellipse([x - h, y - h, x + h, y + h], fill=int(255 * a * .22))
+            d.ellipse([x - h, y - h, x + h, y + h], fill=int(255 * a * .14))
             d.rectangle([x - 1.2 * S, y - 1.2 * S, x + 1.2 * S, y + 1.2 * S], fill=int(190 * a))
             x += pitch
         y += pitch

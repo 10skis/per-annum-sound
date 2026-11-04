@@ -1065,8 +1065,8 @@ function drawSigilOn(g, size, m, swell) {  // swell(x, y) in 0-1 units: how much
   const pitch = 11 * S;
   for (let y = pitch / 2; y < size; y += pitch) for (let x = pitch / 2; x < size; x += pitch) {
     const f = 1 - Math.min(1, Math.hypot(x - cx, y - cy) / (size * .72));
-    const b = swell ? Math.max(0, swell(x / size, y / size)) : 0, q = 1.2 * S * (1 + b * 1.4), a = .12 + f * .22 + b * .25;
-    g.fillStyle = `rgba(255,176,46,${(a * .22).toFixed(3)})`;
+    const b = swell ? Math.max(0, swell(x / size, y / size)) : 0, q = 1.2 * S * (1 + b * 1.4), a = .09 + f * .17 + b * .25;
+    g.fillStyle = `rgba(255,176,46,${(a * .14).toFixed(3)})`;
     g.beginPath(); g.arc(x, y, q * 2.6, 0, Math.PI * 2); g.fill();
     g.fillStyle = `rgba(190,130,42,${a.toFixed(3)})`;
     g.fillRect(x - q, y - q, 2 * q, 2 * q);
