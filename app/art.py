@@ -119,14 +119,18 @@ def placeholder(name: str, size: int = 512, city: str = "", code: str = "") -> b
     out = Image.new("L", (W, W), 0)
     d = ImageDraw.Draw(out)
     cx = cy = W / 2
-    # A faint dot matrix behind the rings, fading toward the corners
+    # A dot matrix behind the rings, glowing faintly, fading toward the corners: a soft halo under
+    # each dot, then the dot (the page's sigil draws the same)
     pitch = 11 * S
     y = pitch / 2
     while y < W:
         x = pitch / 2
         while x < W:
             f = 1 - min(1, math.hypot(x - cx, y - cy) / (W * .72))
-            d.rectangle([x - 1.2 * S, y - 1.2 * S, x + 1.2 * S, y + 1.2 * S], fill=int(18 + f * 34))
+            a = .15 + f * .27
+            h = 1.2 * S * 2.6
+            d.ellipse([x - h, y - h, x + h, y + h], fill=int(255 * a * .32))
+            d.rectangle([x - 1.2 * S, y - 1.2 * S, x + 1.2 * S, y + 1.2 * S], fill=int(190 * a))
             x += pitch
         y += pitch
     for ring in range(11):

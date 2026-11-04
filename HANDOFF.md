@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.64 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.65 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.64 |
+| Version | v0.65 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.64 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.65 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -43,7 +43,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Level displays | Eight: Trace, Meter, Needle, Goniometer, Loudness, then eye candy (Phosphor, Fluid, Reels). Goniometer is the first version, a random dot cloud with LO and HI clouds; v0.49's trace lives on as Phosphor. Eye candy is welcome here; avoid repeating the spectrum screens' displays. Fluid is a 3D dot surface with spikes; Phosphor, Goniometer and Fluid all have LO and HI side versions |
 | Art shimmer | Breathing, not flashing (v0.50): a 5.2 s ring or 4.6 s sweep every 7 to 16 s, dots swelling by up to about 40%, no highlight colour. Cover art and sigils (v0.51). Since v0.49 halftone art swells its own dots (read back from the image onto `#artDots`, image hidden only during the ripple); logos keep the `.shimmer` overlay |
 | Hold | Tap the art to hold shimmer and sigil rotation; tap the title to stop its scroll. Tap again resumes; remembered per device. About opens from the line under the title and the description, not the title |
-| Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), faint dot matrix behind. Breathes with the same ripple as cover art |
+| Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), glowing dot matrix behind (a halo under each dot, v0.65; page and art.py match). Breathes with the same ripple as cover art |
 | Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. WORLD and EUROPE ranges |
 | Signal panel | Every station gets: what's on (NTS timeline or recent tracks), day and night bar, nearby and similar, your listening |
 | Board | Collapsible groups. Columns: NTS Live and Infinite Mixtapes; Terrascan FM and Genre Radio; Deep Cuts and Talk Radio (`GROUP_COL`). Two columns 960–1279 px (third column under the second), three from 1280. Recently played ticker above the columns, hover lights the row |
