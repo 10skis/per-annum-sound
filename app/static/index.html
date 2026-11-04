@@ -136,7 +136,7 @@
   .next .chips button:hover, .next .chips button:focus-visible { color: var(--amber); border-color: var(--amber); background: var(--amber-ghost); }
   .next .chips button small { color: var(--amber-dim); font-size: 15px; margin-left: 4px; }
   .next .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 21px/1.2 var(--dot); }
-  .next .dn-status { font: 19px/1 var(--dot); color: var(--amber-mid); margin-top: -4px; }
+  .next .dn-status { font: 19px/1 var(--dot); color: var(--amber-mid); }
   .next .dn { display: grid; grid-template-columns: repeat(48, 1fr); gap: 2px; height: 12px; }
   .next .dn i { background: var(--amber-ghost); }
   .next .dn i.day { background: #9c6c22; }
@@ -2967,7 +2967,7 @@ function drawNext() {
   }
   if (st.geo) parts.push(dayNight(st));
   if (st.kind !== "nts_live") parts.push(nearbyChips(id, st));
-  parts.push(`<div class="label">Your listening here</div><div class="stats">${listenSummary(id)}</div>`);
+  parts.push(`<div class="stats">${listenSummary(id)}</div>`);  // no heading: the stats name themselves
   box.innerHTML = parts.filter(Boolean).map(x => `<div class="nsec">${x}</div>`).join("");
   box.querySelectorAll("[data-cal]").forEach(b => b.onclick = () => { const [ch, i] = b.dataset.cal.split("|"); downloadReminder(ch, schedule[ch][+i]); });
   box.querySelectorAll("[data-play]").forEach(b => b.onclick = () => act.play(b.dataset.play));
@@ -3051,7 +3051,7 @@ function dayNight(st) {
     const x = k / 2;
     return `<i class="${lit(x + .25) ? "day" : ""}${Math.floor(h * 2) === k ? " now" : ""}"></i>`;
   }).join("");
-  return `<div class="label">Day &amp; night</div><div class="dn-status">${status}</div><div class="dn">${cells}</div>` +
+  return `<div class="dn-status">${status}</div><div class="dn">${cells}</div>` +
     `<div class="dn-scale"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>`;
 }
 
