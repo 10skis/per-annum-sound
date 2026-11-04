@@ -1989,8 +1989,10 @@ function drawTapes(idx) {
 }
 
 /* Rotating-window dial: the glyph ring turns so the current station sits under the caret at the
-   top; only the six either side show, fading with distance, so it reads the same at any count. */
-const RING_STEP = 21, RING_SHOW = 6;
+   top; only the six either side show, fading with distance, so it reads the same at any count.
+   The thirteen share the whole circle evenly (v0.75; it was an arc open at the bottom, which
+   made the ring look like it sat high around the number). */
+const RING_SHOW = 6, RING_STEP = 360 / (2 * RING_SHOW + 1);
 function drawRing(idx) {
   const n = order.length;
   [...$("dial").querySelectorAll("i")].forEach((d, i) => {

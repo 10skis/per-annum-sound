@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.74: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.75: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.75 | 2026-11-04 | Dial's visible glyphs spread evenly round the full ring, so it sits centred on the number | [link](updates/2026-11-04-dial-full-ring.md) |
 | v0.74 | 2026-11-04 | Signal panel drops the Day & night and Your listening here headings | [link](updates/2026-11-04-signal-labels-trimmed.md) |
 | v0.73 | 2026-11-04 | Galaxy zooms and pans like the maps; no borders or geography on phone USA/Europe | [link](updates/2026-11-04-galaxy-zoom-phone-geo.md) |
 | v0.72 | 2026-11-04 | NGT is Solarized dark; DSK panel corners drawn again; US state lines drawn like Europe's borders | [link](updates/2026-11-04-solarized-night-dusk-corners.md) |
