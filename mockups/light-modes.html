@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Display Mode Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* The real app (../app/web) in two frames, desktop and phone, with each option's CSS injected.
+     Serve from projects/pi-radio: python3 -m http.server 8090, then /mockups/light-modes.html */
+  :root { --bg: #0b0906; --amber: #ffb02e; --amber-mid: #d08c26; --amber-dim: #9c6c22; --line: #4a3616; }
+  body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: "Saira Condensed", sans-serif; padding: 24px 16px; }
+  h1 { font: 400 16px "Michroma", sans-serif; letter-spacing: .2em; color: var(--amber); margin: 0 0 6px; }
+  p.lead { color: var(--amber-dim); margin: 0 0 18px; font-size: 17px; max-width: 900px; }
+  .picks { display: flex; flex-wrap: wrap; gap: 28px; margin-bottom: 8px; }
+  .picks div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .picks span { font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--amber-dim); margin-right: 4px; }
+  button { font: 20px "VT323", monospace; color: var(--amber-mid); background: none; border: 1px solid var(--amber-dim); padding: 3px 10px; cursor: pointer; }
+  button.on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .why { min-height: 2.6em; font-size: 17px; color: var(--amber); margin: 10px 0 16px; max-width: 900px; }
+  .frames { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .desk { width: 1008px; height: 630px; overflow: hidden; border: 1px solid var(--line); }
+  .desk iframe { width: 1440px; height: 900px; transform: scale(.7); transform-origin: 0 0; border: 0; }
+  .phone { width: 375px; height: 812px; border: 1px solid var(--line); }
+  .phone iframe { width: 375px; height: 812px; border: 0; }
+  @media (max-width: 1100px) { .desk { width: 100%; height: 56vw; } .desk iframe { transform: scale(calc(1 / 1440 * 100vw * .9)); } }
+</style>
+</head>
+<body>
+<h1>DISPLAY MODES</h1>
+<p class="lead">The real app with each option applied. Pick one light mode (A, B or C), and say whether the reworked dusk and bright work. The frames are live: tap around.</p>
+<div class="picks">
+  <div><span>Now</span><button data-m="night">NGT</button><button data-m="dusk">DSK</button><button data-m="bright">BRT</button></div>
+  <div><span>Reworked</span><button data-m="mk-dusk">DSK</button><button data-m="mk-bright">BRT</button></div>
+  <div><span>Light</span><button data-m="mk-paper">A · PAPER</button><button data-m="mk-solar">B · SOLAR</button><button data-m="mk-lcd">C · LCD</button></div>
+</div>
+<div class="why" id="why"></div>
+<div class="frames">
+  <div class="desk"><iframe id="fd" src="../app/web/index.html"></iframe></div>
+  <div class="phone"><iframe id="fp" src="../app/web/index.html"></iframe></div>
+</div>
+
+<style id="variants">
+  /* Mockup only: show the art and title as if playing, so options compare fairly without audio */
+  .off img, .off .line, .off .detail, .off .sigil { opacity: 1 !important; }
+  /* ---- Reworked DUSK: the dim end. Lower, warmer and redder than night, faint glows, displays
+     turned down, for a dark room or the bedside. ---- */
+  :root[data-theme="mk-dusk"] { --bg: #0c0705; --screen: #060302; --amber: #e8862e; --amber-mid: #b0662a; --amber-dim: #81501f;
+    --amber-ghost: #1d1008; --line: #3a2210; --glow: #e8862e44; --glow-soft: #e8862e30; --texture: #e8862e08; --vignette: #00000099; }
+  [data-theme="mk-dusk"] .screen canvas:not(.sigil) { filter: brightness(.72) sepia(.35) hue-rotate(-12deg) saturate(1.3); }
+  [data-theme="mk-dusk"] .art img, [data-theme="mk-dusk"] .sigil { filter: brightness(.75) sepia(.35) hue-rotate(-12deg) saturate(1.3); }
+  [data-theme="mk-dusk"] .ghost::before { color: #1f120a; }
+
+  /* ---- Reworked BRIGHT: the loud end of the dark modes. Pure black, the brightest amber, strong
+     glows, no vignette or scanlines, for a lit room when you still want dark. ---- */
+  :root[data-theme="mk-bright"] { --bg: #000; --screen: #000; --amber: #ffc24a; --amber-mid: #ffb43a; --amber-dim: #e0a040;
+    --amber-ghost: #33240c; --line: #8a6428; --glow: #ffc24acc; --glow-soft: #ffc24a99; --texture: #ffc24a10; }
+  [data-theme="mk-bright"] .screen canvas:not(.sigil) { filter: brightness(1.6) contrast(1.15); }
+  [data-theme="mk-bright"] .art img, [data-theme="mk-bright"] .sigil { filter: brightness(1.3) contrast(1.1) drop-shadow(0 0 3px var(--glow-soft)); }
+  [data-theme="mk-bright"] body::before, [data-theme="mk-bright"] body::after { opacity: 0; }
+  [data-theme="mk-bright"] .ghost::before { color: #2a1d0a; }
+
+  /* ---- A · PAPER: hardware in daylight. Warm paper chassis, ink-brown lettering, burnt amber for
+     lit keys; every display stays dark glass with its amber glow. ---- */
+  :root[data-theme="mk-paper"] { --bg: #ebe2cf; --amber: #b0500c; --amber-mid: #3f2e1a; --amber-dim: #6e5840; --amber-ghost: #ddd1b8;
+    --line: #b4a07c; --glow: #00000000; --glow-soft: #00000000; --texture: #3f2e1a12; --vignette: #6b4a2022; --scanline: #00000000;
+    --scrim: #ebe2cfeb; --screen: #0b0906; }
+  [data-theme="mk-paper"] .screen { --amber: #ffb02e; --amber-mid: #d08c26; --amber-dim: #9c6c22; --amber-ghost: #241907;
+    --line: #3a2a14; --glow: #ffb02e88; --glow-soft: #ffb02e5c; }
+  [data-theme="mk-paper"] .ghost::before { color: #ddd1b8; }
+  [data-theme="mk-paper"] .screen .ghost::before { color: #2a1d0a; }
+
+  /* ---- B · SOLAR: Solarized light, the day twin of NGT. base3 chassis, base2 glass, base01
+     lettering, Solarized orange as the accent. The displays turn light too: dark ink on pale glass. ---- */
+  :root[data-theme="mk-solar"] { --bg: #fdf6e3; --amber: #cb4b16; --amber-mid: #586e75; --amber-dim: #657b83; --amber-ghost: #eee8d5;
+    --line: #d3cbb4; --glow: #00000000; --glow-soft: #00000000; --texture: #586e7510; --vignette: #00000000; --scanline: #00000000;
+    --scrim: #fdf6e3eb; --screen: #0b0906; }
+  [data-theme="mk-solar"] .screen { background-color: #f1ebd9; }
+  [data-theme="mk-solar"] .screen canvas, [data-theme="mk-solar"] .art img { filter: invert(1) hue-rotate(180deg) sepia(.25) saturate(1.4); }
+  [data-theme="mk-solar"] .ghost::before { color: #eee8d5; }
+  [data-theme="mk-solar"] .sigil { filter: invert(1) hue-rotate(180deg) sepia(.25) saturate(1.4); }
+
+  /* ---- C · LCD: built for sun. A grey reflective-LCD look: pale grey-green glass with near-black
+     ink, the highest contrast of the three. Amber stays on the keys. ---- */
+  :root[data-theme="mk-lcd"] { --bg: #dcd9cf; --amber: #a84300; --amber-mid: #1f221b; --amber-dim: #4c5045; --amber-ghost: #c9c6ba;
+    --line: #9d9a8e; --glow: #00000000; --glow-soft: #00000000; --texture: #1f221b10; --vignette: #00000000; --scanline: #00000000;
+    --scrim: #dcd9cfeb; --screen: #0b0906; }
+  [data-theme="mk-lcd"] .screen { background-color: #c8cdb8; --amber: #10130c; --amber-mid: #1f241a; --amber-dim: #4a5240; --amber-ghost: #b8bea6;
+    --line: #8e957d; }
+  [data-theme="mk-lcd"] .screen canvas, [data-theme="mk-lcd"] .art img, [data-theme="mk-lcd"] .sigil {
+    filter: grayscale(1) invert(1) contrast(1.4) sepia(.35) hue-rotate(35deg) brightness(.92); mix-blend-mode: multiply; }
+  [data-theme="mk-lcd"] .ghost::before { color: #c9c6ba; }
+  [data-theme="mk-lcd"] .screen .ghost::before { color: #b8bea6; }
+</style>
+<script>
+  const WHY = {
+    night: "Night as it is now: Solarized dark.",
+    dusk: "Dusk as it is now: near-black, everything a little lifted. Too close to Bright.",
+    bright: "Bright as it is now: near-black, amber turned up.",
+    "mk-dusk": "Dusk becomes the dim end: darker, warmer, redder, faint glows and displays turned down. For a dark room or the bedside.",
+    "mk-bright": "Bright becomes the loud end of dark: pure black, brightest amber, strong glows, no vignette or scanlines.",
+    "mk-paper": "A. Hardware in daylight: paper chassis, ink lettering, displays stay dark glass with amber. Keeps the visualizers as they are; the screens are still dark in sun.",
+    "mk-solar": "B. Solarized light, the day twin of NGT: cream chassis and pale glass, dark ink, orange accent. Everything goes light, displays included.",
+    "mk-lcd": "C. Reflective LCD: grey chassis, grey-green glass, near-black ink. Highest contrast, best in direct sun; amber only on keys and lit items.",
+  };
+  const css = document.getElementById("variants").textContent;
+  let mode = "mk-solar";
+  function apply(f) {
+    const d = f.contentDocument; if (!d || !d.documentElement) return;
+    if (!d.getElementById("mkv")) { const s = d.createElement("style"); s.id = "mkv"; s.textContent = css; d.head.appendChild(s); }
+    d.documentElement.dataset.theme = mode;
+    const b = d.getElementById("modeBtn"); if (b) b.textContent = { night: "NGT", dusk: "DSK", bright: "BRT", "mk-dusk": "DSK", "mk-bright": "BRT" }[mode] || "DAY";
+  }
+  function pick(m) {
+    mode = m; document.getElementById("why").textContent = WHY[m];
+    document.querySelectorAll("[data-m]").forEach(b => b.classList.toggle("on", b.dataset.m === m));
+    ["fd", "fp"].forEach(id => apply(document.getElementById(id)));
+  }
+  document.querySelectorAll("[data-m]").forEach(b => b.onclick = () => pick(b.dataset.m));
+  ["fd", "fp"].forEach(id => { const f = document.getElementById(id); f.addEventListener("load", () => { apply(f); setTimeout(() => apply(f), 1500); }); });
+  pick(mode);
+</script>
+</body>
+</html>
