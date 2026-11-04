@@ -133,7 +133,11 @@ function prepare(frame) {
     g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`ROT ${String(Math.round(((-spin * 180 / Math.PI) % 360 + 360) % 360)).padStart(3, "0")}°`, W - 2, H - 1);
   }
 }
-document.querySelectorAll("iframe").forEach(f => f.addEventListener("load", () => prepare(f)));
+document.querySelectorAll("iframe").forEach(f => f.addEventListener("load", () => {
+  let ok = false; try { ok = !!f.contentDocument.getElementById("navMap"); } catch (e) {}
+  if (ok) return prepare(f);
+  document.querySelector("p").textContent = "This mockup needs the app beside it. Build with build_static.py, copy this file into app/web, serve that folder (python3 -m http.server 8091 --directory web) and open http://localhost:8091/galaxy-map.html.";
+}));
 </script>
 </body>
 </html>
