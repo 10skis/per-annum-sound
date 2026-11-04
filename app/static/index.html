@@ -2075,7 +2075,8 @@ function mapBaseLayer(c, w, h, dpr) {
   return off;
 }
 /* Geography over the USA and EUROPE ranges, from static/geo.js (make_geo.py): lakes and rivers
-   etched out of the land dots; country borders, and US state and Canadian province lines, dashed alike. Drawn
+   etched out of the land dots; country borders, and US state and Canadian province lines, dashed alike.
+   On phones only the lakes and a fine dotted trace of country borders, to stay as plain as TERRA. Drawn
    once into the cached base layer. */
 function drawGeo(g, r, w, h) {
   const path = list => {
@@ -2090,9 +2091,32 @@ function drawGeo(g, r, w, h) {
   const glass = cssVar("--screen");
   path(GEO.lakes); g.fillStyle = glass; g.fill();
   g.setLineDash([1, 2]); g.strokeStyle = "#86601f"; g.lineWidth = 1; g.stroke();
-  g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke();
-  g.setLineDash([4, 2]); path(GEO.states.concat(GEO.borders)); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke();
+  const phone = w < 460;  // phones keep it as plain as TERRA: lakes and country borders only
+  if (!phone) { g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke(); }
+  if (phone) { g.setLineDash([1, 2]); path(GEO.borders); g.strokeStyle = "#9c6c22"; g.lineWidth = .9; g.stroke(); }  // a fine dotted trace, not a line
+  else { g.setLineDash([4, 2]); path(GEO.states.concat(GEO.borders)); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke(); }
   g.restore();
+}
+/* One frame of the eased click-to-zoom and its panning, shared by the maps and the galaxy.
+   Returns the zoom and the offset that maps content to the frame: screen = content * z + t. */
+function zoomStep(t, w, h) {
+  const mdt = mapT ? Math.min(100, t - mapT) / 1000 : 0;
+  mapT = t;
+  mapZ.z += (mapZ.target - mapZ.z) * Math.min(1, mdt * 9);  // eased zoom
+  if (Math.abs(mapZ.target - mapZ.z) < .002) mapZ.z = mapZ.target;
+  const z = mapZ.z;
+  if (mapZ.target === 1) { const k = 1 - Math.min(1, mdt * 9); mapZ.px *= k; mapZ.py *= k; }  // panning eases out with the zoom
+  // Keep the zoomed view covering the frame: vertically always, horizontally unless the world view (which wraps)
+  const tx0 = mapZ.fx * (1 - z), ty0 = mapZ.fy * (1 - z);
+  mapZ.py = Math.max(h * (1 - z) - ty0, Math.min(-ty0, mapZ.py));
+  if (mapRange !== "world") mapZ.px = Math.max(w * (1 - z) - tx0, Math.min(-tx0, mapZ.px));
+  return { mdt, z, tx: tx0 + mapZ.px, ty: ty0 + mapZ.py };
+}
+/* Click on empty space: zoom in about that point, or back out if already in */
+function toggleZoom(x, y) {
+  if (mapZ.target > 1) mapZ.target = 1;
+  else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; mapZ.px = mapZ.py = 0; } mapZ.target = mapRange === "galaxy" ? GAL_ZOOM : MAP_ZOOM; }
+  $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "pan-y";  // zoomed: any finger drag pans; unzoomed: only sideways
 }
 function drawMap(t) {
   if (mapRange === "galaxy") return drawGalaxy(t);
@@ -2104,17 +2128,7 @@ function drawMap(t) {
   const g = c.getContext("2d"), r = RANGES[mapRange];
   if (mapRange === "world" && !mapHover && !reduceMotion && mapT && mapZ.target === 1 && mapZ.z < 1.01)
     mapPan = (mapPan - Math.min(100, t - mapT) / 1000 * PAN_DEG_PER_S) % 360;  // content drifts left; long gaps don't jump
-  const mdt = mapT ? Math.min(100, t - mapT) / 1000 : 0;
-  mapT = t;
-  mapZ.z += (mapZ.target - mapZ.z) * Math.min(1, mdt * 9);  // eased zoom
-  if (Math.abs(mapZ.target - mapZ.z) < .002) mapZ.z = mapZ.target;
-  const z = mapZ.z;
-  if (mapZ.target === 1) { const k = 1 - Math.min(1, mdt * 9); mapZ.px *= k; mapZ.py *= k; }  // panning eases out with the zoom
-  // Keep the zoomed map covering the frame: vertically always, horizontally unless the world view (which wraps)
-  const tx0 = mapZ.fx * (1 - z), ty0 = mapZ.fy * (1 - z);
-  mapZ.py = Math.max(h * (1 - z) - ty0, Math.min(-ty0, mapZ.py));
-  if (mapRange !== "world") mapZ.px = Math.max(w * (1 - z) - tx0, Math.min(-tx0, mapZ.px));
-  const tx = tx0 + mapZ.px, ty = ty0 + mapZ.py, zx = v => v * z + tx, zy = v => v * z + ty;
+  const { mdt, z, tx, ty } = zoomStep(t, w, h), zx = v => v * z + tx, zy = v => v * z + ty;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
   const base = mapBaseLayer(c, w, h, dpr);
@@ -2219,16 +2233,14 @@ function setMapRange(rng) {
 }
 function inRange(r, ci) { return ci.lon >= r.lon0 && ci.lon <= r.lon1 && ci.lat <= r.lat0 && ci.lat >= r.lat1; }
 $("navMap").addEventListener("click", e => {
-  if (mapRange === "galaxy") { const id = galaxyHit(e); if (id) act.play(id); return; }
   if (mapDragMoved) { mapDragMoved = false; return; }  // that was the end of a pan, not a click
   const b = $("navMap").getBoundingClientRect(), k = scaleOf($("navMap")), x = (e.clientX - b.left) / k, y = (e.clientY - b.top) / k;
+  if (mapRange === "galaxy") { const id = galaxyHit(e); if (id) act.play(id); else toggleZoom(x, y); return; }
   let best = null, bd = 16;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
   if (!best) {
     mapSel = null; drawMapFoot();
-    if (mapZ.target > 1) mapZ.target = 1;
-    else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; mapZ.px = mapZ.py = 0; } mapZ.target = MAP_ZOOM; }
-    $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "pan-y";  // zoomed: any finger drag pans the map; unzoomed: only sideways
+    toggleZoom(x, y);
     return;
   }
   if (best.cities.length > 1 && mapRange === "world") {
@@ -2242,7 +2254,7 @@ $("rngWorld").addEventListener("click", () => setMapRange("world"));
 $("navMap").addEventListener("pointerenter", () => { mapHover = true; });
 $("navMap").addEventListener("pointerleave", () => { mapHover = false; mapHoverKey = null; galHover = null; });
 $("navMap").addEventListener("pointermove", e => {
-  if (mapRange === "galaxy") { galHover = galaxyHit(e); $("navMap").style.cursor = galHover ? "pointer" : "default"; return; }
+  if (mapRange === "galaxy") { galHover = galaxyHit(e); $("navMap").style.cursor = galHover ? "pointer" : mapZ.target > 1 ? (mapDrag ? "grabbing" : "grab") : "zoom-in"; return; }
   const b = $("navMap").getBoundingClientRect(), k = scaleOf($("navMap")), x = (e.clientX - b.left) / k, y = (e.clientY - b.top) / k;
   let best = null, bd = 14;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
@@ -2259,7 +2271,7 @@ function panMap(dx, dy) {
   mapZ.py += dy;  // clamped when drawn
 }
 $("navMap").addEventListener("pointerdown", e => {
-  if (e.button > 0 || mapRange === "galaxy") return;
+  if (e.button > 0) return;
   mapDrag = { x: e.clientX, y: e.clientY, moved: false };
   try { $("navMap").setPointerCapture(e.pointerId); } catch (_) {}
 });
@@ -2274,7 +2286,7 @@ $("navMap").addEventListener("pointerup", () => { mapDragMoved = !!(mapDrag && m
 $("navMap").addEventListener("pointercancel", () => { mapDrag = null; });
 $("navMap").addEventListener("wheel", e => {
   // Not zoomed: only a sideways swipe moves the map; up and down still scroll the page
-  if (mapRange === "galaxy" || (mapZ.target <= 1 && Math.abs(e.deltaX) <= Math.abs(e.deltaY))) return;
+  if (mapZ.target <= 1 && (mapRange === "galaxy" || Math.abs(e.deltaX) <= Math.abs(e.deltaY))) return;  // the galaxy has nothing to pan until zoomed
   e.preventDefault();
   panMap(-e.deltaX, -e.deltaY);
 }, { passive: false });
@@ -2286,10 +2298,13 @@ $("rngGalaxy").addEventListener("click", () => setMapRange("galaxy"));
    mixtapes ring the bulge; each other group is one arm, as bright as the group is big, with its
    stations placed along it by longitude so a city's stations cluster, joined like a
    constellation. The disc is a halftone on a fixed grid: as it turns the dots grow and shrink in
-   place, never slide. Its light is worked out once on a polar table and looked up each frame. */
+   place, never slide; zooming works the same way, the grid staying put while the disc grows under it.
+   Its light is worked out once on a polar table and looked up each frame. Click empty space to zoom
+   (2.6×), drag or scroll to move, click again to come back out, as on the maps. */
 const GAL_ARMS = ["Terrascan FM", "Deep Cuts", "Genre Radio", "Talk Radio"];  // the big arms opposite each other
 const GAL_LABEL = { "Terrascan FM": "TERRASCAN", "Genre Radio": "GENRE", "Deep Cuts": "DEEP CUTS", "Talk Radio": "TALK" };
 const GAL_PHASE = [0, Math.PI, Math.PI / 2, Math.PI * 1.5], TAU = Math.PI * 2;
+const GAL_ZOOM = 2.6;  // deeper than the maps: the arms' stations sit close together
 const GAL_WIND = .52 / Math.tan(14 * Math.PI / 180), GAL_R0 = .14, GAL_BAR = .17, GAL_NR = 220, GAL_NA = 1024, GAL_RMAX = 1.12;
 let GAL = null, galHover = null, galPts = [];
 const galArm = (k, r) => GAL_PHASE[k] + Math.log(Math.max(r, GAL_R0) / GAL_R0) * GAL_WIND;
@@ -2351,7 +2366,8 @@ function drawGalaxy(t) {
   const g = c.getContext("2d"), css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
   const A = v("--amber"), MID = v("--amber-mid"), DIM = v("--amber-dim"), GHOST = v("--amber-ghost"), LINE = v("--line"), BG = v("--bg");
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-  const tilt = .5, R = Math.min(W * .44, (H - 30) * .5 / tilt), cx = W / 2, cy = H / 2 + 3;
+  const { z, tx, ty } = zoomStep(t, W, H);
+  const tilt = .5, R0 = Math.min(W * .44, (H - 30) * .5 / tilt), R = R0 * z, cx = W / 2 * z + tx, cy = (H / 2 + 3) * z + ty;  // zoom folded into centre and radius
   const spin = reduceMotion ? 0 : (t / 1000) * TAU / 300;  // one turn every five minutes
   const at = (r, a) => [cx + R * r * Math.cos(a + spin), cy + R * r * Math.sin(a + spin) * tilt];
   // Orbit rings and bearing ticks, like the map's plotter frame
@@ -2400,6 +2416,7 @@ function drawGalaxy(t) {
   GAL_ARMS.forEach((name, k) => {
     const tip = galPts.filter(p => p.k === k).sort((a, b) => b.r - a.r)[0]; if (!tip) return;
     const [x, y] = at(tip.r + .1, tip.a + .08);
+    if (z > 1.01 && (x < 0 || x > W || y < 0 || y > H)) return;  // zoomed: an arm whose tip is off-frame goes unlabelled
     g.textAlign = x < cx ? "right" : "left";
     g.fillText(`${GAL_LABEL[name]} ${GAL.counts[k]}`, Math.max(2, Math.min(W - 2, x)), Math.max(16, Math.min(H - 14, y)));
   });
@@ -2416,7 +2433,7 @@ function drawGalaxy(t) {
   }
   // Plotter corners
   g.font = "12px VT323, monospace"; g.fillStyle = DIM;
-  g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${galPts.length} STARS · ${W < 400 ? "SBC" : "SBC · 14° PITCH"}`, 2, 1);
+  g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${galPts.length} STARS · ${W < 400 ? "SBC" : "SBC · 14° PITCH"}${z > 1.01 ? `  ×${z.toFixed(1)}` : ""}`, 2, 1);
   g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`ROT ${String(Math.round((spin * 180 / Math.PI) % 360)).padStart(3, "0")}°`, W - 2, H - 1);
 }
 function geoText(geo) {

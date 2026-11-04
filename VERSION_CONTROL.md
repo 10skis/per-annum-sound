@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.72: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.73: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.73 | 2026-11-04 | Galaxy zooms and pans like the maps; phone USA/Europe simplified to lakes and faint borders | [link](updates/2026-11-04-galaxy-zoom-phone-geo.md) |
 | v0.72 | 2026-11-04 | NGT is Solarized dark; DSK panel corners drawn again; US state lines drawn like Europe's borders | [link](updates/2026-11-04-solarized-night-dusk-corners.md) |
 | v0.71 | 2026-11-04 | Borders, state lines, rivers and lakes on USA and EUROPE | [link](updates/2026-11-04-map-geography.md) |
 | v0.70 | 2026-11-04 | Map ranges USA, EUROPE, TERRA, GALAXY; TERRA zooms to USA or EUROPE; galaxy view built in | [link](updates/2026-11-04-map-usa-terra-galaxy.md) |
