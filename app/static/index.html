@@ -2573,20 +2573,23 @@ function drawPhosphor(g, w, h, t, dt) {
   b.globalCompositeOperation = "source-over";
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
   const lo = avg(visLevels.slice(0, 6)), mid = avg(visLevels.slice(6, 16)), hi = avg(visLevels.slice(16));
-  const cx = w / 2, cy = h / 2 - 5, s = Math.min(w, h - 12) * .46, width = .4 + hi * 1.6, TAU = Math.PI * 2;
+  // Size from the room there is: the diamond fills the height above the correlation bar, so a
+  // short, wide panel (a big window) gets a smaller figure, but drawn to its own scale
+  const cx = w / 2, cy = (h - 12) / 2, s = Math.max(10, Math.min(w * .3, (h - 14) / 2 * .94)), width = .4 + hi * 1.6, TAU = Math.PI * 2;
   const pts = [];
   let sm = 0, ss = 0;
   for (let i = 0; i < 240; i++) {
-    const tau = t / 1000 + i / 240 * .05;  // 50 ms of "audio", sliding with time
+    const tau = t / 1000 + i / 240 * .025;  // 25 ms of "audio", sliding with time: few enough turns to read as a figure
     const m = lo * Math.sin(tau * TAU * 47) + mid * .7 * Math.sin(tau * TAU * 196 + .4) + hi * .4 * Math.sin(tau * TAU * 523);
     const sd = width * (mid * .6 * Math.sin(tau * TAU * 151 + t / 900) + hi * .5 * Math.sin(tau * TAU * 607 + t / 400) + lo * .25 * Math.sin(tau * TAU * 31));
     sm += m * m; ss += sd * sd;
-    pts.push([cx + Math.tanh(sd) * s * .95, cy - Math.tanh(m) * s * .95]);
+    pts.push([cx + Math.tanh(sd * 1.25) * s * .95, cy - Math.tanh(m * .6) * s * .95]);  // sides opened up and mid eased: not a tall streak, not a square block
   }
-  b.strokeStyle = "#ffb02e"; b.lineWidth = 1.4; b.lineJoin = "round"; b.shadowColor = "#ffb02e"; b.shadowBlur = 8;
+  const glow = Math.max(2, Math.min(8, s * .14));  // a small figure gets a small glow, or it blurs into a blob
+  b.strokeStyle = "#ffb02e"; b.lineWidth = s < 30 ? 1 : 1.4; b.lineJoin = "round"; b.shadowColor = "#ffb02e"; b.shadowBlur = glow;
   b.beginPath(); pts.forEach(([x, y], i) => i ? b.lineTo(x, y) : b.moveTo(x, y)); b.stroke();
   b.shadowBlur = 0; b.fillStyle = "#ffe3b0";
-  for (let i = 0; i < pts.length; i += 12) b.fillRect(pts[i][0] - 1, pts[i][1] - 1, 2, 2);  // bright beads along the trace
+  if (s >= 30) for (let i = 0; i < pts.length; i += 12) b.fillRect(pts[i][0] - 1, pts[i][1] - 1, 2, 2);  // bright beads along the trace
   // Grid: the diamond and its axes, with labels
   g.fillStyle = "#241907";
   for (let i = -s; i <= s; i += 5) { g.fillRect(cx + i, cy - (s - Math.abs(i)), 2, 2); g.fillRect(cx + i, cy + (s - Math.abs(i)), 2, 2); }
@@ -2594,18 +2597,18 @@ function drawPhosphor(g, w, h, t, dt) {
   g.fillStyle = "#9c6c22"; g.textAlign = "center";
   g.fillText("M", cx, cy - s - 2); g.fillText("L", cx - s * .55, cy - s * .55); g.fillText("R", cx + s * .55, cy - s * .55);
   // LO and HI traces either side, where there's room: the bass and the treble alone
-  const side = (w - 2 * s) / 2, r = Math.min(side * .36, s * .5);
-  if (r >= 14) {
+  const side = (w - 2 * s) / 2, r = Math.min(side * .36, s * .6);
+  if (r >= 8) {
     [[cx - s - side / 2, "LO", .05, tau => [Math.sin(tau * TAU * 47) * (.3 + lo), (.2 + lo * .5) * Math.sin(tau * TAU * 31 + t / 900)]],
      [cx + s + side / 2, "HI", .022, tau => [Math.sin(tau * TAU * 150) * (.3 + hi), (.3 + hi) * Math.sin(tau * TAU * 200 + t / 500)]]  // 3:4
     ].forEach(([x0, name, win, fn]) => {
       g.fillStyle = "#241907";
       for (let i = -r; i <= r; i += 4) { g.fillRect(x0 + i, cy - (r - Math.abs(i)), 2, 2); g.fillRect(x0 + i, cy + (r - Math.abs(i)), 2, 2); }
-      g.fillStyle = "#9c6c22"; g.fillText(name, x0, cy + r + 12);
-      b.strokeStyle = "#ffb02e"; b.lineWidth = 1.2; b.shadowColor = "#ffb02e"; b.shadowBlur = 6;
+      g.fillStyle = "#9c6c22"; g.fillText(name, x0, Math.min(cy + r + 12, h - 12));  // kept clear of the correlation bar
+      b.strokeStyle = "#ffb02e"; b.lineWidth = 1.2; b.shadowColor = "#ffb02e"; b.shadowBlur = Math.max(1.5, Math.min(6, r * .2));
       b.beginPath();
       for (let i = 0; i < 120; i++) {
-        const [m, sd] = fn(t / 1000 + i / 120 * win), x = x0 + Math.tanh(sd * 1.2) * r * .95, y = cy - Math.tanh(m * 1.2) * r * .95;
+        const [m, sd] = fn(t / 1000 + i / 120 * win), x = x0 + Math.tanh(sd * 1.4) * r * .95, y = cy - Math.tanh(m * 1) * r * .95;
         i ? b.lineTo(x, y) : b.moveTo(x, y);
       }
       b.stroke(); b.shadowBlur = 0;
