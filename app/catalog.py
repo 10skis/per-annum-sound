@@ -22,4 +22,6 @@ def load(path: Path) -> dict:
                 st["city"] = p[2] if len(p) > 2 else st["place"]
             city = st.get("city") or st["place"]
             st["code"] = codes.get(city) or "".join(ch for ch in city if ch.isalpha())[:3].upper()
+        # Each group's list (and the dial) runs by place A to Z, then name; Online stations last
+        g["stations"].sort(key=lambda st: (st["place"] == "Online", st["place"].lower(), st["name"].lower()))
     return data

@@ -1,4 +1,5 @@
-# Station list for Pi Radio. Order here is the order the dial steps through.
+# Station list for Pi Radio. Within each group the app sorts stations by place, A to Z, then by
+# name, with Online last; that is also the order the dial steps through.
 # kinds:
 #   nts_live     NTS Channel 1/2. Show info and art come from the NTS live feed.
 #   nts_mixtape  NTS Infinite Mixtape. Title and art come from the NTS mixtapes feed by alias.
@@ -39,6 +40,19 @@ places:
   Pittsburgh: [40.44, -80.00]
   Vancouver: [49.28, -123.12]
   Dublin: [53.35, -6.26]
+  Melbourne: [-37.81, 144.96]
+  Rotterdam: [51.92, 4.48]
+  Lyon: [45.76, 4.84]
+  Kyiv: [50.45, 30.52]
+  Rio de Janeiro: [-22.91, -43.17]
+  Buenos Aires: [-34.60, -58.38]
+  Ocho Rios: [18.41, -77.10]
+  Lisbon: [38.72, -9.14]
+  Cape Town: [-33.92, 18.42]
+  Montreal: [45.50, -73.57]
+  Mexico City: [19.43, -99.13]
+  Warsaw: [52.23, 21.01]
+  Tokyo: [35.68, 139.69]
 
 # Airport-style code for each map label, shown on the map and in the middle of the sigil.
 # A label not listed falls back to its first three letters.
@@ -70,6 +84,19 @@ codes:
   Pittsburgh: PIT
   Vancouver: YVR
   Dublin: DUB
+  Melbourne: MEL
+  Rotterdam: RTM
+  Lyon: LYS
+  Kyiv: KYV  # KBP is the airport; KYV reads better, like LDN
+  Rio de Janeiro: RIO
+  Buenos Aires: BUE
+  Ocho Rios: OCJ
+  Lisbon: LIS
+  Cape Town: CPT
+  Montreal: YUL
+  Mexico City: MEX
+  Warsaw: WAW
+  Tokyo: TYO
 
 # Time zone for each place, for the local-time readout.
 timezones:
@@ -85,6 +112,19 @@ timezones:
   Pittsburgh: America/New_York
   Vancouver: America/Vancouver
   Dublin: Europe/Dublin
+  Melbourne: Australia/Melbourne
+  Rotterdam: Europe/Amsterdam
+  Lyon: Europe/Paris
+  Kyiv: Europe/Kyiv
+  Rio de Janeiro: America/Sao_Paulo
+  Buenos Aires: America/Argentina/Buenos_Aires
+  Ocho Rios: America/Jamaica
+  Lisbon: Europe/Lisbon
+  Cape Town: Africa/Johannesburg
+  Montreal: America/Toronto
+  Mexico City: America/Mexico_City
+  Warsaw: Europe/Warsaw
+  Tokyo: Asia/Tokyo
   Los Angeles: America/Los_Angeles
   Seattle: America/Los_Angeles
   Bologna: Europe/Rome
@@ -353,6 +393,40 @@ groups:
         about: "FluxFM's lo-fi hip-hop channel from Berlin. Mellow beats for working, reading or winding down."
         site: "https://www.fluxfm.de/chillhop"
         profile: "One of the web channels of FluxFM, the Berlin station on 100.6 FM that began as Motor FM in 2004 and took its current name in August 2011. It plays hand-picked lo-fi and chilled hip-hop instrumentals."
+      - id: rrr
+        name: Triple R
+        kind: radio
+        genre: Community radio
+        place: Melbourne
+        url: "https://ondemand.rrr.org.au/getstream?id=wshq"
+        about: "Melbourne's independent community station on 102.7 FM, funded by its subscribers. Specialist music shows across every genre, plus arts and talk."
+        site: "https://www.rrr.org.au"
+        founded: 1976
+        profile: "Began in 1976 as 3RMT, a student-run station at the Royal Melbourne Institute of Technology, and became 3RRR soon after. Now one of Australia's largest community stations, run with hundreds of volunteer presenters."
+      - id: operator
+        name: Operator Radio
+        kind: radio
+        genre: Electronic and leftfield
+        place: Rotterdam
+        url: "https://origin.streamnerd.nl/operator/operator/icecast.audio"
+        about: "An independent station in Rotterdam. DJ sets and shows from the city's club scene and beyond, from electro to ambient."
+        site: "https://operator-radio.com"
+      - id: lyl
+        name: LYL Radio
+        kind: radio
+        genre: Underground
+        place: Lyon
+        url: "https://icecast.lyl.live/live"
+        about: "An independent web station from Lyon. Live shows from local and visiting DJs and musicians, from experimental to club music."
+        site: "https://lyl.live"
+      - id: skovoroda
+        name: Radio Skovoroda
+        kind: radio
+        genre: Eclectic
+        place: Kyiv
+        url: "https://stream.radioskovoroda.com/radioskovoroda"
+        about: "An online station from Kyiv named after the philosopher Hryhorii Skovoroda. Ukrainian and international music, from jazz and soul to electronic."
+        site: "https://radioskovoroda.com"
 
   - name: Genre Radio
     # One station per genre. Streams checked 2026-11-02.
@@ -445,6 +519,33 @@ groups:
         about: "WALM Radio's year-round Christmas channel. Vintage holiday records, crooners and old-time radio, in high quality."
         site: "https://walmradio.com"
         profile: "One of the streams of WALM Radio, playing vintage Christmas records all year under the line 'The Christmas Music You Remember'."
+      - id: batuta
+        name: Rádio Batuta
+        kind: radio
+        genre: Brazilian music
+        place: Rio de Janeiro
+        url: "https://radioims.out.airtime.pro/radioims_a"
+        info: "airtime:radioims"
+        about: "The web radio of the Instituto Moreira Salles. Brazilian popular music, samba, choro and MPB, much of it from the institute's archive."
+        site: "https://radiobatuta.com.br"
+      - id: folklorica
+        name: Radio Nacional Folklórica
+        kind: radio
+        genre: Argentine folk
+        place: Buenos Aires
+        url: "https://sa.mp3.icecast.magma.edge-access.net/sc_rad38"
+        about: "Radio Nacional's folk station on 98.7 FM in Buenos Aires. Chacarera, zamba, chamamé and the rest of Argentina's folk music."
+        site: "https://www.radionacional.com.ar"
+      - id: irie
+        name: Irie FM
+        kind: radio
+        genre: Reggae
+        place: Ocho Rios
+        url: "https://stream.iriefm.net:8008/stream"
+        about: "Jamaica's reggae station, from Ocho Rios. Roots, dancehall and lovers rock, all day."
+        site: "https://iriefm.net"
+        founded: 1991
+        profile: "Went on air in 1991 as the first station in the world to play reggae around the clock."
 
   - name: Deep Cuts
     # Small, odd and far-flung. Streams checked 2026-11-02.
@@ -586,6 +687,51 @@ groups:
         about: "Synthwave in 320 kbps: retrowave, darksynth and outrun. It runs sister channels for each style."
         site: "https://nightride.fm"
         profile: "'The Home of Synthwave Radio', streaming at 320 kbps, with sister channels including Chillsynth, Datawave, Spacesynth and Darksynth, plus live DJ sets, interviews and an archive of past shows."
+      - id: quantica
+        name: Rádio Quântica
+        kind: radio
+        genre: Community radio
+        place: Lisbon
+        url: "https://libretime.radioquantica.com/main.mp3"
+        about: "A community station in Lisbon. Club music, experimental sounds and the city's Afro-Portuguese scene, from local residents and guests."
+        site: "https://radioquantica.com"
+        founded: 2015
+      - id: bush
+        name: Bush Radio
+        kind: radio
+        genre: Community radio
+        place: Cape Town
+        url: "https://zas4.ndx.co.za:9100/stream"
+        about: "Cape Town's community station on 89.5 FM, often called the mother of community radio in Africa. Jazz, hip-hop and local talk."
+        site: "https://bushradio.co.za"
+        founded: 1993
+        profile: "Started as an unlicensed station in the last years of apartheid, when it was raided and shut down in 1993. It won a licence in 1995 and has trained community broadcasters across Africa since."
+      - id: ckut
+        name: CKUT
+        kind: radio
+        genre: Campus freeform
+        place: Montreal
+        url: "https://ckut.out.airtime.pro/ckut_a"
+        info: "airtime:ckut"
+        about: "The campus and community station of McGill University on 90.3 FM. Freeform music shows and community news, in English and French."
+        site: "https://ckut.ca"
+        founded: 1987
+      - id: ibero
+        name: Ibero 90.9
+        kind: radio
+        genre: Alternative
+        place: Mexico City
+        url: "https://noasrv.caster.fm:10182/live"
+        about: "The station of the Universidad Iberoamericana in Mexico City. Alternative, indie and electronic music, with a lot of Mexican and Latin American bands."
+        site: "https://ibero909.fm"
+      - id: kampus
+        name: Radio Kampus
+        kind: radio
+        genre: Student radio
+        place: Warsaw
+        url: "https://stream.radiokampus.fm/kampus"
+        about: "Warsaw's student station on 97.1 FM. Independent music, from Polish alternative to jazz and electronic, run by students."
+        site: "https://radiokampus.fm"
 
   - name: Talk Radio
     stations:
@@ -664,3 +810,13 @@ groups:
         founded: 1973
         notable: ["Nick Ferrari at Breakfast", "James O'Brien"]
         profile: "Launched on 8 October 1973 as the UK's first licensed commercial radio station. Owned by Global, it went national on digital radio in 2014."
+      - id: nhk
+        name: NHK World Radio Japan
+        kind: radio
+        genre: "News"
+        place: "Tokyo"
+        url: "https://masterpl.hls.nhkworld.jp/hls/r1/live/master.m3u8"
+        about: "Japan's international public radio. News from Japan and Asia in English, with features on Japanese life and culture."
+        site: "https://www3.nhk.or.jp/nhkworld/en/radio"
+        founded: 1935
+        profile: "NHK's overseas service, which began shortwave broadcasts in 1935. Today it broadcasts in 17 languages; this stream is the English programme."

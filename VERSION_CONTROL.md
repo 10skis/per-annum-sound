@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.67: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.68: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.68 | 2026-11-04 | 13 worldwide stations (79 in all); each group sorted by place, A to Z | [link](updates/2026-11-04-worldwide-stations-sorted.md) |
 | v0.67 | 2026-11-04 | Phosphor sizes to its panel: scaled glow, balanced figure, side scopes in short panels | [link](updates/2026-11-04-phosphor-scale.md) |
 | v0.66 | 2026-11-04 | Dial and tape glyphs centred: even overflow, and each glyph's ink measured and nudged to centre | [link](updates/2026-11-04-glyphs-centred.md) |
 | v0.65 | 2026-11-04 | Sigil's background dot grid brighter, with a soft glow (page and server) | [link](updates/2026-11-04-sigil-grid-glow.md) |

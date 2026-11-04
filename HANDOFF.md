@@ -21,7 +21,7 @@ Start here. Written 2026-11-03 at v0.34, updated at v0.67 so a new session can p
 | Server version (the Pi later) | `app/run.sh`, port 8080. FastAPI plus MPD; falls back to a silent mock player when MPD isn't running |
 | No-server version (Netlify) | `.venv/bin/python build_static.py` writes `app/web/`. Serve locally with `python3 -m http.server 8090` from `app/web` |
 | One page, two modes | `app/static/index.html` serves both. The build injects `window.PI_RADIO_STATIC = true`; the `DATA` object switches between the server API and fetching NTS and stations.json directly |
-| Station data | `app/stations.yaml`: groups, `places` (lat/lon/label), `timezones`, per-station `about`, `info`, `genre`, `glyph`, `profile`, `founded`, `notable`, `site`, `map`, plus `codes` (airport-style city codes for the map and sigil; London is LDN by choice, not LON). Loaded by `catalog.py` for both server and build |
+| Station data | `app/stations.yaml`: groups, `places` (lat/lon/label), `timezones`, per-station `about`, `info`, `genre`, `glyph`, `profile`, `founded`, `notable`, `site`, `map`, plus `codes` (airport-style city codes for the map and sigil; London is LDN by choice, not LON). Loaded by `catalog.py` for both server and build, which sorts each group by place A to Z, then name, with Online last; that is the list and dial order, so file order within a group doesn't matter |
 | Art | `art.py`: 45° halftone for covers, 1-bit for logos, sigil for stations with none. The page has matching JS for the no-server build |
 | Map land | `make_map.py` builds `static/worldmap.js` from Natural Earth (`dev/ne_110m_land.geojson`) |
 | Offline | `static/sw.js`, copied to the web root by the build |
