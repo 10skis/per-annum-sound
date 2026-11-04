@@ -2,9 +2,9 @@
 // last NTS data so the app still opens with no signal. Network first, so updates show
 // straight away; the cached copy is only used offline. Streams are never touched. NTS cover
 // art goes in its own cache, kept to the newest 60 images so it can't grow without end.
-const CACHE = "pi-radio-v2", ART = "pi-radio-art-v1", ART_MAX = 60;
+const CACHE = "pi-radio-v3", ART = "pi-radio-art-v1", ART_MAX = 60;
 const SHELL = ["./", "index.html", "stations.json", "manifest.webmanifest",
-               "static/worldmap.js", "static/icon-180.png", "static/icon-512.png"];
+               "static/worldmap.js", "static/geo.js", "static/icon-180.png", "static/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Per Annum Sound</title>
-<meta name="theme-color" content="#0b0906">
+<meta name="theme-color" content="#002b36">
 <script>try { document.documentElement.dataset.theme = JSON.parse(localStorage.getItem("piRadioTheme")) || "night"; } catch (_) {}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -35,13 +35,20 @@
     --vignette: #00000073;
     --scanline: #0000002e;
     --scrim: #0b0906eb;      /* behind pop-ups */
+    --screen: #070503;       /* the glass behind each display */
   }
   /* Display modes (T, or the NGT / DSK / BRT key in the header). NIGHT is the original. DUSK
      lifts everything for a bright room: lighter chassis and text, brighter displays, softer
      vignette and scanlines. BRIGHT keeps the night background and turns every amber element up
      instead: lettering, lines, glows and the displays themselves. */
+  /* NIGHT is Solarized dark: the chassis, glass, lines and quiet lettering take Solarized's base
+     tones (base03 chassis, base02 ghosts, base0 labels); amber stays the accent, near its
+     yellow and orange. DUSK and BRIGHT keep the original near-black. */
+  [data-theme="night"] .ghost::before { color: #0b4452; }  /* unlit segments, a shade above base02 */
+  :root[data-theme="night"] { --bg: #002b36; --screen: #00212a; --line: #1f4f5a; --amber-ghost: #073642; --amber-dim: #839496;
+                              --texture: #93a1a10d; --scrim: #002b36eb; }
   :root[data-theme="dusk"] { --bg: #17130e; --amber-mid: #e8a33a; --amber-dim: #c48c36; --amber-ghost: #33250f; --line: #6e5022; }
-  [data-theme="dusk"] .screen { background: #100c08; }
+  [data-theme="dusk"] { --screen: #100c08; }
   [data-theme="dusk"] .screen canvas:not(.sigil) { filter: brightness(1.3); }
   [data-theme="dusk"] .art img, [data-theme="dusk"] .sigil { filter: brightness(1.25) drop-shadow(0 0 2px var(--glow-soft)); }
   [data-theme="dusk"] body::before, [data-theme="dusk"] body::after { opacity: .5; }
@@ -131,7 +138,7 @@
   .next .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 21px/1.2 var(--dot); }
   .next .dn-status { font: 19px/1 var(--dot); color: var(--amber-mid); margin-top: -4px; }
   .next .dn { display: grid; grid-template-columns: repeat(48, 1fr); gap: 2px; height: 12px; }
-  .next .dn i { background: #1c1407; }
+  .next .dn i { background: var(--amber-ghost); }
   .next .dn i.day { background: #9c6c22; }
   .next .dn i.now { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
   .next .dn-scale { display: flex; justify-content: space-between; font: 14px/1 var(--dot); color: var(--amber-dim); margin-top: -6px; }
@@ -264,7 +271,7 @@
   .dial-read b { font-weight: 400; font-size: 46px; line-height: .85; }
   .dial-read span { font-size: 16px; color: var(--amber-dim); }
 
-  .screen { border: 1px solid var(--line); background: #070503; position: relative; }
+  .screen { border: 1px solid var(--line); background-color: var(--screen); position: relative; }  /* colour only: the chamfer's diagonals are background images */
   .art { aspect-ratio: 1; padding: 8px; }
   .art img {
     width: 100%; height: 100%; display: block;
@@ -837,6 +844,7 @@
 </div>
 
 <script src="static/worldmap.js"></script>
+<script src="static/geo.js"></script>
 <!-- static-flag -->
 <script>
 const $ = (id) => document.getElementById(id);
@@ -1804,7 +1812,8 @@ function clockOf(ms) {
   const t = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60;
   return (h ? h + ":" + pad(m) : m) + ":" + pad(t % 60);
 }
-const MODES = { night: ["NGT", "#0b0906"], dusk: ["DSK", "#17130e"], bright: ["BRT", "#0b0906"] };
+const MODES = { night: ["NGT", "#002b36"], dusk: ["DSK", "#17130e"], bright: ["BRT", "#0b0906"] };
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function setTheme(m) {
   if (m === "day") m = "bright";  // v0.57's day mode, replaced
   if (!MODES[m]) m = "night";
@@ -2045,7 +2054,7 @@ function project(r, lat, lon, w, h) {
   return [fx * w, (r.lat0 - lat) / (r.lat0 - r.lat1) * h];
 }
 function mapBaseLayer(c, w, h, dpr) {
-  const key = [mapRange, w, h, dpr].join();
+  const key = [mapRange, w, h, dpr, document.documentElement.dataset.theme].join();
   if (mapBase && mapBase.key === key) return mapBase.canvas;
   const r = RANGES[mapRange], off = document.createElement("canvas");
   off.width = w * dpr; off.height = h * dpr;
@@ -2061,8 +2070,30 @@ function mapBaseLayer(c, w, h, dpr) {
     if (isLand(lat, lon)) { g.fillStyle = "#86601f"; g.fillRect(x - 1.5, y - 1.5, 3, 3); }
     else if (onGrid) { g.fillStyle = "#3a2a10"; g.fillRect(x - .5, y - .5, 1.5, 1.5); }
   }
+  if (mapRange !== "world" && window.GEO) drawGeo(g, r, w, h);
   mapBase = { key, canvas: off };
   return off;
+}
+/* Geography over the USA and EUROPE ranges, from static/geo.js (make_geo.py): lakes and rivers
+   etched out of the land dots, state and province lines dotted, country borders dashed. Drawn
+   once into the cached base layer. */
+function drawGeo(g, r, w, h) {
+  const path = list => {
+    g.beginPath();
+    for (const a of list) for (let i = 0; i < a.length; i += 2) {
+      const [x, y] = project(r, a[i + 1] / 10, a[i] / 10, w, h);
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+  };
+  g.save();
+  g.lineJoin = g.lineCap = "round";
+  const glass = cssVar("--screen");
+  path(GEO.lakes); g.fillStyle = glass; g.fill();
+  g.setLineDash([1, 2]); g.strokeStyle = "#86601f"; g.lineWidth = 1; g.stroke();
+  g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke();
+  g.setLineDash([1, 2.5]); path(GEO.states); g.strokeStyle = "#9c6c22"; g.lineWidth = 1; g.stroke();
+  g.setLineDash([4, 2]); path(GEO.borders); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke();
+  g.restore();
 }
 function drawMap(t) {
   if (mapRange === "galaxy") return drawGalaxy(t);
@@ -2174,8 +2205,8 @@ function drawMap(t) {
     labels.push([spot[0], spot[1], tw]);
     g.save();
     g.beginPath(); g.rect(spot[0] >= x ? spot[0] : spot[0] + tw - rw, spot[1], rw, 16); g.clip();  // wipe out from the dot's side
-    g.fillStyle = k.sel ? MARK : "#0b0906e0"; g.fillRect(spot[0], spot[1], tw, 16);
-    g.fillStyle = k.sel ? "#0b0906" : MARK; g.fillText(text, spot[0] + 3, spot[1] + 8);
+    g.fillStyle = k.sel ? MARK : cssVar("--screen"); g.fillRect(spot[0], spot[1], tw, 16);
+    g.fillStyle = k.sel ? cssVar("--screen") : MARK; g.fillText(text, spot[0] + 3, spot[1] + 8);
     g.restore();
   }
 }
@@ -3137,7 +3168,7 @@ function drawIdle(g, w, h) {
   for (let x = 0; x < w; x += 4) g.fillRect(x, Math.round(h / 2), 2, 1);
   g.font = "18px VT323, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
   const tw = g.measureText("NO CARRIER").width + 14;
-  g.fillStyle = "#070503"; g.fillRect(w / 2 - tw / 2, h / 2 - 10, tw, 20);
+  g.fillStyle = cssVar("--screen"); g.fillRect(w / 2 - tw / 2, h / 2 - 10, tw, 20);
   g.fillStyle = "#9c6c22"; g.fillText("NO CARRIER", w / 2, h / 2 + 1);
 }
 function drawBars(g, w, h) {
@@ -3168,7 +3199,7 @@ function drawSpectrogram(g, w, h, t) {
       g.fillRect(x, 1 + r * ch, cw - 1, ch - 1);
     }
   }
-  g.fillStyle = "#070503"; g.fillRect(0, 0, lab, h);
+  g.fillStyle = cssVar("--screen"); g.fillRect(0, 0, lab, h);
   g.font = "13px VT323, monospace"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#9c6c22";
   [["16K", 1], ["4K", .72], ["1K", .48], ["250", .24], ["60", .02]].forEach(([l, f]) => g.fillText(l, 0, 1 + (1 - f) * (h - 8) + 3));
 }
@@ -3273,7 +3304,7 @@ function drawRidges(g, w, h, t, slot) {
       const at = lv => lv[i0] + (lv[i1] - lv[i0]) * (f - i0), v = at(a) + (at(b) - at(a)) * frac;
       pts.push([x, Math.round(base - v * Math.pow(Math.sin(Math.PI * x / w), 1.5) * gap * 3.4)]);
     }
-    g.fillStyle = "#070503";
+    g.fillStyle = cssVar("--screen");
     g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(w, h); g.closePath(); g.fill();
     g.fillStyle = tier(1 - r / rows * .75);
     pts.forEach(([x, y]) => g.fillRect(x, y, 2, 2));

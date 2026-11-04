@@ -38,7 +38,7 @@ assert "<!-- static-flag -->" in page
 page = page.replace("<!-- static-flag -->", "<script>window.PI_RADIO_STATIC = true;</script>")
 (OUT / "index.html").write_text(page)
 
-for name in ("icon-180.png", "icon-512.png", "worldmap.js"):
+for name in ("icon-180.png", "icon-512.png", "worldmap.js", "geo.js"):
     shutil.copy(HERE / "static" / name, OUT / "static" / name)
 shutil.copy(HERE / "static" / "manifest.webmanifest", OUT / "manifest.webmanifest")
 shutil.copy(HERE / "static" / "sw.js", OUT / "sw.js")  # offline shell; must sit at the root to cover the site
