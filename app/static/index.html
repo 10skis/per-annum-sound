@@ -661,6 +661,9 @@ const DISPLAY = (() => {
   /* Display panel: drops from the header's mode key. A three-way switch like the map range, the
      Eclipse tint as a strip like the tape tuner (segments painted with the chassis colour at each
      point, an amber needle, notches named under it), brightness as a dot bar like VOL */
+  /* It sits in .unit, so it must opt out of the console's boot flicker, which would otherwise replay
+     each time the panel unhides */
+  .unit > .dpanel { animation: none; }
   .dpanel { position: absolute; z-index: 25; right: 16px; width: 316px; padding: 14px 16px 16px; display: grid; gap: 12px; background-color: var(--bg); }
   .dpanel .seg { grid-template-columns: repeat(3, 1fr); }
   .dpanel .seg button { height: 32px; font-size: 19px; }
