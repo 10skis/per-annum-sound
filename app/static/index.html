@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Per Annum Sound</title>
 <meta name="theme-color" content="#0b0906">
+<script>try { document.documentElement.dataset.theme = JSON.parse(localStorage.getItem("piRadioTheme")) || "night"; } catch (_) {}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Per Annum">
@@ -27,6 +28,27 @@
     --cond: "Saira Condensed", "Arial Narrow", sans-serif; /* instrument labels */
     --warn: #4fb4ff;  /* warnings only: no signal, sleep timer's last minute */
   }
+  /* Display modes (T, or the NGT / DSK / DAY key in the header). NIGHT is the original. DUSK
+     lifts everything for a bright room: lighter chassis and text, brighter displays, softer
+     vignette and scanlines. DAY is the console in daylight: a warm cream chassis with ink-brown
+     lettering and a deep amber accent, while every display window stays dark glass with its
+     amber glow, as real hardware does; that also leaves the visualizers untouched. */
+  :root[data-theme="dusk"] { --bg: #17130e; --amber-mid: #e8a33a; --amber-dim: #c48c36; --amber-ghost: #33250f; --line: #6e5022; }
+  [data-theme="dusk"] .screen { background: #100c08; }
+  [data-theme="dusk"] .screen canvas:not(.sigil) { filter: brightness(1.3); }
+  [data-theme="dusk"] .art img, [data-theme="dusk"] .sigil { filter: brightness(1.25) drop-shadow(0 0 2px #ffb02e66); }
+  [data-theme="dusk"] body::before, [data-theme="dusk"] body::after { opacity: .5; }
+  [data-theme="dusk"] .ghost::before { color: #3a2a12; }
+  :root[data-theme="day"] { --bg: #e7dece; --amber: #b25f00; --amber-mid: #5a3a12; --amber-dim: #7b5a2e; --amber-ghost: #d8c9ad; --line: #b49c76; }
+  [data-theme="day"] .screen, [data-theme="day"] .help-card {  /* the display windows keep the night palette */
+    --bg: #0b0906; --amber: #ffb02e; --amber-mid: #d08c26; --amber-dim: #9c6c22; --amber-ghost: #241907; --line: #4a3616; color: var(--amber-mid);
+  }
+  [data-theme="day"] body { background-image: radial-gradient(#5a3a1214 1px, transparent 1.2px); }
+  [data-theme="day"] body::before { opacity: .2; }
+  [data-theme="day"] body::after { opacity: .25; }
+  [data-theme="day"] .glow { text-shadow: none; }
+  [data-theme="day"] .screen .glow { text-shadow: 0 0 6px #ffb02e88; }
+  [data-theme="day"] .ghost::before { color: var(--amber-ghost); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }  /* class display rules would otherwise override it */
   html, body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: var(--mono); }
@@ -145,6 +167,8 @@
   .preset.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
   .preset.on small { color: var(--bg); }
   .preset.saved { animation: blink .25s steps(1) 4; }
+  .head .mode { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; flex-shrink: 0; }
+  .head .mode:hover { color: var(--amber); }
   .head .sleep { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; white-space: nowrap; flex-shrink: 0; }
   .head > :not(.sig) { white-space: nowrap; flex-shrink: 0; }
   @media (max-width: 959px) {
@@ -535,7 +559,8 @@
   @media (min-width: 960px) {
     .mid .dial-wrap { display: grid; }
     .tuner, .tuner-hint, .tuner-tape { display: none; }
-    body { max-width: 1360px; margin: 0 auto; padding: 32px; align-items: stretch; }
+    body { max-width: 1360px; margin: 0 auto; padding: 24px 32px; align-items: stretch; }
+    .note, .unit, .list { zoom: var(--fit, 1); align-self: center; width: 100%; }  /* scaled to fit the window's height: see fitDesktop() */
     .note, .unit, .list { max-width: none; }
     .unit {
       grid-template-columns: minmax(220px, 24%) minmax(0, 1fr) 300px;
@@ -592,6 +617,7 @@
     <span class="clock ghost" id="clock" data-ghost="88:88"></span>
     <span id="status">--</span>
     <button class="sleep" id="sleepBtn" hidden aria-label="Sleep timer" title="Sleep timer: tap for 15, 30, 60, 90 min, off">ZZ</button>
+    <button class="mode" id="modeBtn" aria-label="Display mode" title="Display mode: night, dusk, day (T)">NGT</button>
     <button class="help-head" id="helpBtn2" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
   </div>
 
@@ -734,6 +760,7 @@
       <dt>SHIFT 1–6</dt><dd>Save this station to a preset</dd>
       <dt>S</dt><dd>Sleep timer: 15, 30, 60, 90 min, off</dd>
       <dt>R</dt><dd>Random station</dd>
+      <dt>T</dt><dd>Display mode: night, dusk, day</dd>
       <dt>M</dt><dd>Map: world / Europe</dd>
       <dt>?</dt><dd>This panel</dd>
       <dt>CLICK</dt><dd>A visualizer for its next display</dd>
@@ -1700,6 +1727,17 @@ function clockOf(ms) {
   const t = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60;
   return (h ? h + ":" + pad(m) : m) + ":" + pad(t % 60);
 }
+const MODES = { night: ["NGT", "#0b0906"], dusk: ["DSK", "#17130e"], day: ["DAY", "#e7dece"] };
+function setTheme(m) {
+  if (!MODES[m]) m = "night";
+  document.documentElement.dataset.theme = m;
+  store.set("piRadioTheme", m);
+  $("modeBtn").textContent = MODES[m][0];
+  document.querySelector('meta[name="theme-color"]').content = MODES[m][1];
+}
+const cycleTheme = () => { const k = Object.keys(MODES); setTheme(k[(k.indexOf(document.documentElement.dataset.theme) + 1) % k.length]); };
+$("modeBtn").addEventListener("click", cycleTheme);
+setTheme(store.get("piRadioTheme", "night"));
 function cycleSleep() {
   if (!S || !S.playing) return;
   const step = sleep ? sleep.step + 1 : 0;
@@ -1743,6 +1781,7 @@ document.addEventListener("keydown", e => {
     e.shiftKey ? savePreset(+slot[1] - 1) : pressPreset(+slot[1] - 1);
   } else if (e.key === "s" || e.key === "S") cycleSleep();
   else if (e.key === "r" || e.key === "R") randomPlay();
+  else if (e.key === "t" || e.key === "T") cycleTheme();
   else if (e.key === "m" || e.key === "M") setMapRange(mapRange === "world" ? "europe" : "world");
   else if (e.key === "?") toggleHelp();
   else if (e.key === "Escape") { toggleHelp(false); closeAbout(); }
@@ -1786,7 +1825,7 @@ document.querySelectorAll(".tape").forEach(tape => {
   });
   tape.addEventListener("pointermove", e => {
     if (!tapeDrag) return;
-    const dx = e.clientX - tapeDrag.x;
+    const dx = (e.clientX - tapeDrag.x) / scaleOf(tape);
     if (Math.abs(dx) > 4) tapeDrag.moved = true;
     if (!tapeDrag.moved) return;
     const idx = Math.max(0, Math.min(order.length - 1, tapeDrag.start - Math.round(dx / TAPE_STEP)));  // drag left = higher
@@ -1799,7 +1838,7 @@ document.querySelectorAll(".tape").forEach(tape => {
     let idx = d.idx;
     if (!d.moved) {  // a tap: tune to the tick under the pointer
       const b = tape.getBoundingClientRect();
-      idx = Math.max(0, Math.min(order.length - 1, d.start + Math.round((e.clientX - (b.left + b.width / 2)) / TAPE_STEP)));
+      idx = Math.max(0, Math.min(order.length - 1, d.start + Math.round((e.clientX - (b.left + b.width / 2)) / scaleOf(tape) / TAPE_STEP)));
     }
     if (idx !== d.start) act.play(order[idx]);
     else if (S) render(S);
@@ -2043,7 +2082,7 @@ function setMapRange(rng) {
 function inRange(r, ci) { return ci.lon >= r.lon0 && ci.lon <= r.lon1 && ci.lat <= r.lat0 && ci.lat >= r.lat1; }
 $("navMap").addEventListener("click", e => {
   if (mapDragMoved) { mapDragMoved = false; return; }  // that was the end of a pan, not a click
-  const b = $("navMap").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+  const b = $("navMap").getBoundingClientRect(), k = scaleOf($("navMap")), x = (e.clientX - b.left) / k, y = (e.clientY - b.top) / k;
   let best = null, bd = 16;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
   if (!best) {
@@ -2064,7 +2103,7 @@ $("rngWorld").addEventListener("click", () => setMapRange("world"));
 $("navMap").addEventListener("pointerenter", () => { mapHover = true; });
 $("navMap").addEventListener("pointerleave", () => { mapHover = false; mapHoverKey = null; });
 $("navMap").addEventListener("pointermove", e => {
-  const b = $("navMap").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+  const b = $("navMap").getBoundingClientRect(), k = scaleOf($("navMap")), x = (e.clientX - b.left) / k, y = (e.clientY - b.top) / k;
   let best = null, bd = 14;
   for (const k of mapHits) { const d = Math.hypot(k.x - x, k.y - y); if (d < bd) { bd = d; best = k; } }
   mapHoverKey = best ? best.cities[0].name : null;
@@ -2086,7 +2125,7 @@ $("navMap").addEventListener("pointerdown", e => {
 });
 $("navMap").addEventListener("pointermove", e => {
   if (!mapDrag) return;
-  const dx = e.clientX - mapDrag.x, dy = e.clientY - mapDrag.y;
+  const k = scaleOf($("navMap")), dx = (e.clientX - mapDrag.x) / k, dy = (e.clientY - mapDrag.y) / k;
   if (!mapDrag.moved && Math.hypot(dx, dy) < 4) return;
   mapDrag.moved = true; mapDrag.x = e.clientX; mapDrag.y = e.clientY;
   panMap(dx, dy);
@@ -2304,6 +2343,32 @@ $("swipe").addEventListener("scroll", () => {
   const sw = $("swipe"), page = Math.round(sw.scrollLeft / Math.max(1, sw.clientWidth));
   [...$("swipeDots").children].forEach((d, i) => d.classList.toggle("on", i === page));
 }, { passive: true });
+/* Desktop: the console is scaled down, no further than 70%, until it fits the window's height,
+   so the map and the visualizers never sit below the fold on a laptop. Scaling keeps every
+   panel's proportions (squashing the map would distort or crop the world). Pointer code that
+   measures distances divides by the scale: see scaleOf(). */
+function fitDesktop() {
+  const root = document.documentElement, u = document.querySelector(".unit");
+  if (phoneLayout.matches) { root.style.removeProperty("--fit"); return; }
+  const b = getComputedStyle(document.body), room = innerHeight - parseFloat(b.paddingTop) - parseFloat(b.paddingBottom);
+  // A scaled console lays out wider (it still fills the width), and the square art makes it a bit
+  // taller again, so settle the scale over a few passes
+  let z = 1;
+  for (let i = 0; i < 5; i++) {
+    root.style.setProperty("--fit", z);
+    const h = u.getBoundingClientRect().height;
+    if (h <= room + 1 && (z === 1 || h > room - 4)) break;
+    z = Math.max(.7, Math.min(1, z * room / h));
+  }
+  root.style.setProperty("--fit", z.toFixed(3));
+}
+// On-screen size over layout size: 1 normally, less while fitDesktop() has scaled the console
+const scaleOf = el => el.getBoundingClientRect().width / (el.offsetWidth || 1) || 1;
+let fitTimer;
+window.addEventListener("resize", () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitDesktop, 60); });
+phoneLayout.addEventListener("change", fitDesktop);
+fitDesktop();
+if (document.fonts) document.fonts.ready.then(fitDesktop);
 function drawLevel(t) {
   const c = $("lvl");
   if (!c || !c.clientWidth) return;
@@ -2473,8 +2538,7 @@ function drawPhosphor(g, w, h, t, dt) {
 /* Fluid: cornstarch on a speaker cone, seen from above at an angle. A disc of dots whose height
    is a slow rolling swell plus spikes: the music keeps throwing up narrow columns that shoot up
    and slump back, more of them the louder it gets, with a burst on each bass kick. Dots are drawn
-   back to front and lit by height, so the surface reads in depth. It leans toward the louder
-   channel. Small LO (a rolling swell) and HI (a bed of fast, fine spikes) puddles sit either side. */
+   back to front and lit by height, so the surface reads in depth. Small LO (a rolling swell) and HI (a bed of fast, fine spikes) puddles sit either side. */
 const fluid = { main: [], lo: 0, hiS: [] };
 const FLUID_TONES = ["#3d2a0c", "#7a5419", "#c4841f", "#ffb02e", "#ffd27a"];
 function fluidSpikes(list, t, dt, rate, max, h, w, life, burst = 0) {
@@ -2515,7 +2579,7 @@ function drawFluid(g, w, h, t, dt, L, R) {
     }
     return z;
   };
-  const Rm = Math.min(w * .2, h * .62), y0 = h * .64, cx = w / 2 + (R - L) * 24;
+  const Rm = Math.min(w * .2, h * .62), y0 = h * .64, cx = w / 2;  // stationary: it doesn't lean with the balance
   g.fillStyle = "#241907";  // the cone: dim rings round the puddle
   for (const k of [1.25, 1.6]) for (let i = 0; i < 72; i += 2) {
     const a = i / 72 * Math.PI * 2; g.fillRect(w / 2 + Math.cos(a) * Rm * k, y0 + Math.sin(a) * Rm * k * .42, 2, 2);
@@ -2934,17 +2998,24 @@ function drawMirror(g, w, h) {
 const visState = [{}, {}];
 const avgOf = a => a.reduce((x, y) => x + y, 0) / (a.length || 1);
 function tickState(st, t) { const dt = Math.min(100, t - (st.t || t)) / 1000; st.t = t; return dt; }
-function drawRidges(g, w, h) {
-  const rows = Math.min(14, fall.length), gap = (h - 8) / 15;
-  for (let r = rows - 1; r >= 0; r--) {  // oldest at the back, newest in front at the bottom
-    const lv = fall[r], base = h - 4 - r * gap, pts = [];
+function drawRidges(g, w, h, t, slot) {
+  const st = visState[slot], dt = tickState(st, t), STEP = 110;
+  st.sm = st.sm || visLevels.slice();
+  st.sm = st.sm.map((v, i) => v + (visLevels[i] - v) * (1 - Math.exp(-dt * 8)));  // eased levels: no flicker
+  st.rows = st.rows || [];
+  if (!st.last || t - st.last > STEP) { st.last = t; st.rows.unshift(st.sm.slice()); if (st.rows.length > 16) st.rows.length = 16; }
+  const frac = Math.min(1, (t - st.last) / STEP), gap = (h - 8) / 15;
+  const rows = [st.sm].concat(st.rows.slice(0, 14));  // the live row first, then the history
+  for (let r = rows.length - 1; r >= 0; r--) {  // oldest at the back, newest in front at the bottom
+    const lv = rows[r], base = h - 4 - (r - 1 + frac) * gap, pts = [];  // every row glides back a step between samples
+    if (base > h + gap) continue;
     for (let x = 0; x <= w; x += 3) {
       const f = x / w * (BANDS - 1), i0 = Math.floor(f), v = lv[i0] + ((lv[i0 + 1] ?? lv[i0]) - lv[i0]) * (f - i0);
       pts.push([x, base - v * Math.pow(Math.sin(Math.PI * x / w), 1.5) * gap * 3.4]);
     }
     g.fillStyle = "#070503";
     g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(w, h); g.closePath(); g.fill();
-    g.fillStyle = tier(1 - r / rows * .75);
+    g.fillStyle = tier(1 - Math.max(0, r - 1 + frac) / 14 * .75);
     pts.forEach(([x, y]) => g.fillRect(x, y, 2, 2));
   }
 }
@@ -2964,17 +3035,24 @@ function drawRain(g, w, h, t, slot) {
     }
   });
 }
-function drawLissajous(g, w, h, t) {
-  const cx = w / 2, cy = h / 2, low = avgOf(visLevels.slice(0, 8)), high = avgOf(visLevels.slice(16));
-  const ax = (w / 2 - 8) * (.25 + low * .75), ay = (h / 2 - 6) * (.25 + high * .75);
-  const ratio = [2, 4, 5, 7][Math.floor((Math.sin(t / 9000) + 1) * 1.999)];  // shape changes slowly; never 3:3 (a plain ellipse)
+function drawLissajous(g, w, h, t, slot) {
+  const st = visState[slot], dt = tickState(st, t), k = 1 - Math.exp(-dt * 5);
+  const cx = w / 2, cy = h / 2;
+  st.lo = (st.lo ?? 0) + (avgOf(visLevels.slice(0, 8)) - (st.lo ?? 0)) * k;  // eased, so the figure breathes instead of jittering
+  st.hi = (st.hi ?? 0) + (avgOf(visLevels.slice(16)) - (st.hi ?? 0)) * k;
+  const ax = (w / 2 - 8) * (.25 + st.lo * .75), ay = (h / 2 - 6) * (.25 + st.hi * .75);
+  // The shape steps slowly through 2, 4, 5 and 7 against 3 (never 3:3, a plain ellipse), each
+  // one melting into the next over the last third of its turn
+  const RATIOS = [2, 4, 5, 7], ph = t / 7000, i0 = Math.floor(ph) % RATIOS.length, f = ph % 1;
+  const m = f < .67 ? 0 : (f - .67) / .33, mix = m * m * (3 - 2 * m);
+  const ra = RATIOS[i0], rb = RATIOS[(i0 + 1) % RATIOS.length];
   g.fillStyle = "#241907";
   for (let x = 0; x < w; x += 6) g.fillRect(x, Math.round(cy), 2, 1);
   for (let y = 0; y < h; y += 6) g.fillRect(Math.round(cx), y, 1, 2);
   for (let i = 0; i < 260; i++) {
-    const th = i / 260 * Math.PI * 2;
+    const th = i / 260 * Math.PI * 2, yv = Math.sin(ra * th) * (1 - mix) + Math.sin(rb * th) * mix;
     g.fillStyle = i % 3 ? "#c4841f" : "#ffb02e";
-    g.fillRect(Math.round(cx + Math.sin(3 * th + t / 1300) * ax), Math.round(cy + Math.sin(ratio * th) * ay), 2, 2);
+    g.fillRect(cx + Math.sin(3 * th + t / 1300) * ax - 1, cy + yv * ay - 1, 2, 2);
   }
 }
 function drawStars(g, w, h, t, slot) {

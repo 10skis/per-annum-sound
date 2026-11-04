@@ -77,7 +77,7 @@ window.selfTest = {
   layout() {
     const vw = document.documentElement.clientWidth, head = document.querySelector(".head"), strip = $("strip");
     const over = [...document.querySelectorAll(".unit *, .list *, .deck *")].filter(e => {
-      if (e.closest(".tape, .line, .sig, .vis-head, canvas, #recent")) return false;  // these scroll or clip on purpose
+      if (e.closest(".tape, .line, .sig, .vis-head, canvas, #recent, .swipe")) return false;  // these scroll or clip on purpose
       const r = e.getBoundingClientRect();
       return r.width && (r.right > vw + 1 || r.left < -1);
     }).slice(0, 5).map(e => e.id || e.className || e.tagName);
