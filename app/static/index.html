@@ -247,12 +247,14 @@
   .dial i {
     position: absolute; left: 50%; top: 50%; width: 10px; height: 12px; margin: -6px -5px;
     font: 12px/12px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace;
-    font-style: normal; text-align: center; color: var(--amber-dim);
+    font-style: normal; color: var(--amber-dim);
+    display: flex; justify-content: center; align-items: center;  /* a glyph wider than the box overflows both sides evenly */
     transition: transform .35s cubic-bezier(.3, .7, .3, 1), opacity .35s, color .15s;
   }
   .dial::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed var(--line); pointer-events: none; }
   .dial::after { content: ""; position: absolute; left: 50%; top: -6px; margin-left: -5px; pointer-events: none;
                  border: 5px solid transparent; border-top: 7px solid var(--amber); }
+  .gc { display: inline-block; }  /* a glyph, nudged by glyphNudge() so its ink sits on the centre */
   .dial i.lit { color: var(--amber); font-size: 15px; text-shadow: 0 0 6px var(--amber), 0 0 1px var(--amber); }
   .dial i.near { color: var(--amber-dim); }
   .dial-read {
@@ -551,7 +553,7 @@
                  background: var(--amber); box-shadow: 0 0 8px var(--amber); opacity: .85; }
   .tape-run { position: absolute; left: 50%; top: 0; height: 100%; transition: transform .35s cubic-bezier(.3, .7, .3, 1); }
   .tape-run .t { position: absolute; top: 0; width: 16px; margin-left: -8px; height: 100%; text-align: center; }
-  .tape-run .gl { display: block; margin-top: 6px; height: 15px; font: 13px/15px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace; color: var(--amber-dim); }
+  .tape-run .gl { display: flex; justify-content: center; align-items: center; margin-top: 6px; height: 15px; font: 13px/15px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace; color: var(--amber-dim); }
   .tape-run .tk { display: block; margin: 3px auto 0; width: 1px; height: 11px; background: var(--line); }
   .tape-run .maj .tk { height: 17px; background: var(--amber-dim); }
   .tape-run .n { display: block; font: 12px/1 var(--dot); color: var(--amber-dim); margin-top: 1px; }
@@ -1855,7 +1857,30 @@ const GLYPH_ART = {
   tree: '<svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M8 1.5 4.6 5.6h2L3.6 9.6h2.4l-3.3 4.1h10.6L10 9.6h2.4L9.4 5.6h2z"/><path d="M8 13.7v1.8"/></svg>',
 };
-const glyphFor = (i) => GLYPH_ART[(STN[order[i]] || {}).glyph] || esc(DIAL_GLYPHS[i % DIAL_GLYPHS.length]);
+/* Glyphs come from several fonts, and each sits its ink somewhere different in its box: line-art
+   symbols run wide, katakana sit high. Measure each one's ink once (same font stack, large size)
+   and nudge it, in em so it holds at every size, until the ink's centre is the box's centre. */
+const GLYPH_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace';
+const nudges = new Map();
+function glyphNudge(ch) {
+  if (nudges.has(ch)) return nudges.get(ch);
+  const g = (glyphNudge.c = glyphNudge.c || document.createElement("canvas")).getContext("2d"), S = 100;
+  g.font = `${S}px ${GLYPH_FONT}`; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  const m = g.measureText(ch);
+  // x: ink centre from the advance centre. y: ink centre from the line box centre, which sits
+  // halfway between the font's ascent and descent whatever the line height.
+  const dx = -(m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2 / S;
+  const dy = -((m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent)) / 2 / S;
+  const n = [isFinite(dx) ? dx : 0, isFinite(dy) ? dy : 0];
+  nudges.set(ch, n);
+  return n;
+}
+const glyphFor = (i) => {
+  const art = GLYPH_ART[(STN[order[i]] || {}).glyph];
+  if (art) return art;
+  const ch = DIAL_GLYPHS[i % DIAL_GLYPHS.length], [dx, dy] = glyphNudge(ch);
+  return `<span class="gc" style="transform: translate(${dx.toFixed(3)}em, ${dy.toFixed(3)}em)">${esc(ch)}</span>`;
+};
 const DIAL_GLYPHS = [..."ｦｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ⌬⍜⏃⏄⏅⌖⍟⎔⎈⏁⏂⏆⏇⏈⏀⌗⌕⍝⍢⍣⍤⍥⎊⎋"];  // one per station; add more when stations pass 70
 let tapeSegs = [];
 function buildTapes() {

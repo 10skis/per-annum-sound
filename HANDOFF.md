@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here. Written 2026-11-03 at v0.34, updated at v0.65 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here. Written 2026-11-03 at v0.34, updated at v0.66 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.65 |
+| Version | v0.66 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.65 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-03, v0.66 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -36,7 +36,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Colour | Amber only: `--amber #ffb02e`, `--amber-mid #d08c26`, `--amber-dim #9c6c22`, `--amber-ghost #241907`, `--line #4a3616`. Blue `#4fb4ff` for warnings only (no signal, offline, sleep's last minute). Map city dots yellow `#e8c43a` (hot `#ffe56e`). Nothing else |
 | Type | VT323 for data, Saira Condensed for labels, Michroma for the brand only |
 | Look | "Cyberpunk alien car dashboard", leaning retro-analog: chamfered panels, inverse name tabs (ART, SIGNAL, SPECTRUM, NAV, LEVEL, ABOUT; numbers dropped in v0.62, per `context/visual-design.md`), registration brackets, unlit 88 behind numerals, dot matrix everywhere. Robert reacts badly to over-literal brand references (Braun etc.) |
-| Dial (desktop) | No glyphs that read as a known symbol (⌘ was swapped out). A station can set `glyph:` for a drawn one from `GLYPH_ART` (Christmas Vinyl HD has a tree); drawn glyphs use currentColor, never emoji, and are absolutely centred in the slot (inline SVG sits on the baseline and rides high). Rotating window: ring of katakana glyphs, about six either side of the current one, fading. Not the centerpiece (he rejected that mockup). ◀ turns the ring clockwise, ▶ anticlockwise; drag follows the hand; scroll down or right = next |
+| Dial (desktop) | No glyphs that read as a known symbol (⌘ was swapped out). A station can set `glyph:` for a drawn one from `GLYPH_ART` (Christmas Vinyl HD has a tree); drawn glyphs use currentColor, never emoji, and are absolutely centred in the slot (inline SVG sits on the baseline and rides high). Text glyphs go through `glyphFor()`, which wraps each in a `.gc` span nudged by `glyphNudge()` (ink measured on a canvas) so it centres; slots centre with flex, since text-align can't centre a glyph wider than its box. Rotating window: ring of katakana glyphs, about six either side of the current one, fading. Not the centerpiece (he rejected that mockup). ◀ turns the ring clockwise, ▶ anticlockwise; drag follows the hand; scroll down or right = next |
 | Tape tuner | Under the dial (desktop) and under the tuner (phones). Thin 1 px analog ticks, a number every fifth, group bands, needle. Swipe or drag left = higher stations |
 | Volume | Two-finger swipe right = louder |
 | Phones | Tuner strip instead of the dial; no clock in the header (status bar has it); ? in the header; brand shows P·A·S |
