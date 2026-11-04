@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.78: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.79: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.79 | 2026-11-04 | Display modes Lunar, Eclipse (tint slider) and Solar, one brightness setting, display panel under the mode key | [link](updates/2026-11-04-lunar-eclipse-solar.md) |
 | v0.78 | 2026-11-04 | Panel padding evened out now the name tabs are gone | [link](updates/2026-11-04-panels-rebalanced.md) |
 | v0.77 | 2026-11-04 | Tree glyph centred under the caret (even SVG sizes); panel name tabs removed | [link](updates/2026-11-04-tree-centred-tabs-removed.md) |
 | v0.76 | 2026-11-04 | Dial caret drawn without border rounding, so it sits centred over the lit glyph; ring pulled in to clear it | [link](updates/2026-11-04-dial-caret-centred.md) |

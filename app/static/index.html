@@ -4,8 +4,84 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Per Annum Sound</title>
-<meta name="theme-color" content="#002b36">
-<script>try { document.documentElement.dataset.theme = JSON.parse(localStorage.getItem("piRadioTheme")) || "night"; } catch (_) {}</script>
+<meta name="theme-color" content="#000000">
+<script>
+/* Display: mode (LUNAR, ECLIPSE, SOLAR), Eclipse's tint and one brightness setting, applied here
+   before first paint so nothing flashes. Every mode's colours live in this script and are set
+   inline on <html>; the CSS keeps only each mode's filters and overlays.
+   Eclipse's chassis blends in OKLab between five notches, in hue order so neighbours mix cleanly,
+   and snaps to a notch within 0.1. Brightness moves what carries information (the lettering and
+   line tokens here, the displays and art through --lum): below 100 toward the background, above
+   it toward white, or black on Solar. Backgrounds and glass don't move. */
+const DISPLAY = (() => {
+  const LUNAR = { bg: "#000000", screen: "#000000", amber: "#ffc24a", "amber-mid": "#ffb43a", "amber-dim": "#e0a040", "amber-ghost": "#33240c",
+                  line: "#8a6428", glow: "#ffc24acc", "glow-soft": "#ffc24a99", texture: "#ffc24a10", vignette: "#00000073", scanline: "#0000002e",
+                  scrim: "#000000eb", "ghost-chassis": "#2a1d0a", "ghost-glass": "#2a1d0a" };
+  // Solarized light. --screen stays dark: the displays are drawn amber on dark and the Solar
+  // filter turns them to ink on pale glass; the glass itself is painted in the CSS
+  const SOLAR = { bg: "#fdf6e3", screen: "#0b0906", amber: "#cb4b16", "amber-mid": "#586e75", "amber-dim": "#657b83", "amber-ghost": "#eee8d5",
+                  line: "#d3cbb4", glow: "#00000000", "glow-soft": "#00000000", texture: "#586e7510", vignette: "#00000000", scanline: "#00000000",
+                  scrim: "#fdf6e3eb", "ghost-chassis": "#eee8d5", "ghost-glass": "#e6dfca" };
+  // Eclipse notches: chassis, glass, lettering, quiet lettering, unlit ghosts, lines, unlit
+  // segments behind glass. Orange and yellow were tried for the warm end and dropped: they share
+  // amber's hue and the keys sank into the chassis
+  const NOTCHES = [
+    ["GREY",   ["#34373a", "#17191b", "#e6dcc4", "#aaa597", "#45484b", "#5c6064", "#2a2c2e"]],
+    ["GREEN",  ["#2a3832", "#121a16", "#dfe2c6", "#a0ad96", "#3a4a42", "#4f6358", "#22302a"]],
+    ["BLUE",   ["#1d5262", "#0a2a34", "#eee8d5", "#a3b3b3", "#2a6373", "#3f7584", "#123c48"]],
+    ["VIOLET", ["#3e2a4e", "#1a1022", "#ece4d4", "#b3a5b8", "#4d3860", "#67507a", "#2c1c38"]],
+    ["RED",    ["#5a2224", "#220c0d", "#f1e2c8", "#c9a29c", "#6a2c2e", "#86464a", "#3a1416"]],
+  ];
+  const MODES = { lunar: "LUN", eclipse: "ECL", solar: "SOL" };
+  const lin = c => (c /= 255) <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
+  const gam = c => 255 * (c <= .0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - .055);
+  function lab(hex) {
+    const [r, g, b] = [1, 3, 5].map(i => lin(parseInt(hex.slice(i, i + 2), 16)));
+    const l = Math.cbrt(.4122214708 * r + .5363325363 * g + .0514459929 * b), m = Math.cbrt(.2119034982 * r + .6806995451 * g + .1073969566 * b),
+          s = Math.cbrt(.0883024619 * r + .2817188376 * g + .6299787005 * b);
+    return [.2104542553 * l + .793617785 * m - .0040720468 * s, 1.9779984951 * l - 2.428592205 * m + .4505937099 * s, .0259040371 * l + .7827717662 * m - .808675766 * s];
+  }
+  function hex([L, a, b]) {
+    const l = (L + .3963377774 * a + .2158037573 * b) ** 3, m = (L - .1055613458 * a - .0638541728 * b) ** 3, s = (L - .0894841775 * a - 1.291485548 * b) ** 3;
+    return "#" + [4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, -.0041960863 * l - .7034186147 * m + 1.707614701 * s]
+      .map(c => Math.round(Math.min(255, Math.max(0, gam(c)))).toString(16).padStart(2, "0")).join("");
+  }
+  const mix = (x, y, f) => { const p = lab(x), q = lab(y); return hex(p.map((v, j) => v + (q[j] - v) * f)); };
+  function tintAt(t) {
+    const i = Math.min(3, Math.floor(t)), f = t - i;
+    return NOTCHES[i][1].map((c, k) => mix(c, NOTCHES[i + 1][1][k], f));
+  }
+  function eclipse(t) {
+    const [bg, screen, mid, dim, ghost, line, glass] = tintAt(t);
+    return { bg, screen, amber: "#ffb84a", "amber-mid": mid, "amber-dim": dim, "amber-ghost": ghost, line, glow: "#ffb84a55", "glow-soft": "#ffb84a40",
+             texture: mid + "0d", vignette: "#00000040", scanline: "#00000014", scrim: bg + "eb", "ghost-chassis": ghost, "ghost-glass": glass };
+  }
+  const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+  const state = { mode: read("piRadioTheme", "lunar"), tint: +read("piRadioTint", 2), lum: +read("piRadioLum", 100) };
+  function set(next) {
+    Object.assign(state, next);
+    if (!MODES[state.mode]) state.mode = "lunar";  // night, dusk and bright (v0.57-0.78) land on Lunar
+    state.tint = Math.min(4, Math.max(0, Math.abs(state.tint - Math.round(state.tint)) < .1 ? Math.round(state.tint) : state.tint)) || 0;
+    state.lum = Math.min(140, Math.max(40, Math.round(state.lum / 5) * 5)) || 100;
+    const pal = state.mode === "lunar" ? LUNAR : state.mode === "solar" ? SOLAR : eclipse(state.tint);
+    const r = document.documentElement, f = state.lum / 100, peak = state.mode === "solar" ? "#000000" : "#ffffff";
+    r.dataset.theme = state.mode;
+    for (const k in pal) {
+      const v = ["amber", "amber-mid", "amber-dim", "line"].includes(k) ? (f <= 1 ? mix(pal.bg, pal[k], f) : mix(pal[k], peak, f - 1)) : pal[k];
+      r.style.setProperty("--" + k, v);
+    }
+    r.style.setProperty("--lum", f);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = pal.bg;
+    save("piRadioTheme", state.mode); save("piRadioTint", state.tint); save("piRadioLum", state.lum);
+    return state;
+  }
+  const name = t => Number.isInteger(t) ? NOTCHES[t][0] : "~" + NOTCHES[Math.round(t)][0];
+  set({});
+  return { set, state, MODES, NOTCHES, tintAt, name };
+})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Per Annum">
@@ -37,27 +113,21 @@
     --scrim: #0b0906eb;      /* behind pop-ups */
     --screen: #070503;       /* the glass behind each display */
   }
-  /* Display modes (T, or the NGT / DSK / BRT key in the header). NIGHT is the original. DUSK
-     lifts everything for a bright room: lighter chassis and text, brighter displays, softer
-     vignette and scanlines. BRIGHT keeps the night background and turns every amber element up
-     instead: lettering, lines, glows and the displays themselves. */
-  /* NIGHT is Solarized dark: the chassis, glass, lines and quiet lettering take Solarized's base
-     tones (base03 chassis, base02 ghosts, base0 labels); amber stays the accent, near its
-     yellow and orange. DUSK and BRIGHT keep the original near-black. */
-  [data-theme="night"] .ghost::before { color: #0b4452; }  /* unlit segments, a shade above base02 */
-  :root[data-theme="night"] { --bg: #002b36; --screen: #00212a; --line: #1f4f5a; --amber-ghost: #073642; --amber-dim: #839496;
-                              --texture: #93a1a10d; --scrim: #002b36eb; }
-  :root[data-theme="dusk"] { --bg: #17130e; --amber-mid: #e8a33a; --amber-dim: #c48c36; --amber-ghost: #33250f; --line: #6e5022; }
-  [data-theme="dusk"] { --screen: #100c08; }
-  [data-theme="dusk"] .screen canvas:not(.sigil) { filter: brightness(1.3); }
-  [data-theme="dusk"] .art img, [data-theme="dusk"] .sigil { filter: brightness(1.25) drop-shadow(0 0 2px var(--glow-soft)); }
-  [data-theme="dusk"] body::before, [data-theme="dusk"] body::after { opacity: .5; }
-  [data-theme="dusk"] .ghost::before { color: #3a2a12; }
-  :root[data-theme="bright"] { --amber: #ffc24a; --amber-mid: #f5ac3c; --amber-dim: #d39a40; --amber-ghost: #2e210c; --line: #6e5022; }
-  [data-theme="bright"] .screen canvas:not(.sigil) { filter: brightness(1.5); }
-  :root[data-theme="bright"] { --glow: #ffc24aaa; --glow-soft: #ffc24a88; }
-  [data-theme="bright"] .art img, [data-theme="bright"] .sigil { filter: brightness(1.25) drop-shadow(0 0 3px var(--glow-soft)); }  /* more washes the art out */
-  [data-theme="bright"] body::before, [data-theme="bright"] body::after { opacity: .6; }
+  /* Display modes: LUNAR, ECLIPSE, SOLAR, set by DISPLAY in <head> (colours inline on <html>) and
+     the panel under the header's mode key. Here only what each mode does to the displays, art
+     and overlays. --lum is the brightness setting (1 = 100). */
+  :root { --lum: 1; --ghost-chassis: #2a1d0a; --ghost-glass: #2a1d0a; }
+  .screen canvas:not(.sigil) { filter: brightness(var(--lum)); }
+  [data-theme="lunar"] .screen canvas:not(.sigil) { filter: brightness(calc(1.6 * var(--lum))) contrast(1.15); }
+  [data-theme="lunar"] .art img, [data-theme="lunar"] .sigil { filter: brightness(calc(1.3 * var(--lum))) contrast(1.1) drop-shadow(0 0 3px var(--glow-soft)); }
+  [data-theme="lunar"] body::before, [data-theme="lunar"] body::after { opacity: 0; }
+  [data-theme="eclipse"] .screen canvas:not(.sigil) { filter: brightness(calc(1.2 * var(--lum))); }
+  [data-theme="eclipse"] .art img, [data-theme="eclipse"] .sigil { filter: brightness(var(--lum)) drop-shadow(0 0 2px var(--glow-soft)); }
+  /* Solar: pale glass, and the amber-on-dark displays turned to dark ink by inverting them with the
+     hue kept. Brightness goes first, so a higher setting means stronger ink */
+  [data-theme="solar"] .screen { background-color: #f1ebd9; }
+  [data-theme="solar"] .screen canvas, [data-theme="solar"] .art img, [data-theme="solar"] .sigil {
+    filter: brightness(var(--lum)) invert(1) hue-rotate(180deg) sepia(.25) saturate(1.4) contrast(1.15); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }  /* class display rules would otherwise override it */
   html, body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: var(--mono); }
@@ -559,7 +629,8 @@
 
   /* VFD digits: an unlit 8 behind every lit numeral */
   .ghost { position: relative; isolation: isolate; }
-  .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: #2a1d0a; text-shadow: none; z-index: -1; }
+  .ghost::before { content: attr(data-ghost); position: absolute; left: 0; top: 0; color: var(--ghost-chassis); text-shadow: none; z-index: -1; }
+  .screen .ghost::before { color: var(--ghost-glass); }
 
   /* Tape tuner: a band that slides under a fixed needle, like an old car radio's frequency strip.
      A glyph and tick per station, a number every fifth, and the groups marked underneath like
@@ -586,6 +657,27 @@
                    white-space: nowrap; font: 600 10px/11px var(--cond); letter-spacing: .14em; color: var(--amber-dim); text-transform: uppercase; }
   .tape-run .seg.on { border-top-color: var(--amber); color: var(--amber); }
   .tuner-tape { height: 74px; }  /* any shorter and the numbers sit on the group labels */
+
+  /* Display panel: drops from the header's mode key. A three-way switch like the map range, the
+     Eclipse tint as a strip like the tape tuner (segments painted with the chassis colour at each
+     point, an amber needle, notches named under it), brightness as a dot bar like VOL */
+  .dpanel { position: absolute; z-index: 25; right: 16px; width: 316px; padding: 14px 16px 16px; display: grid; gap: 12px; background-color: var(--bg); }
+  .dpanel .seg { grid-template-columns: repeat(3, 1fr); }
+  .dpanel .seg button { height: 32px; font-size: 19px; }
+  .dpanel .d-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .dpanel .d-row output { font: 19px var(--dot); color: var(--amber); }
+  .dpanel .d-tint { display: grid; gap: 6px; }
+  .tint-bar { position: relative; height: 22px; display: grid; grid-template-columns: repeat(40, 1fr); gap: 2px; }
+  .tint-bar i { outline: 1px solid var(--line); outline-offset: -1px; }
+  .tint-bar .needle { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--amber); box-shadow: 0 0 6px var(--glow); pointer-events: none; }
+  .tint-bar input, .dpanel .bar input { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); opacity: 0; margin: 0; cursor: pointer; }
+  .tint-names { position: relative; height: 22px; font: 14px/1 var(--dot); color: var(--amber-dim); }
+  .tint-names span { position: absolute; top: 8px; transform: translateX(-50%); }
+  .tint-names span::before { content: ""; position: absolute; left: 50%; top: -8px; width: 1px; height: 5px; background: var(--amber-dim); }
+  .tint-names span:first-child { transform: none; } .tint-names span:first-child::before { left: 0; }
+  .tint-names span:last-child { transform: translateX(-100%); } .tint-names span:last-child::before { left: auto; right: 0; }
+  .tint-names span.on { color: var(--amber); }
+  @media (max-width: 959px) { .dpanel { width: auto; left: 12px; right: 12px; } }
 
   /* Help */
   .help-btn {
@@ -678,7 +770,7 @@
     <span class="clock ghost" id="clock" data-ghost="88:88"></span>
     <span id="status">--</span>
     <button class="sleep" id="sleepBtn" hidden aria-label="Sleep timer" title="Sleep timer: tap for 15, 30, 60, 90 min, off">ZZ</button>
-    <button class="mode" id="modeBtn" aria-label="Display mode" title="Display mode: night, dusk, bright (T)">NGT</button>
+    <button class="mode" id="modeBtn" aria-label="Display" aria-haspopup="true" aria-expanded="false" aria-controls="dpanel" title="Display: mode, tint, brightness (T cycles the mode)">LUN</button>
     <button class="help-head" id="helpBtn2" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
   </div>
 
@@ -782,6 +874,19 @@
     </div>
   </div>
 
+  <div class="dpanel screen cham" id="dpanel" hidden role="group" aria-label="Display">
+    <span class="label">Mode</span>
+    <div class="seg" role="group" aria-label="Display mode">
+      <button data-mode="lunar">LUNAR</button><button data-mode="eclipse">ECLIPSE</button><button data-mode="solar">SOLAR</button>
+    </div>
+    <div class="d-tint" id="dTint">
+      <div class="d-row"><span class="label">Tint</span><output id="tintOut"></output></div>
+      <div class="tint-bar" id="tintBar"><span class="needle" id="tintNeedle"></span><input type="range" id="tintIn" min="0" max="400" aria-label="Eclipse tint"></div>
+      <div class="tint-names" id="tintNames"></div>
+    </div>
+    <div class="d-row"><span class="label">Brightness</span><output id="lumOut"></output></div>
+    <div class="bar" id="lumBar"><input type="range" id="lumIn" min="40" max="140" step="5" aria-label="Brightness"></div>
+  </div>
 </main>
 
 <nav class="list cham" aria-label="Stations">
@@ -814,7 +919,8 @@
       <dt>SHIFT + KEY</dt><dd>Save this station to that preset</dd>
       <dt>S</dt><dd>Sleep timer: 15, 30, 60, 90 min, off</dd>
       <dt>R</dt><dd>Random station</dd>
-      <dt>T</dt><dd>Display mode: night, dusk, bright</dd>
+      <dt>T</dt><dd>Display mode: Lunar, Eclipse, Solar</dd>
+      <dt>[ ]</dt><dd>Brightness down / up</dd>
       <dt>M</dt><dd>Map: USA / Europe / Terra / Galaxy</dd>
       <dt>?</dt><dd>This panel</dd>
       <dt>CLICK</dt><dd>A visualizer for its next display</dd>
@@ -1800,19 +1906,40 @@ function clockOf(ms) {
   const t = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60;
   return (h ? h + ":" + pad(m) : m) + ":" + pad(t % 60);
 }
-const MODES = { night: ["NGT", "#002b36"], dusk: ["DSK", "#17130e"], bright: ["BRT", "#0b0906"] };
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-function setTheme(m) {
-  if (m === "day") m = "bright";  // v0.57's day mode, replaced
-  if (!MODES[m]) m = "night";
-  document.documentElement.dataset.theme = m;
-  store.set("piRadioTheme", m);
-  $("modeBtn").textContent = MODES[m][0];
-  document.querySelector('meta[name="theme-color"]').content = MODES[m][1];
+/* Display panel (the colours themselves are DISPLAY's, in <head>) */
+$("tintBar").insertAdjacentHTML("afterbegin", Array.from({ length: 40 }, (_, k) => `<i style="background:${DISPLAY.tintAt(k / 39 * 4)[0]}"></i>`).join(""));
+$("tintNames").innerHTML = DISPLAY.NOTCHES.map(([n], k) => `<span style="left:${k * 25}%">${n}</span>`).join("");
+$("lumBar").insertAdjacentHTML("afterbegin", "<i></i>".repeat(20));
+function setDisplay(next) {
+  const st = DISPLAY.set(next);
+  $("modeBtn").textContent = DISPLAY.MODES[st.mode];
+  document.querySelectorAll("#dpanel [data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === st.mode));
+  $("dTint").hidden = st.mode !== "eclipse";
+  $("tintOut").textContent = DISPLAY.name(st.tint);
+  $("tintIn").value = Math.round(st.tint * 100);
+  $("tintNeedle").style.left = st.tint * 25 + "%";
+  $("tintNames").querySelectorAll("span").forEach((s, k) => s.classList.toggle("on", st.tint === k));
+  $("lumOut").textContent = st.lum;
+  $("lumIn").value = st.lum;
+  $("lumBar").querySelectorAll("i").forEach((i, k) => i.classList.toggle("lit", k < (st.lum - 40) / 5));
 }
-const cycleTheme = () => { const k = Object.keys(MODES); setTheme(k[(k.indexOf(document.documentElement.dataset.theme) + 1) % k.length]); };
-$("modeBtn").addEventListener("click", cycleTheme);
-setTheme(store.get("piRadioTheme", "night"));
+function toggleDisplay(open = $("dpanel").hidden) {
+  const head = document.querySelector(".head");
+  $("dpanel").style.top = head.offsetTop + head.offsetHeight + 6 + "px";
+  $("dpanel").hidden = !open;
+  $("modeBtn").setAttribute("aria-expanded", open);
+}
+const MODE_ORDER = Object.keys(DISPLAY.MODES);
+const cycleTheme = () => setDisplay({ mode: MODE_ORDER[(MODE_ORDER.indexOf(DISPLAY.state.mode) + 1) % MODE_ORDER.length] });
+$("modeBtn").addEventListener("click", () => toggleDisplay());
+document.querySelectorAll("#dpanel [data-mode]").forEach(b => b.addEventListener("click", () => setDisplay({ mode: b.dataset.mode })));
+$("tintIn").addEventListener("input", e => setDisplay({ tint: e.target.value / 100 }));
+$("lumIn").addEventListener("input", e => setDisplay({ lum: +e.target.value }));
+document.addEventListener("pointerdown", e => {
+  if (!$("dpanel").hidden && !$("dpanel").contains(e.target) && !$("modeBtn").contains(e.target)) toggleDisplay(false);
+});
+setDisplay({});
 function cycleSleep() {
   if (!S || !S.playing) return;
   const step = sleep ? sleep.step + 1 : 0;
@@ -1859,9 +1986,10 @@ document.addEventListener("keydown", e => {
   } else if (e.key === "s" || e.key === "S") cycleSleep();
   else if (e.key === "r" || e.key === "R") randomPlay();
   else if (e.key === "t" || e.key === "T") cycleTheme();
+  else if (e.key === "[" || e.key === "]") setDisplay({ lum: DISPLAY.state.lum + (e.key === "]" ? 5 : -5) });
   else if (e.key === "m" || e.key === "M") setMapRange(MAP_ORDER[(MAP_ORDER.indexOf(mapRange) + 1) % MAP_ORDER.length]);
   else if (e.key === "?") toggleHelp();
-  else if (e.key === "Escape") { toggleHelp(false); closeAbout(); }
+  else if (e.key === "Escape") { toggleHelp(false); closeAbout(); toggleDisplay(false); }
 });
 
 /* Tape tuner under the dial and the phone tuner: slides so the current station sits at the needle. */
@@ -2044,7 +2172,7 @@ function project(r, lat, lon, w, h) {
   return [fx * w, (r.lat0 - lat) / (r.lat0 - r.lat1) * h];
 }
 function mapBaseLayer(c, w, h, dpr) {
-  const key = [mapRange, w, h, dpr, document.documentElement.dataset.theme].join();
+  const key = [mapRange, w, h, dpr, document.documentElement.dataset.theme, cssVar("--screen")].join();  // the glass follows the tint
   if (mapBase && mapBase.key === key) return mapBase.canvas;
   const r = RANGES[mapRange], off = document.createElement("canvas");
   off.width = w * dpr; off.height = h * dpr;

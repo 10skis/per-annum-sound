@@ -31,9 +31,10 @@
 </head>
 <body>
 <h1>DISPLAY MODES</h1>
-<p class="lead">Three modes, dark to light, and one brightness slider for everything that carries information (lettering, lines, displays, art). Backgrounds stay put. Pick an Eclipse; the frames are live.</p>
+<p class="lead">Three modes, dark to light, and one brightness slider for everything that carries information (lettering, lines, displays, art). Backgrounds stay put. Eclipse's tint is a slider with five notches; it snaps to each and blends between them. In the frames, tap the mode key in the header (LUN, ECL or SOL) for the panel the app would have.</p>
 <div class="picks">
-  <div><span>Mode</span><button data-m="mk-lunar">LUNAR</button><button data-m="mk-eclipse-grey">ECLIPSE · GREY</button><button data-m="mk-eclipse-green">ECLIPSE · GREEN</button><button data-m="mk-eclipse-blue">ECLIPSE · BLUE</button><button data-m="mk-solar">SOLAR</button></div>
+  <div><span>Mode</span><button data-m="mk-lunar">LUNAR</button><button data-m="mk-eclipse">ECLIPSE</button><button data-m="mk-solar">SOLAR</button></div>
+  <div><span>Tint</span><input type="range" id="tint" min="0" max="400" value="200"><output id="tintOut">BLUE</output></div>
   <div><span>Brightness</span><input type="range" id="lum" min="40" max="140" step="5" value="100"><output id="lumOut">100</output></div>
   <div><span>Now</span><button data-m="night">NGT</button></div>
 </div>
@@ -47,6 +48,26 @@
   /* Mockup only: show the art and title as if playing, so options compare fairly without audio */
   .off img, .off .line, .off .detail, .off .sigil { opacity: 1 !important; }
   :root { --lum: 1; }
+  /* The display panel: drops from the header's mode key */
+  .dpanel { position: absolute; z-index: 25; width: 316px; padding: 14px 16px 16px; display: grid; gap: 12px; background-color: var(--bg); }
+  .dpanel .seg { grid-template-columns: repeat(3, 1fr); }
+  .dpanel .seg button { height: 32px; font-size: 19px; }
+  .dpanel .brow { display: flex; justify-content: space-between; align-items: baseline; }
+  .dpanel .brow output { font: 19px var(--dot); color: var(--amber); }
+  .dpanel .ptint { display: grid; gap: 6px; }
+  /* Tint strip: segments painted with the chassis colour at each point, an amber needle, notches
+     with names under them, like the tape tuner */
+  .dpanel .tbar { position: relative; height: 22px; display: grid; grid-template-columns: repeat(40, 1fr); gap: 2px; }
+  .dpanel .tbar i { outline: 1px solid var(--line); outline-offset: -1px; }
+  .dpanel .tbar .needle { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--amber); box-shadow: 0 0 6px var(--glow); pointer-events: none; }
+  .dpanel .tbar input { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); opacity: 0; margin: 0; cursor: pointer; }
+  .dpanel .tnames { position: relative; height: 22px; font: 14px/1 var(--dot); color: var(--amber-dim); }
+  .dpanel .tnames span { position: absolute; top: 8px; transform: translateX(-50%); }
+  .dpanel .tnames span::before { content: ""; position: absolute; left: 50%; top: -8px; width: 1px; height: 5px; background: var(--amber-dim); }
+  .dpanel .tnames span:first-child { transform: none; } .dpanel .tnames span:first-child::before { left: 0; }
+  .dpanel .tnames span:last-child { transform: translateX(-100%); } .dpanel .tnames span:last-child::before { left: auto; right: 0; }
+  .dpanel .tnames span.on { color: var(--amber); }
+  @media (max-width: 959px) { .dpanel { width: auto; left: 12px !important; right: 12px !important; } }
   .screen canvas:not(.sigil) { filter: brightness(var(--lum)); }
   .art img, .sigil { filter: brightness(var(--lum)) drop-shadow(0 0 2px var(--glow-soft)); }
 
@@ -60,24 +81,14 @@
   [data-theme="mk-lunar"] .ghost::before { color: #2a1d0a; }
 
   /* ---- ECLIPSE: the middle. A painted mid-dark chassis with cream lettering and amber accents;
-     the displays stay dark glass, a step deeper than the chassis. Two candidates. ---- */
-  :root[data-theme="mk-eclipse-grey"] { --bg: #34373a; --screen: #17191b; --amber: #ffb84a; --amber-mid: #e6dcc4; --amber-dim: #aaa597;
-    --amber-ghost: #45484b; --line: #5c6064; --glow: #ffb84a55; --glow-soft: #ffb84a40; --texture: #e6dcc40d; --vignette: #00000040;
-    --scanline: #00000014; --scrim: #34373aeb; }
-  [data-theme="mk-eclipse-grey"] .ghost::before { color: #45484b; }
-  [data-theme="mk-eclipse-grey"] .screen .ghost::before { color: #2a2c2e; }
-  :root[data-theme="mk-eclipse-green"] { --bg: #2a3832; --screen: #121a16; --amber: #ffb84a; --amber-mid: #dfe2c6; --amber-dim: #a0ad96;
-    --amber-ghost: #3a4a42; --line: #4f6358; --glow: #ffb84a55; --glow-soft: #ffb84a40; --texture: #dfe2c60d; --vignette: #00000040;
-    --scanline: #00000014; --scrim: #2a3832eb; }
-  [data-theme="mk-eclipse-green"] .ghost::before { color: #3a4a42; }
-  [data-theme="mk-eclipse-green"] .screen .ghost::before { color: #22302a; }
-  /* Blue: a brighter Solarized blue than NGT's base03, with base2/base1 lettering */
-  :root[data-theme="mk-eclipse-blue"] { --bg: #1d5262; --screen: #0a2a34; --amber: #ffb84a; --amber-mid: #eee8d5; --amber-dim: #a3b3b3;
-    --amber-ghost: #2a6373; --line: #3f7584; --glow: #ffb84a55; --glow-soft: #ffb84a40; --texture: #eee8d50d; --vignette: #00000040;
-    --scanline: #00000014; --scrim: #1d5262eb; }
-  [data-theme="mk-eclipse-blue"] .ghost::before { color: #2a6373; }
-  [data-theme="mk-eclipse-blue"] .screen .ghost::before { color: #123c48; }
-  [data-theme^="mk-eclipse"] .screen canvas:not(.sigil) { filter: brightness(calc(1.2 * var(--lum))); }
+     the displays stay dark glass, a step deeper than the chassis. The chassis colours come from
+     the tint slider (set inline by the script), blended in OKLab between five notches. Orange
+     (#5c3016) and yellow (#55491c) were tried for a warm notch: both share amber's hue and the
+     keys sank into the chassis, so the warm end is red. ---- */
+  :root[data-theme="mk-eclipse"] { --amber: #ffb84a; --glow: #ffb84a55; --glow-soft: #ffb84a40; --vignette: #00000040; --scanline: #00000014; }
+  [data-theme="mk-eclipse"] .ghost::before { color: var(--mk-ghost); }
+  [data-theme="mk-eclipse"] .screen .ghost::before { color: var(--mk-ghost-glass); }
+  [data-theme="mk-eclipse"] .screen canvas:not(.sigil) { filter: brightness(calc(1.2 * var(--lum))); }
 
   /* ---- SOLAR: Solarized light. base3 chassis, base2 glass, base01 lettering, Solarized orange as
      the accent. The displays turn light: dark ink on pale glass. Brightness before the invert, so
@@ -94,31 +105,112 @@
   const WHY = {
     night: "Night as it is now (Solarized dark), for reference. Lunar replaces it.",
     "mk-lunar": "Lunar: the dark mode, built on round 1's BRT. Slide down for a dark room, which covers what DSK did.",
-    "mk-eclipse-grey": "Eclipse, grey: a graphite chassis with cream lettering and amber accents. Displays stay dark glass.",
-    "mk-eclipse-green": "Eclipse, green: the same with a deep instrument green, a nod to the Solarized teal NGT had.",
-    "mk-eclipse-blue": "Eclipse, blue: a brighter Solarized blue than NGT had, with Solarized cream lettering and amber accents.",
+    "mk-eclipse": "Eclipse: a painted chassis, cream lettering, amber accents, dark glass. Tint snaps to grey, green, blue, violet and red, and blends anywhere between.",
     "mk-solar": "Solar: Solarized light. Everything goes light, displays included. Slide up for direct sun.",
   };
+  // Eclipse notches, in hue order so neighbours blend cleanly: bg, glass, lettering, quiet
+  // lettering, unlit ghosts, lines, unlit segments behind glass
+  const NOTCHES = [
+    ["GREY",   ["#34373a", "#17191b", "#e6dcc4", "#aaa597", "#45484b", "#5c6064", "#2a2c2e"]],
+    ["GREEN",  ["#2a3832", "#121a16", "#dfe2c6", "#a0ad96", "#3a4a42", "#4f6358", "#22302a"]],
+    ["BLUE",   ["#1d5262", "#0a2a34", "#eee8d5", "#a3b3b3", "#2a6373", "#3f7584", "#123c48"]],
+    ["VIOLET", ["#3e2a4e", "#1a1022", "#ece4d4", "#b3a5b8", "#4d3860", "#67507a", "#2c1c38"]],
+    ["RED",    ["#5a2224", "#220c0d", "#f1e2c8", "#c9a29c", "#6a2c2e", "#86464a", "#3a1416"]],
+  ];
+  const TINT_VARS = ["--bg", "--screen", "--amber-mid", "--amber-dim", "--amber-ghost", "--line", "--mk-ghost-glass"];
+  // sRGB <-> OKLab, so blends between notches stay even in lightness instead of going muddy
+  const lin = c => (c /= 255) <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
+  const gam = c => 255 * (c <= .0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - .055);
+  function toLab(hex) {
+    const [r, g, b] = [1, 3, 5].map(i => lin(parseInt(hex.slice(i, i + 2), 16)));
+    const l = Math.cbrt(.4122214708 * r + .5363325363 * g + .0514459929 * b), m = Math.cbrt(.2119034982 * r + .6806995451 * g + .1073969566 * b),
+          s = Math.cbrt(.0883024619 * r + .2817188376 * g + .6299787005 * b);
+    return [.2104542553 * l + .793617785 * m - .0040720468 * s, 1.9779984951 * l - 2.428592205 * m + .4505937099 * s, .0259040371 * l + .7827717662 * m - .808675766 * s];
+  }
+  function toHex([L, a, b]) {
+    const l = (L + .3963377774 * a + .2158037573 * b) ** 3, m = (L - .1055613458 * a - .0638541728 * b) ** 3, s = (L - .0894841775 * a - 1.291485548 * b) ** 3;
+    return "#" + [4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, -.0041960863 * l - .7034186147 * m + 1.707614701 * s]
+      .map(c => Math.round(Math.min(255, Math.max(0, gam(c)))).toString(16).padStart(2, "0")).join("");
+  }
+  function tintAt(t) {
+    const i = Math.min(3, Math.floor(t)), f = t - i, A = NOTCHES[i][1], B = NOTCHES[i + 1][1];
+    return A.map((c, k) => { const x = toLab(c), y = toLab(B[k]); return toHex(x.map((v, j) => v + (y[j] - v) * f)); });
+  }
+  const snap = t => Math.abs(t - Math.round(t)) < .1 ? Math.round(t) : t;
+  const tintName = t => Number.isInteger(t) ? NOTCHES[t][0] : "~" + NOTCHES[Math.round(t)][0];
+
   // Information tokens the slider moves: below 100 they blend toward the background, above 100
   // toward the extreme (white on the dark modes, black on Solar). Backgrounds and glass don't move.
   const TOKENS = ["--amber", "--amber-mid", "--amber-dim", "--line"];
   const css = document.getElementById("variants").textContent;
-  let mode = "mk-lunar", lum = 1;
+  let mode = "mk-lunar", tint = 2, lum = 1;
   function apply(f) {
     const d = f.contentDocument; if (!d || !d.documentElement) return;
     if (!d.getElementById("mkv")) { const s = d.createElement("style"); s.id = "mkv"; s.textContent = css; d.head.appendChild(s); }
     const r = d.documentElement;
-    TOKENS.forEach(t => r.style.removeProperty(t));
+    TOKENS.concat(TINT_VARS, ["--mk-ghost", "--texture", "--scrim"]).forEach(t => r.style.removeProperty(t));
     r.dataset.theme = mode;
-    const cs = getComputedStyle(r), bg = cs.getPropertyValue("--bg").trim(), peak = mode === "mk-solar" ? "#000" : "#fff";
+    const base = {};
+    if (mode === "mk-eclipse") {
+      const c = tintAt(tint);
+      TINT_VARS.forEach((v, k) => { base[v] = c[k]; r.style.setProperty(v, c[k]); });
+      r.style.setProperty("--mk-ghost", c[4]); r.style.setProperty("--texture", c[2] + "0d"); r.style.setProperty("--scrim", c[0] + "eb");
+    }
+    const cs = getComputedStyle(r), bg = base["--bg"] || cs.getPropertyValue("--bg").trim(), peak = mode === "mk-solar" ? "#000" : "#fff";
     TOKENS.forEach(t => {
-      const v = cs.getPropertyValue(t).trim();
+      const v = base[t] || cs.getPropertyValue(t).trim();
       r.style.setProperty(t, lum <= 1 ? `color-mix(in srgb, ${v} ${Math.round(lum * 100)}%, ${bg})`
                                       : `color-mix(in srgb, ${v} ${Math.round((2 - lum) * 100)}%, ${peak})`);
     });
     r.style.setProperty("--lum", lum);
     const b = d.getElementById("modeBtn");
     if (b) b.textContent = { night: "NGT", "mk-lunar": "LUN", "mk-solar": "SOL" }[mode] || "ECL";
+    syncPanel(d);
+  }
+  // The in-app control, drawn into each frame from the app's own parts: a three-way switch like
+  // the map range, a tint strip like the tape tuner, a dot bar like VOL
+  function ensurePanel(d) {
+    if (d.getElementById("dpanel")) return d.getElementById("dpanel");
+    const unit = d.querySelector(".unit"), btn = d.getElementById("modeBtn"), head = d.querySelector(".head");
+    if (!unit || !btn || !head) return null;
+    const pnl = d.createElement("div");
+    pnl.id = "dpanel"; pnl.className = "dpanel screen cham"; pnl.hidden = true;
+    pnl.innerHTML = `<span class="label">Mode</span>
+      <div class="seg"><button data-pm="mk-lunar">LUNAR</button><button data-pm="mk-eclipse">ECLIPSE</button><button data-pm="mk-solar">SOLAR</button></div>
+      <div class="ptint"><div class="brow"><span class="label">Tint</span><output class="tout"></output></div>
+        <div class="tbar">${Array.from({ length: 40 }, (_, k) => `<i style="background:${tintAt(k / 39 * 4)[0]}"></i>`).join("")}<span class="needle"></span>
+          <input type="range" class="tin" min="0" max="400" aria-label="Tint"></div>
+        <div class="tnames">${NOTCHES.map(([n], k) => `<span style="left:${k * 25}%">${n}</span>`).join("")}</div></div>
+      <div class="brow"><span class="label">Brightness</span><output class="lout"></output></div>
+      <div class="bar">${"<i></i>".repeat(20)}<input type="range" class="lin" min="40" max="140" step="5" aria-label="Brightness"></div>`;
+    unit.appendChild(pnl);
+    const place = () => { pnl.style.top = (head.offsetTop + head.offsetHeight + 6) + "px"; pnl.style.right = "16px"; };
+    btn.addEventListener("click", e => { e.stopImmediatePropagation(); place(); pnl.hidden = !pnl.hidden; }, true);
+    d.addEventListener("pointerdown", e => { if (!pnl.hidden && !pnl.contains(e.target) && e.target !== btn) pnl.hidden = true; });
+    d.addEventListener("keydown", e => { if (e.key === "Escape") pnl.hidden = true; });
+    pnl.querySelectorAll("[data-pm]").forEach(b => b.onclick = () => pick(b.dataset.pm));
+    pnl.querySelector(".tin").oninput = e => setTint(+e.target.value / 100);
+    pnl.querySelector(".lin").oninput = e => setLum(+e.target.value);
+    return pnl;
+  }
+  function syncPanel(d) {
+    const pnl = ensurePanel(d); if (!pnl) return;
+    pnl.querySelectorAll("[data-pm]").forEach(b => b.classList.toggle("on", b.dataset.pm === mode));
+    pnl.querySelector(".ptint").hidden = mode !== "mk-eclipse";
+    pnl.querySelector(".tout").textContent = tintName(tint);
+    pnl.querySelector(".tin").value = Math.round(tint * 100);
+    pnl.querySelector(".needle").style.left = (tint / 4 * 100) + "%";
+    pnl.querySelectorAll(".tnames span").forEach((s, k) => s.classList.toggle("on", tint === k));
+    const v = Math.round(lum * 100), lit = Math.round((v - 40) / 5);
+    pnl.querySelector(".lout").textContent = v;
+    pnl.querySelector(".lin").value = v;
+    pnl.querySelectorAll(".bar i").forEach((i, k) => i.classList.toggle("lit", k < lit));
+  }
+  function setLum(v) { lum = v / 100; document.getElementById("lum").value = v; document.getElementById("lumOut").textContent = v; all(); }
+  function setTint(t) {
+    tint = snap(t); document.getElementById("tint").value = Math.round(tint * 100);
+    document.getElementById("tintOut").textContent = tintName(tint);
+    mode === "mk-eclipse" ? all() : pick("mk-eclipse");
   }
   const all = () => ["fd", "fp"].forEach(id => apply(document.getElementById(id)));
   function pick(m) {
@@ -127,7 +219,8 @@
     all();
   }
   document.querySelectorAll("[data-m]").forEach(b => b.onclick = () => pick(b.dataset.m));
-  document.getElementById("lum").oninput = e => { lum = e.target.value / 100; document.getElementById("lumOut").textContent = e.target.value; all(); };
+  document.getElementById("lum").oninput = e => setLum(+e.target.value);
+  document.getElementById("tint").oninput = e => setTint(+e.target.value / 100);
   ["fd", "fp"].forEach(id => { const f = document.getElementById(id); f.addEventListener("load", () => { apply(f); setTimeout(() => apply(f), 1500); }); });
   pick(mode);
 </script>
