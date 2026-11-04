@@ -33,7 +33,7 @@
 <h1>DISPLAY MODES</h1>
 <p class="lead">Three modes, dark to light, and one brightness slider for everything that carries information (lettering, lines, displays, art). Backgrounds stay put. Pick an Eclipse; the frames are live.</p>
 <div class="picks">
-  <div><span>Mode</span><button data-m="mk-lunar">LUNAR</button><button data-m="mk-eclipse-grey">ECLIPSE · GREY</button><button data-m="mk-eclipse-green">ECLIPSE · GREEN</button><button data-m="mk-solar">SOLAR</button></div>
+  <div><span>Mode</span><button data-m="mk-lunar">LUNAR</button><button data-m="mk-eclipse-grey">ECLIPSE · GREY</button><button data-m="mk-eclipse-green">ECLIPSE · GREEN</button><button data-m="mk-eclipse-blue">ECLIPSE · BLUE</button><button data-m="mk-solar">SOLAR</button></div>
   <div><span>Brightness</span><input type="range" id="lum" min="40" max="140" step="5" value="100"><output id="lumOut">100</output></div>
   <div><span>Now</span><button data-m="night">NGT</button></div>
 </div>
@@ -71,6 +71,12 @@
     --scanline: #00000014; --scrim: #2a3832eb; }
   [data-theme="mk-eclipse-green"] .ghost::before { color: #3a4a42; }
   [data-theme="mk-eclipse-green"] .screen .ghost::before { color: #22302a; }
+  /* Blue: a brighter Solarized blue than NGT's base03, with base2/base1 lettering */
+  :root[data-theme="mk-eclipse-blue"] { --bg: #1d5262; --screen: #0a2a34; --amber: #ffb84a; --amber-mid: #eee8d5; --amber-dim: #a3b3b3;
+    --amber-ghost: #2a6373; --line: #3f7584; --glow: #ffb84a55; --glow-soft: #ffb84a40; --texture: #eee8d50d; --vignette: #00000040;
+    --scanline: #00000014; --scrim: #1d5262eb; }
+  [data-theme="mk-eclipse-blue"] .ghost::before { color: #2a6373; }
+  [data-theme="mk-eclipse-blue"] .screen .ghost::before { color: #123c48; }
   [data-theme^="mk-eclipse"] .screen canvas:not(.sigil) { filter: brightness(calc(1.2 * var(--lum))); }
 
   /* ---- SOLAR: Solarized light. base3 chassis, base2 glass, base01 lettering, Solarized orange as
@@ -90,6 +96,7 @@
     "mk-lunar": "Lunar: the dark mode, built on round 1's BRT. Slide down for a dark room, which covers what DSK did.",
     "mk-eclipse-grey": "Eclipse, grey: a graphite chassis with cream lettering and amber accents. Displays stay dark glass.",
     "mk-eclipse-green": "Eclipse, green: the same with a deep instrument green, a nod to the Solarized teal NGT had.",
+    "mk-eclipse-blue": "Eclipse, blue: a brighter Solarized blue than NGT had, with Solarized cream lettering and amber accents.",
     "mk-solar": "Solar: Solarized light. Everything goes light, displays included. Slide up for direct sun.",
   };
   // Information tokens the slider moves: below 100 they blend toward the background, above 100
