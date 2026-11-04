@@ -5,7 +5,7 @@ Paste the block below into a new Claude Code chat (working directory `~/Document
 ```
 Picking up Per Annum Sound, my internet-radio web app, in projects/pi-radio. Read projects/pi-radio/HANDOFF.md first (rules, traps, open items), then the top of projects/pi-radio/VERSION_CONTROL.md for recent versions. Don't read every update file.
 
-Where it stands: v0.84 is built (app/web) and pushed to GitHub. The live site https://perannum.netlify.app is still on v0.47; I re-drag app/web to Netlify myself, so don't deploy. 79 stations; map ranges USA / EUROPE / TERRA / GALAXY; display modes Lunar / Eclipse / Solar, each with its own tint strip, and one brightness setting, in a panel under the header's mode key.
+Where it stands: v0.85 is built (app/web) and pushed to GitHub. The live site https://perannum.netlify.app is still on v0.47; I re-drag app/web to Netlify myself, so don't deploy. 79 stations; map ranges USA / EUROPE / TERRA / GALAXY; display modes Lunar / Eclipse / Solar, each with its own tint strip, and one brightness setting, in a panel under the header's mode key.
 
 How I want to work: one small change at a time, built, checked in the browser at desktop and phone width, logged and pushed. If I ask a question, answer it and stop. If you're unsure what I mean, ask before building, and when I compare to something existing ("like Terra"), match it exactly. Keep replies short.
 
@@ -16,14 +16,14 @@ First task: [write it here]
 
 | Field | Value |
 |---|---|
-| Version | v0.84 (2026-11-04) |
+| Version | v0.85 (2026-11-04) |
 | Live site | https://perannum.netlify.app, on v0.47 until the next re-drag |
 | Rules and traps | `HANDOFF.md` |
 | History | `VERSION_CONTROL.md`, `updates/` |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
 | Local preview | `cd app && .venv/bin/python build_static.py`, then `python3 -m http.server 8091 --directory web` |
 
-## Last run (v0.68 to v0.84, 2026-11-04)
+## Last run (v0.68 to v0.85, 2026-11-04)
 
 | Version | Change |
 |---|---|
@@ -42,6 +42,7 @@ First task: [write it here]
 | v0.82 | Station search |
 | v0.83 | Lunar and Solar tint strips |
 | v0.84 | Lunar black to grey; taller Level panel |
+| v0.85 | Solid controls and board |
 
 ## Worth doing next (Robert's call)
 

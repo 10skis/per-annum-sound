@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Weight</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* The real app (../app/web, v0.84) with each option's CSS injected, desktop and phone.
+     Serve from projects/pi-radio: python3 -m http.server 8091, then /mockups/control-weight.html */
+  :root { --bg: #0b0906; --amber: #ffb02e; --amber-mid: #d08c26; --amber-dim: #9c6c22; --line: #4a3616; }
+  body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: "Saira Condensed", sans-serif; padding: 24px 16px; }
+  h1 { font: 400 16px "Michroma", sans-serif; letter-spacing: .2em; color: var(--amber); margin: 0 0 6px; }
+  p.lead { color: var(--amber-dim); margin: 0 0 18px; font-size: 17px; max-width: 900px; }
+  .picks { display: flex; flex-wrap: wrap; gap: 28px; margin-bottom: 8px; align-items: center; }
+  .picks div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .picks span { font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--amber-dim); margin-right: 4px; }
+  button { font: 20px "VT323", monospace; color: var(--amber-mid); background: none; border: 1px solid var(--amber-dim); padding: 3px 10px; cursor: pointer; }
+  button.on { background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .why { min-height: 2.6em; font-size: 17px; color: var(--amber); margin: 10px 0 16px; max-width: 900px; }
+  .frames { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .desk { width: 1008px; height: 630px; overflow: hidden; border: 1px solid var(--line); }
+  .desk iframe { width: 1440px; height: 900px; transform: scale(.7); transform-origin: 0 0; border: 0; }
+  .phone { width: 375px; height: 812px; border: 1px solid var(--line); }
+  .phone iframe { width: 375px; height: 812px; border: 0; }
+</style>
+</head>
+<body>
+<h1>CONTROL WEIGHT</h1>
+<p class="lead">The controls and the station board sit on the bare chassis while the displays have glass, so they read as hollow. Both options lift the displays' glass partway toward the chassis, then fill the controls to match. Scroll the frames for the board.</p>
+<div class="picks">
+  <div><span>Option</span><button data-o="now">NOW</button><button data-o="solid">A · SOLID CONTROLS</button><button data-o="plate">B · GLASS PLATE</button></div>
+  <div><span>Mode</span><button data-m="lunar">LUNAR</button><button data-m="eclipse">ECLIPSE</button><button data-m="solar">SOLAR</button></div>
+</div>
+<div class="why" id="why"></div>
+<div class="frames">
+  <div class="desk"><iframe id="fd" src="../app/web/index.html?mk=cw"></iframe></div>
+  <div class="phone"><iframe id="fp" src="../app/web/index.html?mk=cwp"></iframe></div>
+</div>
+
+<style id="opts">
+  /* Shared: --pg is the displays' glass in each mode (Solar paints --glass; the rest --screen),
+     --lift is that glass moved 35% of the way toward the chassis */
+  :root { --pg: var(--screen); } :root[data-theme="solar"] { --pg: var(--glass); }
+  :root { --lift: color-mix(in oklab, var(--pg) 65%, var(--bg)); }
+  .mk .screen, .mk .tuner-read { background-color: var(--lift); }
+
+  /* A: every control filled with the lifted glass; lit keys keep their amber */
+  .mk-solid .key:not(.on), .mk-solid .preset:not(.on), .mk-solid .seg button:not(.on),
+  .mk-solid .playstop > span:not(.on), .mk-solid .dial { background-color: var(--lift); }
+  .mk-solid .list { background-color: var(--lift); }
+
+  /* B: one borderless plate behind the controls column and the board, between the glass and
+     the chassis; the controls themselves stay outlines */
+  .mk-plate .mk-plate-el { position: absolute; z-index: 0; pointer-events: none; background-color: color-mix(in oklab, var(--pg) 40%, var(--bg)); }
+  .mk-plate .out, .mk-plate .top, .mk-plate .dial-wrap, .mk-plate .vol { position: relative; z-index: 1; }
+  .mk-plate .list { background-color: color-mix(in oklab, var(--pg) 40%, var(--bg)); }
+</style>
+<script>
+  const WHY = {
+    now: "As it is: displays on glass, controls and board on the bare chassis.",
+    solid: "A: displays' glass lifted partway toward the chassis, and each control (keys, presets, PLAY/STOP, readout, dial) filled with the same glass. The column stays open round them; the board fills inside its frame.",
+    plate: "B: displays' glass lifted the same way, and one borderless plate, a shade between glass and chassis, behind the whole controls column and the board. The controls stay outlines on it.",
+  };
+  const css = document.getElementById("opts").textContent;
+  let opt = "solid", mode = "lunar";
+  function plate(d) {  // the controls column's outline, measured: out, keys, dial and volume
+    let el = d.querySelector(".mk-plate-el");
+    const unit = d.querySelector(".unit");
+    if (!el) { el = d.createElement("div"); el.className = "mk-plate-el"; unit.prepend(el); }
+    const parts = [".out", ".top", ".dial-wrap", ".vol"].map(s => d.querySelector(s)).filter(e => e && e.offsetParent);
+    if (!parts.length) { el.hidden = true; return; }
+    el.hidden = false;
+    const u = unit.getBoundingClientRect(), z = u.width / unit.offsetWidth, r = parts.map(e => e.getBoundingClientRect()), pad = 12;
+    const x0 = Math.min(...r.map(b => b.left)), y0 = Math.min(...r.map(b => b.top)), x1 = Math.max(...r.map(b => b.right)), y1 = Math.max(...r.map(b => b.bottom));
+    Object.assign(el.style, { left: (x0 - u.left) / z - pad + "px", top: (y0 - u.top) / z - pad + "px", width: (x1 - x0) / z + 2 * pad + "px", height: (y1 - y0) / z + 2 * pad + "px" });
+  }
+  function apply(f) {
+    const d = f.contentDocument, w = f.contentWindow;
+    let ok = false;
+    try { ok = !!d && !!d.querySelector(".unit") && w.eval("typeof DISPLAY !== 'undefined' && typeof setDisplay === 'function'"); } catch (_) {}
+    if (!ok) return;
+    if (!d.getElementById("mkcw")) { const s = d.createElement("style"); s.id = "mkcw"; s.textContent = css; d.head.appendChild(s); }
+    if (w.eval("DISPLAY.state.mode") !== mode) w.eval(`setDisplay({ mode: "${mode}"${mode === "lunar" ? ", tint: 1" : ""} })`);  // Lunar on GRAPHITE: at BLACK the glass and chassis are the same
+    const r = d.documentElement;
+    r.classList.toggle("mk", opt !== "now"); r.classList.toggle("mk-solid", opt === "solid"); r.classList.toggle("mk-plate", opt === "plate");
+    if (opt === "plate") plate(d);
+  }
+  const all = () => ["fd", "fp"].forEach(id => apply(document.getElementById(id)));
+  function pick() {
+    document.getElementById("why").textContent = WHY[opt];
+    document.querySelectorAll("[data-o]").forEach(b => b.classList.toggle("on", b.dataset.o === opt));
+    document.querySelectorAll("[data-m]").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
+    all();
+  }
+  document.querySelectorAll("[data-o]").forEach(b => b.onclick = () => { opt = b.dataset.o; pick(); });
+  document.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; pick(); });
+  ["fd", "fp"].forEach(id => { const f = document.getElementById(id); f.addEventListener("load", () => { apply(f); setTimeout(apply, 1500, f); setTimeout(apply, 3000, f); }); });
+  setInterval(() => { if (opt === "plate") all(); }, 1000);  // keep the plate on the column as fonts and the fit settle
+  pick();
+</script>
+</body>
+</html>

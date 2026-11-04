@@ -74,6 +74,11 @@ const DISPLAY = (() => {
     const pal = Object.assign({}, mode === "lunar" ? LUNAR : mode === "solar" ? SOLAR : ECLIPSE, tintAt(mode, t));
     if (mode === "eclipse") Object.assign(pal, { texture: pal["amber-mid"] + "0d", "ghost-chassis": pal["amber-ghost"] });
     pal.scrim = pal.bg + "eb";
+    // The displays' glass sits a third of the way toward the chassis (v0.85), and every control is
+    // filled with it (--fill), so panels and controls weigh the same against the chassis. Solar's
+    // --screen stays dark for its filter, so there the painted --glass moves
+    if (mode === "solar") pal.glass = mix(pal.glass, pal.bg, .35); else pal.screen = mix(pal.screen, pal.bg, .35);
+    pal.fill = mode === "solar" ? pal.glass : pal.screen;
     return pal;
   }
   const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } };
@@ -338,6 +343,10 @@ const DISPLAY = (() => {
   .tuner-read b { font-weight: 400; font-size: 38px; line-height: 48px; }
   .tuner-read span { font-size: 18px; color: var(--amber-dim); }
   .tuner-hint { text-align: center; margin-top: -2px; }
+  /* Solid controls (v0.85, option A in mockups/control-weight.html): filled with the displays' glass
+     so they carry the same weight as the panels; lit keys keep their amber. :where keeps this under
+     the :active and .on rules */
+  :where(.key, .preset, .seg button, .playstop > span):not(.on), .dial, .tuner-read, .st-search { background-color: var(--fill); }
   .dial-wrap { display: grid; justify-items: center; gap: 8px; }
   .dial-row { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; justify-items: center; width: 100%; }
   .dial-row .key { width: 44px; height: 44px; font-size: 20px; }
@@ -802,7 +811,7 @@ const DISPLAY = (() => {
     .swipe { display: contents; }  /* desktop: Level sits under the art and Spectrum beside the map */
     .swipe-dots { display: none; }
     .vis { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); align-content: stretch; }
-    .list { border: 1px solid var(--line); padding: 16px 20px; }
+    .list { border: 1px solid var(--line); padding: 16px 20px; background-color: var(--fill); }  /* filled like the controls; phones have no frame, so no fill */
     .list-head { display: flex; }
     .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "a b" "a c"; grid-template-rows: auto 1fr;
             column-gap: 32px; row-gap: 20px; align-items: start; }
