@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.82: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.83: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.83 | 2026-11-04 | Lunar and Solar get tint strips (cool, neutral or cream, warm); each mode keeps its own tint | [link](updates/2026-11-04-lunar-solar-tints.md) |
 | v0.82 | 2026-11-04 | Station search on the board: name, city, code, genre, group or what's on | [link](updates/2026-11-04-station-search.md) |
 | v0.81 | 2026-11-04 | Fluid sized to fit its panel, so its spikes no longer run off the top | [link](updates/2026-11-04-fluid-fit.md) |
 | v0.80 | 2026-11-04 | Display panel opens without the console's boot flicker | [link](updates/2026-11-04-panel-flicker.md) |
