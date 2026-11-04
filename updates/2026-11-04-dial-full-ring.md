@@ -11,5 +11,5 @@
 - Dial enlarged 4× in the build: thirteen glyphs evenly round the number, lit station under the caret.
 
 ## Next steps
-- Robert to judge it in use; if glyphs still look off, get a pointer to which ones.
+- Robert's close-ups showed the real fault (caret offset and overlap); fixed in v0.76.
 - Re-drag `app/web` to Netlify. See TODO.md.

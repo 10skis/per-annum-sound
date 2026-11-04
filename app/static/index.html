@@ -252,15 +252,17 @@
   .dial:focus-visible { box-shadow: 0 0 0 1px var(--amber-dim); }
   /* Ring of glyphs, one per station, like characters on an alien instrument */
   .dial i {
-    position: absolute; left: 50%; top: 50%; width: 10px; height: 12px; margin: -6px -5px;
+    position: absolute; left: 50%; top: 50%; width: 10px; height: 12px; margin: -6px -5px;  /* --ring keeps the lit (15 px) glyph clear of the caret */
     font: 12px/12px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "MS Gothic", "Apple Symbols", monospace;
     font-style: normal; color: var(--amber-dim);
     display: flex; justify-content: center; align-items: center;  /* a glyph wider than the box overflows both sides evenly */
     transition: transform .35s cubic-bezier(.3, .7, .3, 1), opacity .35s, color .15s;
   }
   .dial::before { content: ""; position: absolute; inset: 20%; border-radius: 50%; border: 1px dashed var(--line); pointer-events: none; }
-  .dial::after { content: ""; position: absolute; left: 50%; top: -6px; margin-left: -5px; pointer-events: none;
-                 border: 5px solid transparent; border-top: 7px solid var(--amber); }
+  /* The caret: a clipped shape, not a CSS border triangle. Borders round to whole device pixels,
+     which at the desktop fit's zoom (~0.77) left the caret about a pixel left of the glyphs. */
+  .dial::after { content: ""; position: absolute; left: 50%; top: -6px; width: 10px; height: 7px; transform: translateX(-50%); pointer-events: none;
+                 background: var(--amber); clip-path: polygon(0 0, 100% 0, 50% 100%); }
   .gc { display: inline-block; }  /* a glyph, nudged by glyphNudge() so its ink sits on the centre */
   .dial i.lit { color: var(--amber); font-size: 15px; text-shadow: 0 0 6px var(--amber), 0 0 1px var(--amber); }
   .dial i.near { color: var(--amber-dim); }
@@ -655,7 +657,7 @@
     .top { grid-area: keys; }
     .out { grid-area: out; }
     .dial-wrap { grid-area: dial; }
-    .dial { max-width: 176px; --ring: 82px; }  /* room for a glyph per station */
+    .dial { max-width: 176px; --ring: 76px; }  /* the top glyph's centre 12 px down, clear of the caret */
     .vol { grid-area: vol; align-self: end; }
     .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
     .swipe { display: contents; }  /* desktop: Level sits under the art and Spectrum beside the map */
@@ -2000,7 +2002,7 @@ function drawRing(idx) {
     if (off > n / 2) off -= n;
     if (off < -n / 2) off += n;  // the nearest way round
     const a = off * RING_STEP;  // next stations wait on the right, as on the tape: ▶ turns the ring anticlockwise, ◀ clockwise
-    d.style.transform = `rotate(${a}deg) translateY(calc(-1 * var(--ring, 72px))) rotate(${-a}deg)`;
+    d.style.transform = `rotate(${a}deg) translateY(calc(-1 * var(--ring, 66px))) rotate(${-a}deg)`;
     d.style.opacity = Math.abs(off) > RING_SHOW ? 0 : 1 - Math.abs(off) / (RING_SHOW + 1) * .85;
     d.className = off === 0 ? "lit" : "";
   });
