@@ -27,6 +27,14 @@
     --wide: "Michroma", "Eurostile", sans-serif;          /* the one wide display face: the brand */
     --cond: "Saira Condensed", "Arial Narrow", sans-serif; /* instrument labels */
     --warn: #4fb4ff;  /* warnings only: no signal, sleep timer's last minute */
+    /* The only see-through colours: glows, and the overlays that make the glass */
+    --glow: #ffb02e88;       /* lit text, segments and dots */
+    --glow-soft: #ffb02e5c;  /* lit keys, art and headings: a wider, fainter halo */
+    --warn-glow: #4fb4ff70;
+    --texture: #ffb02e0c;    /* the faint dot grid behind the console */
+    --vignette: #00000073;
+    --scanline: #0000002e;
+    --scrim: #0b0906eb;      /* behind pop-ups */
   }
   /* Display modes (T, or the NGT / DSK / BRT key in the header). NIGHT is the original. DUSK
      lifts everything for a bright room: lighter chassis and text, brighter displays, softer
@@ -35,13 +43,13 @@
   :root[data-theme="dusk"] { --bg: #17130e; --amber-mid: #e8a33a; --amber-dim: #c48c36; --amber-ghost: #33250f; --line: #6e5022; }
   [data-theme="dusk"] .screen { background: #100c08; }
   [data-theme="dusk"] .screen canvas:not(.sigil) { filter: brightness(1.3); }
-  [data-theme="dusk"] .art img, [data-theme="dusk"] .sigil { filter: brightness(1.25) drop-shadow(0 0 2px #ffb02e66); }
+  [data-theme="dusk"] .art img, [data-theme="dusk"] .sigil { filter: brightness(1.25) drop-shadow(0 0 2px var(--glow-soft)); }
   [data-theme="dusk"] body::before, [data-theme="dusk"] body::after { opacity: .5; }
   [data-theme="dusk"] .ghost::before { color: #3a2a12; }
   :root[data-theme="bright"] { --amber: #ffc24a; --amber-mid: #f5ac3c; --amber-dim: #d39a40; --amber-ghost: #2e210c; --line: #6e5022; }
   [data-theme="bright"] .screen canvas:not(.sigil) { filter: brightness(1.5); }
-  [data-theme="bright"] .art img, [data-theme="bright"] .sigil { filter: brightness(1.25) drop-shadow(0 0 3px #ffc24a88); }  /* more washes the art out */
-  [data-theme="bright"] .glow { text-shadow: 0 0 8px #ffc24aaa; }
+  :root[data-theme="bright"] { --glow: #ffc24aaa; --glow-soft: #ffc24a88; }
+  [data-theme="bright"] .art img, [data-theme="bright"] .sigil { filter: brightness(1.25) drop-shadow(0 0 3px var(--glow-soft)); }  /* more washes the art out */
   [data-theme="bright"] body::before, [data-theme="bright"] body::after { opacity: .6; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }  /* class display rules would otherwise override it */
@@ -52,20 +60,20 @@
     display: flex; flex-direction: column; align-items: center; gap: 20px;
   }
   body {
-    background-image: radial-gradient(#ffb02e0c 1px, transparent 1.2px);
+    background-image: radial-gradient(var(--texture) 1px, transparent 1.2px);
     background-size: 7px 7px;
   }
   body::before {
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9;
-    background: radial-gradient(ellipse at center, transparent 55%, #00000073 100%);
+    background: radial-gradient(ellipse at center, transparent 55%, var(--vignette) 100%);
   }
   body::after {
     /* scanlines over everything */
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 10;
-    background: repeating-linear-gradient(0deg, #0000 0 2px, #0000002e 2px 3px);
+    background: repeating-linear-gradient(0deg, transparent 0 2px, var(--scanline) 2px 3px);
   }
   button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
-  .glow { color: var(--amber); text-shadow: 0 0 6px #ffb02e88; }
+  .glow { color: var(--amber); text-shadow: 0 0 6px var(--glow); }
 
   .unit {
     width: 100%; max-width: 420px;
@@ -98,7 +106,7 @@
   .lvl canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; }
 
   /* Up next: NTS shows on a small timeline, or the tracks recently heard on this station */
-  .next { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 10px; }
+  .next { padding-top: 10px; display: grid; gap: 10px; }  /* spacing, not a rule, sets it off from the description */
   .next .nsec { display: grid; gap: 10px; min-width: 0; }
   .next .nsec[hidden] { display: none; }
   .next .ruler { position: relative; height: 18px; border-bottom: 1px solid var(--line); }
@@ -107,7 +115,7 @@
   .next .blk { position: absolute; top: 0; height: 100%; border: 1px solid var(--amber-dim); padding: 5px 8px; overflow: hidden; font-family: var(--dot); }
   .next .blk b { display: block; font-weight: 400; font-size: 19px; color: var(--amber-mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .next .blk small { font-size: 15px; color: var(--amber-dim); }
-  .next .blk.now { border-color: var(--amber); background: #ffb02e14; }
+  .next .blk.now { border-color: var(--amber); background: var(--amber-ghost); }
   .next .blk.now b { color: var(--amber); }
   .next .blk .cal { margin-left: 6px; font-size: 13px; padding: 0 4px; }
   .next .nowline { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
@@ -131,7 +139,7 @@
   /* About pop-up: the station in full */
   .strip .line, .strip .desc { cursor: pointer; }
   .about-card { max-width: 560px; max-height: calc(100vh - 32px); overflow-y: auto; }
-  .about-card h3 { margin: 0; font: 400 40px/1 var(--dot); color: var(--amber); text-shadow: 0 0 8px #ffb02e66; letter-spacing: .02em; }
+  .about-card h3 { margin: 0; font: 400 40px/1 var(--dot); color: var(--amber); text-shadow: 0 0 8px var(--glow-soft); letter-spacing: .02em; }
   .about-card .sub { font: 20px var(--dot); color: var(--amber-mid); margin-top: 4px; }
   .about-card p { margin: 0; font: 20px/1.25 var(--dot); color: var(--amber-mid); }
   .about-card .facts { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 20px/1.2 var(--dot); }
@@ -163,7 +171,7 @@
   .preset b { font-weight: 400; font-size: 24px; line-height: .9; }
   .preset small { font-size: 13px; line-height: 1; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--amber-dim); }
   .preset.empty { border-style: dashed; }
-  .preset.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
+  .preset.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px var(--glow-soft); }
   .preset.on small { color: var(--bg); }
   .preset.saved { animation: blink .25s steps(1) 4; }
   .head .mode { font: inherit; color: var(--amber-dim); letter-spacing: inherit; padding: 0 2px; flex-shrink: 0; }
@@ -188,7 +196,7 @@
     .head .brand .short { display: inline; }
   }
   .head .sleep.on { color: var(--amber); }
-  .head .sleep.warn { color: var(--warn); text-shadow: 0 0 6px #4fb4ff88; animation: blink 1s steps(1) infinite; }
+  .head .sleep.warn { color: var(--warn); text-shadow: 0 0 6px var(--warn-glow); animation: blink 1s steps(1) infinite; }
   .help-head { display: none; font: inherit; color: var(--amber); padding: 0 2px; flex-shrink: 0; }
   .key, .seg button, .playstop > span {
     height: 48px; border: 1px solid var(--amber-dim);
@@ -196,7 +204,7 @@
     display: grid; place-items: center; position: relative;
     transition: background .08s, color .08s;
   }
-  .key.on, .seg button.on, .playstop > span.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px #ffb02e55; }
+  .key.on, .seg button.on, .playstop > span.on { background: var(--amber); color: var(--bg); border-color: var(--amber); box-shadow: 0 0 12px var(--glow-soft); }
   .key:active, .seg button:active { background: var(--amber-mid); color: var(--bg); }
   .seg { display: grid; grid-template-columns: 1fr 1fr; }
   .seg button + button, .playstop > span + span { border-left: 0; }
@@ -258,7 +266,7 @@
   .art { aspect-ratio: 1; padding: 8px; }
   .art img {
     width: 100%; height: 100%; display: block;
-    filter: drop-shadow(0 0 2px #ffb02e66); transition: opacity .2s;
+    filter: drop-shadow(0 0 2px var(--glow-soft)); transition: opacity .2s;
   }
   .off img, .off .line, .off .detail { opacity: .2; text-shadow: none; }
 
@@ -281,8 +289,8 @@
   #line2.tuning .run { animation: blink 1s steps(1) infinite; }  /* until the stream starts */
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tags span { font-family: var(--dot); font-size: 17px; padding: 0 6px; border: 1px solid var(--amber-dim); color: var(--amber-mid); }
+  .tags { font-family: var(--dot); font-size: 17px; color: var(--amber-mid); letter-spacing: .04em; }
+  .tags:empty { display: none; }
   .desc {
     font-family: var(--dot); font-size: 21px; line-height: 1.15; color: var(--amber-mid);
   }  /* one line; too long and it scrolls like the title, slower */
@@ -294,7 +302,7 @@
 
   /* Bottom deck: two stacked visualizers (spectrum over waterfall) beside the nav map */
   .deck { display: grid; gap: 16px; }
-  /* Phones: 03 Spectrum and 05 Level share one spot; swipe sideways between them. Native snap
+  /* Phones: Spectrum and Level share one spot; swipe sideways between them. Native snap
      scrolling, so it has the phone's own momentum and the page still scrolls up and down. */
   .swipe { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
            scrollbar-width: none; margin-bottom: -8px; }
@@ -303,7 +311,7 @@
   .swipe .lvl { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 22px 12px 10px; gap: 6px; }
   .swipe-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: -6px; }
   .swipe-dots i { width: 6px; height: 6px; border: 1px solid var(--amber-dim); transition: background .2s; }
-  .swipe-dots i.on { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 6px #ffb02e88; }
+  .swipe-dots i.on { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 6px var(--glow); }
   .vis, .map { padding: 22px 12px 10px; display: grid; gap: 6px; align-content: start; }
   .vis { grid-template-rows: auto 64px auto 44px; }
   .vis-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -325,7 +333,7 @@
   .vol { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
   .bar { position: relative; height: 22px; display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; }
   .bar i { background: var(--amber-ghost); }
-  .bar i.lit { background: var(--amber); box-shadow: 0 0 4px #ffb02e88; }
+  .bar i.lit { background: var(--amber); box-shadow: 0 0 4px var(--glow); }
   .bar input { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); opacity: 0; margin: 0; cursor: pointer; }
   .vol-read { font-family: var(--dot); font-size: 26px; min-width: 2.4ch; text-align: right; }
   /* iPhones only let the hardware buttons set volume, so there the bar gives way to a note */
@@ -367,7 +375,7 @@
     text-align: left; padding: 6px 4px; font-family: var(--dot); font-size: 22px; color: var(--amber-mid);
     position: relative; isolation: isolate;
     /* Hover and the playing row thicken and brighten quickly; leaving runs it backwards */
-    text-shadow: 0 0 0 #ffb02e00, 0 0 0 #ffb02e00, 0 0 0 #ffb02e00;
+    text-shadow: 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent;
     transition: color .14s ease-out, text-shadow .14s ease-out;
   }
   .row::before {
@@ -380,7 +388,7 @@
   .row .sub { display: block; font-size: 16px; color: var(--amber-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
   .row:hover::before, .row:focus-visible::before, .row.active::before { opacity: 1; }
   .row:hover, .row:focus-visible, .row.active {
-    color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66;
+    color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px var(--glow-soft);
   }
   .row:hover .sub { color: var(--amber-mid); }
   .row.active .cur { visibility: visible; }
@@ -398,13 +406,13 @@
   @keyframes tick { to { transform: translateX(-50%); } }
   .rp { font-family: var(--dot); font-size: 19px; color: var(--amber-mid); white-space: nowrap; padding: 3px 8px;
         position: relative; isolation: isolate;
-        text-shadow: 0 0 0 #ffb02e00, 0 0 0 #ffb02e00, 0 0 0 #ffb02e00; transition: color .14s ease-out, text-shadow .14s ease-out; }
+        text-shadow: 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent; transition: color .14s ease-out, text-shadow .14s ease-out; }
   .rp::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--amber-ghost); opacity: 0;
                 clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); transition: opacity .14s ease-out; }
   .rp:hover::before, .rp:focus-visible::before { opacity: 1; }
-  .rp:hover, .rp:focus-visible { text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
+  .rp:hover, .rp:focus-visible { text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px var(--glow-soft); }
   .row.peek::before { opacity: 1; }
-  .row.peek { color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px #ffb02e66; }
+  .row.peek { color: var(--amber); text-shadow: .5px 0 0 currentColor, -.5px 0 0 currentColor, 0 0 7px var(--glow-soft); }
   .rp .t { color: var(--amber-dim); margin-right: 6px; }
   .rp small { font-size: 17px; color: var(--amber-dim); }
   .rp:hover, .rp:focus-visible { color: var(--amber); }
@@ -428,7 +436,7 @@
 
   .note {
     width: 100%; max-width: 420px; font-family: var(--dot); font-size: 17px; color: var(--warn);
-    border: 1px dashed #4fb4ff88; padding: 6px 10px; display: none; text-shadow: 0 0 6px #4fb4ff55;
+    border: 1px dashed var(--warn-glow); padding: 6px 10px; display: none; text-shadow: 0 0 6px var(--warn-glow);
   }
   .note.show { display: block; }
   .blink { animation: blink 1s steps(1) infinite; }
@@ -482,7 +490,6 @@
     background: var(--amber-dim); color: var(--bg);
     font-family: var(--cond); font-weight: 600; font-size: 11px; letter-spacing: .16em; line-height: 1.2; text-transform: uppercase;
   }
-  .tab b { font-weight: 600; opacity: .6; margin-right: 6px; }
   .strip { padding-top: 22px; }
 
   /* Art shimmer: now and then a ripple or a sweep runs across the dots */
@@ -506,7 +513,7 @@
   @keyframes sweep { 0% { background-position: 100% 0; opacity: 0; } 30% { opacity: .4; } 70% { opacity: .4; } 100% { background-position: 0 0; opacity: 0; } }
 
   .sigil { position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px); contain: size;
-           filter: drop-shadow(0 0 2px #ffb02e66); }
+           filter: drop-shadow(0 0 2px var(--glow-soft)); }
   .off .sigil { opacity: .2; }
   .rippling img { visibility: hidden; }  /* the dots are redrawn on #artDots while a ripple runs */
 
@@ -545,7 +552,7 @@
     width: 30px; height: 30px; background: var(--bg); color: var(--amber); font-family: var(--dot); font-size: 22px; line-height: 1;
     border: 1px solid var(--amber-dim);
   }
-  .help { position: fixed; inset: 0; z-index: 30; background: #0b0906eb; display: grid; place-items: center; padding: 16px; }
+  .help { position: fixed; inset: 0; z-index: 30; background: var(--scrim); display: grid; place-items: center; padding: 16px; }
   .help-card { width: 100%; max-width: 440px; padding: 30px 22px 18px; display: grid; gap: 14px; }
   .help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-family: var(--dot); font-size: 19px; }
   .help dt { color: var(--amber); text-align: right; }
@@ -605,7 +612,7 @@
     .dial { max-width: 176px; --ring: 82px; }  /* room for a glyph per station */
     .vol { grid-area: vol; align-self: end; }
     .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-    .swipe { display: contents; }  /* desktop: 05 sits under the art and 03 beside the map */
+    .swipe { display: contents; }  /* desktop: Level sits under the art and Spectrum beside the map */
     .swipe-dots { display: none; }
     .vis { grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 1fr); align-content: stretch; }
     .list { border: 1px solid var(--line); padding: 16px 20px; }
@@ -658,14 +665,14 @@
   <div class="mid">
     <div class="artcol">
     <div class="screen art off cham" id="artScreen">
-      <span class="tab" aria-hidden="true"><b>01</b>Art</span>
+      <span class="tab" aria-hidden="true">Art</span>
       <span class="shimmer" id="shimmer" aria-hidden="true"></span>
       <img id="art" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
       <canvas id="sigil" class="sigil" hidden aria-hidden="true"></canvas>
       <canvas id="artDots" class="sigil" hidden aria-hidden="true"></canvas>
     </div>
     <div class="screen lvl cham">
-      <span class="tab" aria-hidden="true"><b>05</b>Level</span>
+      <span class="tab" aria-hidden="true">Level</span>
       <div class="vis-head"><button class="label vis-name" id="lvlName">Trace</button><span class="vis-idx" id="lvlIdx"></span></div>
       <canvas id="lvl" title="Click for the next display" aria-hidden="true" style="cursor:pointer"></canvas>
     </div>
@@ -691,7 +698,7 @@
   </div>
 
   <div class="screen strip off cham" id="strip">
-    <span class="tab" aria-hidden="true"><b>02</b>Signal</span>
+    <span class="tab" aria-hidden="true">Signal</span>
     <div class="detail">
       <div class="tags" id="tags"></div>
       <div class="line desc" id="desc"><span class="run"></span></div>
@@ -718,7 +725,7 @@
   <div class="deck">
     <div class="swipe" id="swipe">
     <div class="screen vis cham">
-      <span class="tab" aria-hidden="true"><b>03</b>Spectrum</span>
+      <span class="tab" aria-hidden="true">Spectrum</span>
       <div class="vis-head"><button class="label vis-name" id="visName0" data-slot="0">Spectrum</button><span><span class="vis-src" id="visSrc"></span> <span class="vis-idx" id="visIdx0"></span></span></div>
       <canvas id="vis" data-slot="0" title="Click for the next display" aria-hidden="true"></canvas>
       <div class="vis-head"><button class="label vis-name" id="visName1" data-slot="1">Waterfall</button><span class="vis-idx" id="visIdx1"></span></div>
@@ -727,7 +734,7 @@
     </div>
     <div class="swipe-dots" id="swipeDots" aria-hidden="true"><i class="on"></i><i></i></div>
     <div class="screen map cham">
-      <span class="tab" aria-hidden="true"><b>04</b>Nav</span>
+      <span class="tab" aria-hidden="true">Nav</span>
       <div class="vis-head">
         <span class="label">Stations by city</span>
         <div class="seg" role="group" aria-label="Map range">
@@ -756,7 +763,7 @@
 
 <div class="help" id="about" hidden role="dialog" aria-modal="true" aria-label="About this station">
   <div class="help-card about-card screen cham">
-    <span class="tab" aria-hidden="true"><b>06</b>About</span>
+    <span class="tab" aria-hidden="true">About</span>
     <div id="aboutBody" style="display:grid;gap:14px"></div>
     <button class="key cham" id="aboutClose">CLOSE</button>
   </div>
@@ -765,7 +772,7 @@
 <button class="help-btn cham" id="helpBtn" aria-label="Keys and gestures" aria-haspopup="dialog">?</button>
 <div class="help" id="help" hidden role="dialog" aria-modal="true" aria-label="Keys and gestures">
   <div class="help-card screen cham">
-    <span class="tab" aria-hidden="true"><b>00</b>Keys</span>
+    <span class="tab" aria-hidden="true">Keys</span>
     <dl>
       <dt>SPACE</dt><dd>Play / stop</dd>
       <dt>◀ ▶</dt><dd>Previous / next station</dd>
@@ -780,7 +787,7 @@
     </dl>
     <dl>
       <dt>SWIPE</dt><dd>Art left or right to tune</dd>
-      <dt>SWIPE</dt><dd>03 Spectrum sideways for 05 Level (phones)</dd>
+      <dt>SWIPE</dt><dd>Spectrum sideways for Level (phones)</dd>
       <dt>TAP</dt><dd>Art or title to hold its motion; again to resume</dd>
       <dt>HOLD</dt><dd>A preset key to save to it</dd>
       <dt>TAP</dt><dd>A city on the map for its stations</dd>
@@ -1336,7 +1343,7 @@ function drawSignal(sig, playing) {
 window.addEventListener("resize", () => { roKey = ""; if (S) drawSignal(S.signal || {}, S.playing); });
 
 function drawDetail(now) {
-  $("tags").innerHTML = (now.genres || []).slice(0, 5).map(g => `<span>${esc(g.toUpperCase())}</span>`).join("");
+  $("tags").textContent = (now.genres || []).slice(0, 5).map(g => g.toUpperCase()).join(" · ");  // plain text, not boxes
   setLine($("desc"), (now.description || "").replace(/\s+/g, " ").trim(), 0.6);
   drawProgress(now);
 }
@@ -2344,7 +2351,7 @@ window.addEventListener("offline", offlineNote);
 window.addEventListener("online", () => { setNote(""); poll(); loadSchedule(); });
 if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
-/* 05 LEVEL: click the screen or its label for the next display. Trace: the last ~30 s of left
+/* LEVEL: click the screen or its label for the next display. Trace: the last ~30 s of left
    and right level as dotted lines. Meter: two LED bargraphs with peak hold. Needle: one analog VU.
    Goniometer: the stereo image as a cloud of dots. Loudness: a rolling bar per quarter second.
    Then eye candy: Phosphor (a glowing scope trace), Fluid (cornstarch on a speaker) and Reels.
@@ -2361,7 +2368,7 @@ function drawLevelLabel() {
   $("lvlIdx").textContent = `${lvlMode + 1}/${LEVEL_MODES.length}`;
 }
 ["lvl", "lvlName"].forEach(x => $(x).addEventListener("click", cycleLevel));
-// Phones: the level screen moves in beside 03 Spectrum to be swiped to; desktop keeps it under the art.
+// Phones: the level screen moves in beside Spectrum to be swiped to; desktop keeps it under the art.
 const phoneLayout = matchMedia("(max-width: 959px)"), lvlHome = document.querySelector(".artcol");
 function placeLevel() {
   const lvl = document.querySelector(".lvl");
