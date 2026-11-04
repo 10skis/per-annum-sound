@@ -14,7 +14,7 @@ Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
-| v0.72 | 2026-11-04 | NGT is Solarized dark; DSK panel corners drawn again | [link](updates/2026-11-04-solarized-night-dusk-corners.md) |
+| v0.72 | 2026-11-04 | NGT is Solarized dark; DSK panel corners drawn again; US state lines drawn like Europe's borders | [link](updates/2026-11-04-solarized-night-dusk-corners.md) |
 | v0.71 | 2026-11-04 | Borders, state lines, rivers and lakes on USA and EUROPE | [link](updates/2026-11-04-map-geography.md) |
 | v0.70 | 2026-11-04 | Map ranges USA, EUROPE, TERRA, GALAXY; TERRA zooms to USA or EUROPE; galaxy view built in | [link](updates/2026-11-04-map-usa-terra-galaxy.md) |
 | v0.69 | 2026-11-04 | Map switch reads EUROPE then WORLD; two-way switches and corner tabs chamfered like the keys | [link](updates/2026-11-04-switches-tabs-chamfered.md) |

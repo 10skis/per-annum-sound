@@ -8,8 +8,10 @@
 - A new `--screen` token holds the glass colour; canvas fills that used a fixed near-black (map labels, lakes and rivers, NO CARRIER plates, the level meter's label strip) now read it, so they match every mode. The map's cached base layer redraws when the mode changes.
 - DSK fix: its panel rule set the `background` shorthand, which wiped the diagonal lines drawn across each panel's cut corners, so the art panel's top-left and bottom-right corners looked open. Panels now set only the colour.
 
+- Follow-up: US state and Canadian province lines were dotted in nearly the land's own amber, so they disappeared into the dots. They're now drawn exactly like Europe's country borders (dashed, brighter amber).
+
 ## Verified
-- Desktop in NGT: chassis, glass, keys, map and tabs all in the Solarized tones with amber accents. Phone in DSK: the art panel's cut corners are drawn.
+- Desktop in NGT: chassis, glass, keys, map and tabs all in the Solarized tones with amber accents. Phone in DSK: the art panel's cut corners are drawn. USA render: every state line visible.
 
 ## Next steps
 - Re-drag `app/web` to Netlify. See TODO.md.

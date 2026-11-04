@@ -2075,7 +2075,7 @@ function mapBaseLayer(c, w, h, dpr) {
   return off;
 }
 /* Geography over the USA and EUROPE ranges, from static/geo.js (make_geo.py): lakes and rivers
-   etched out of the land dots, state and province lines dotted, country borders dashed. Drawn
+   etched out of the land dots; country borders, and US state and Canadian province lines, dashed alike. Drawn
    once into the cached base layer. */
 function drawGeo(g, r, w, h) {
   const path = list => {
@@ -2091,8 +2091,7 @@ function drawGeo(g, r, w, h) {
   path(GEO.lakes); g.fillStyle = glass; g.fill();
   g.setLineDash([1, 2]); g.strokeStyle = "#86601f"; g.lineWidth = 1; g.stroke();
   g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke();
-  g.setLineDash([1, 2.5]); path(GEO.states); g.strokeStyle = "#9c6c22"; g.lineWidth = 1; g.stroke();
-  g.setLineDash([4, 2]); path(GEO.borders); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke();
+  g.setLineDash([4, 2]); path(GEO.states.concat(GEO.borders)); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke();
   g.restore();
 }
 function drawMap(t) {
