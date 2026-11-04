@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.58: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.59: Per Annum Sound web app with 66 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.59 | 2026-11-04 | Presets in one row of six, swipe for 7-12; Bright mode replaces Day | [link](updates/2026-11-04-preset-row-bright-mode.md) |
 | v0.58 | 2026-11-04 | Twelve presets in two rows; keys 1-9, 0, -, = | [link](updates/2026-11-04-twelve-presets.md) |
 | v0.57 | 2026-11-04 | Night, dusk and day modes; desktop scales to fit the window; steady Fluid, smooth Lissajous and Ridges | [link](updates/2026-11-04-modes-fit-smoother.md) |
 | v0.56 | 2026-11-03 | 05 Level on phones: swipe sideways on 03 Spectrum | [link](updates/2026-11-03-swipe-level-phone.md) |
