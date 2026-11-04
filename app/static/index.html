@@ -79,6 +79,10 @@ const DISPLAY = (() => {
     // --screen stays dark for its filter, so there the painted --glass moves
     if (mode === "solar") pal.glass = mix(pal.glass, pal.bg, .35); else pal.screen = mix(pal.screen, pal.bg, .35);
     pal.fill = mode === "solar" ? pal.glass : pal.screen;
+    // The plate behind the desktop controls (v0.86): halfway from that glass to the chassis, so the
+    // filled controls still stand off it, with the art's faint dot matrix in it
+    pal.plate = mix(pal.fill, pal.bg, .5);
+    pal["plate-dot"] = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "33";
     return pal;
   }
   const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } };
@@ -343,6 +347,7 @@ const DISPLAY = (() => {
   .tuner-read b { font-weight: 400; font-size: 38px; line-height: 48px; }
   .tuner-read span { font-size: 18px; color: var(--amber-dim); }
   .tuner-hint { text-align: center; margin-top: -2px; }
+  .ctl-plate { display: none; }  /* desktop only: see the min-width 960 block */
   /* Solid controls (v0.85, option A in mockups/control-weight.html): filled with the displays' glass
      so they carry the same weight as the panels; lit keys keep their amber. :where keeps this under
      the :active and .on rules */
@@ -804,6 +809,14 @@ const DISPLAY = (() => {
     .line.small { font-size: clamp(20px, 1.6vw, 24px); }
     .top { grid-area: keys; }
     .out { grid-area: out; }
+    /* A borderless glass plate behind the controls column (v0.86), a shade between the controls'
+       glass and the chassis, with the dot matrix that sits behind the art (the sigil's 11-unit pitch
+       at the art's size). The controls stay filled on top of it, so they read as their own parts */
+    .ctl-plate { display: block; grid-area: 2 / 3 / 6 / 4; margin: -14px -12px; position: relative; z-index: 0; pointer-events: none;
+                 --cut: 14px; clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+                 background-color: var(--plate); background-image: radial-gradient(var(--plate-dot) .9px, transparent 1.3px);
+                 background-size: 7px 7px; background-position: center; background-repeat: repeat; }
+    .out, .top, .dial-wrap, .vol { position: relative; z-index: 1; }
     .dial-wrap { grid-area: dial; padding: 20px 0; }  /* the extra 40 px makes the top row, and so the Level panel under the art, taller (v0.84; option B in mockups/level-height.html) */
     .dial { max-width: 176px; --ring: 76px; }  /* the top glyph's centre 12 px down, clear of the caret */
     .vol { grid-area: vol; align-self: end; }
@@ -937,6 +950,7 @@ const DISPLAY = (() => {
     </div>
   </div>
 
+  <div class="ctl-plate cham" aria-hidden="true"></div>
   <div class="dpanel screen cham" id="dpanel" hidden role="group" aria-label="Display">
     <span class="label">Mode</span>
     <div class="seg" role="group" aria-label="Display mode">

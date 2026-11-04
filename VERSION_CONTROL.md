@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.85: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.86: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.86 | 2026-11-04 | Textured glass plate behind the desktop controls column | [link](updates/2026-11-04-control-plate.md) |
 | v0.85 | 2026-11-04 | Solid controls: glass lifted toward the chassis and every control and the board filled with it | [link](updates/2026-11-04-solid-controls.md) |
 | v0.84 | 2026-11-04 | Lunar tint runs black to grey; taller Level panel (option B) back for Fluid | [link](updates/2026-11-04-lunar-grey-taller-level.md) |
 | v0.83 | 2026-11-04 | Lunar and Solar get tint strips (cool, neutral or cream, warm); each mode keeps its own tint | [link](updates/2026-11-04-lunar-solar-tints.md) |
