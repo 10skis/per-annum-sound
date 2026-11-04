@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level Panel Height</title>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira+Condensed:wght@500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* The real app (../app/web, v0.81 build) in two 1440 x 900 windows. A removes the extra dial
+     padding; B is the build as it is. Both have the Fluid fit fix and fake levels so Fluid moves.
+     Serve from projects/pi-radio: python3 -m http.server 8091, then /mockups/level-height.html */
+  :root { --bg: #0b0906; --amber: #ffb02e; --amber-mid: #d08c26; --amber-dim: #9c6c22; --line: #4a3616; }
+  body { margin: 0; background: var(--bg); color: var(--amber-mid); font-family: "Saira Condensed", sans-serif; padding: 24px 16px; }
+  h1 { font: 400 16px "Michroma", sans-serif; letter-spacing: .2em; color: var(--amber); margin: 0 0 6px; }
+  p.lead { color: var(--amber-dim); margin: 0 0 20px; font-size: 17px; max-width: 900px; }
+  .row { display: flex; flex-wrap: wrap; gap: 24px; }
+  h2 { font-weight: 600; font-size: 18px; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin: 0 0 4px; }
+  .why { color: var(--amber-dim); font-size: 16px; margin: 0 0 10px; }
+  .win { width: 634px; height: 396px; overflow: hidden; border: 1px solid var(--line); }
+  .win iframe { width: 1440px; height: 900px; transform: scale(.44); transform-origin: 0 0; border: 0; }
+  .crop { width: 340px; height: 200px; overflow: hidden; border: 1px solid var(--line); margin-top: 10px; position: relative; }
+  .crop iframe { position: absolute; width: 1440px; height: 900px; border: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<h1>LEVEL PANEL HEIGHT</h1>
+<p class="lead">Both in a 1440 × 900 window, with Fluid fed fake levels. The small frame under each shows the art column at actual size.</p>
+<div class="row">
+  <div>
+    <h2>A · Fit only</h2>
+    <p class="why">Same layout as now; Fluid resized to fit. Console at 95%.</p>
+    <div class="win"><iframe data-v="a" src="../app/web/index.html?mk=a"></iframe></div>
+    <div class="crop"><iframe data-v="a" src="../app/web/index.html?mk=a2"></iframe></div>
+  </div>
+  <div>
+    <h2>B · Taller panel</h2>
+    <p class="why">40 px more in the top row. Console at 89%.</p>
+    <div class="win"><iframe data-v="b" src="../app/web/index.html?mk=b"></iframe></div>
+    <div class="crop"><iframe data-v="b" src="../app/web/index.html?mk=b2"></iframe></div>
+  </div>
+</div>
+<script>
+  function setup(f) {
+    const w = f.contentWindow, d = f.contentDocument;
+    let ready = false;
+    try { ready = !!w.eval("typeof LEVEL_MODES !== 'undefined' && LEVEL_MODES.length"); } catch (_) {}
+    if (!ready) return setTimeout(() => setup(f), 300);
+    if (f.dataset.v === "a") {
+      const s = d.createElement("style"); s.textContent = "@media (min-width: 960px) { .dial-wrap { padding: 0 !important; } }";
+      d.head.appendChild(s); w.fitDesktop();
+    }
+    // Fluid with fake music: a slow swell and random kicks, so the spikes reach full height
+    w.eval(`lvlMode = LEVEL_MODES.indexOf("Fluid"); drawLevelLabel();
+      setInterval(() => { const k = Math.random() < .08 ? .35 : 0, t = performance.now();
+        visLevels = visLevels.map((_, i) => Math.min(1, .45 + .25 * Math.sin(t / 900 + i / 5) + k + .15 * Math.random())); }, 40);`);
+    // The crop frames show the art column at 1:1
+    if (f.closest(".crop")) setTimeout(() => {
+      const b = d.querySelector(".artcol").getBoundingClientRect();
+      f.style.left = -(b.x - 10) + "px"; f.style.top = -(b.y + b.height - 190) + "px";
+    }, 1500);
+  }
+  document.querySelectorAll("iframe").forEach(f => f.addEventListener("load", () => setup(f)));
+</script>
+</body>
+</html>

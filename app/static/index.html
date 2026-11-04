@@ -744,7 +744,7 @@ const DISPLAY = (() => {
     .line.small { font-size: clamp(20px, 1.6vw, 24px); }
     .top { grid-area: keys; }
     .out { grid-area: out; }
-    .dial-wrap { grid-area: dial; }
+    .dial-wrap { grid-area: dial; padding: 20px 0; }  /* the extra 40 px makes the top row, and so the Level panel under the art, taller (v0.81) */
     .dial { max-width: 176px; --ring: 76px; }  /* the top glyph's centre 12 px down, clear of the caret */
     .vol { grid-area: vol; align-self: end; }
     .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
@@ -2998,7 +2998,10 @@ function drawFluid(g, w, h, t, dt, L, R) {
     }
     return z;
   };
-  const Rm = Math.min(w * .2, h * .62), y0 = h * .64, cx = w / 2;  // stationary: it doesn't lean with the balance
+  // Sized so the whole figure fits: the tallest spike reaches 1.37 R above the centre (the back
+  // edge .42 R plus a .95 R column) and the outer cone ring .67 R below it, plus a dot's margin. Stationary: it doesn't
+  // lean with the balance
+  const Rm = Math.min(w * .2, h * .46), y0 = (h - 2.1 * Rm) / 2 + 1.37 * Rm, cx = w / 2;
   g.fillStyle = "#241907";  // the cone: dim rings round the puddle
   for (const k of [1.25, 1.6]) for (let i = 0; i < 72; i += 2) {
     const a = i / 72 * Math.PI * 2; g.fillRect(w / 2 + Math.cos(a) * Rm * k, y0 + Math.sin(a) * Rm * k * .42, 2, 2);
