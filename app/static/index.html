@@ -16,9 +16,9 @@
    through --lum): below 100 toward the background, above it toward white, or black on Solar.
    Backgrounds and glass don't move with it. */
 const DISPLAY = (() => {
-  const LUNAR = { amber: "#ffc24a", "amber-mid": "#ffb43a", "amber-dim": "#e0a040", "amber-ghost": "#33240c",
+  const LUNAR = { amber: "#ffc24a", "amber-mid": "#ffb43a", "amber-dim": "#e0a040",
                   line: "#8a6428", glow: "#ffc24acc", "glow-soft": "#ffc24a99", texture: "#ffc24a10", vignette: "#00000073", scanline: "#0000002e",
-                  "ghost-chassis": "#2a1d0a", "ghost-glass": "#2a1d0a" };
+                  "ghost-glass": "#2a1d0a" };
   // Solarized light. --screen stays dark: the displays are drawn amber on dark and the Solar
   // filter turns them to ink on pale glass; the painted glass is --glass
   const SOLAR = { screen: "#0b0906", amber: "#cb4b16", "amber-mid": "#586e75", "amber-dim": "#657b83",
@@ -28,10 +28,12 @@ const DISPLAY = (() => {
   // amber's hue and the keys sank into the chassis
   const ec = (bg, screen, mid, dim, ghost, line, glass) => ({ bg, screen, "amber-mid": mid, "amber-dim": dim, "amber-ghost": ghost, line, "ghost-glass": glass });
   const TINTS = {
+    // Black to grey. GREY is as light as it goes: the quiet amber lettering is 4.8:1 on it, and
+    // the next step down (#474747) drops it under 4.5:1. Lighter needs dark lettering, which is Solar
     lunar: [
-      ["COOL",    { bg: "#07101a", screen: "#040a12" }],
-      ["NEUTRAL", { bg: "#000000", screen: "#000000" }],
-      ["WARM",    { bg: "#140c04", screen: "#0c0702" }],
+      ["BLACK",    { bg: "#000000", screen: "#000000", "amber-ghost": "#33240c", "ghost-chassis": "#2a1d0a" }],
+      ["GRAPHITE", { bg: "#1e1e1e", screen: "#0f0f0f", "amber-ghost": "#3b2f1c", "ghost-chassis": "#33291a" }],
+      ["GREY",     { bg: "#3d3d3d", screen: "#1e1e1e", "amber-ghost": "#544733", "ghost-chassis": "#4b4132" }],
     ],
     eclipse: [
       ["GREY",   ec("#34373a", "#17191b", "#e6dcc4", "#aaa597", "#45484b", "#5c6064", "#2a2c2e")],
@@ -46,7 +48,7 @@ const DISPLAY = (() => {
       ["WARM",  { bg: "#f6e7c9", glass: "#ecdab6", line: "#d4bf96", "amber-ghost": "#ecdbb8", "ghost-chassis": "#ecdbb8", "ghost-glass": "#e2cca2" }],
     ],
   };
-  const DEFAULT_TINT = { lunar: 1, eclipse: 2, solar: 1 };
+  const DEFAULT_TINT = { lunar: 0, eclipse: 2, solar: 1 };
   const MODES = { lunar: "LUN", eclipse: "ECL", solar: "SOL" };
   const lin = c => (c /= 255) <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
   const gam = c => 255 * (c <= .0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - .055);
@@ -78,6 +80,7 @@ const DISPLAY = (() => {
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
   // One tint per mode (v0.83); v0.79-0.82 kept a single Eclipse tint as piRadioTint
   const tints = Object.assign({}, DEFAULT_TINT, { eclipse: +read("piRadioTint", 2) }, read("piRadioTints", {}));
+  if (tints.v !== 2) { tints.lunar = 0; tints.v = 2; }  // v0.83's Lunar strip was cool/neutral/warm; it starts again at black
   const state = { mode: read("piRadioTheme", "lunar"), tint: 0, lum: +read("piRadioLum", 100) };
   function set(next) {
     if (next.mode) state.mode = next.mode;
@@ -792,7 +795,7 @@ const DISPLAY = (() => {
     .line.small { font-size: clamp(20px, 1.6vw, 24px); }
     .top { grid-area: keys; }
     .out { grid-area: out; }
-    .dial-wrap { grid-area: dial; }
+    .dial-wrap { grid-area: dial; padding: 20px 0; }  /* the extra 40 px makes the top row, and so the Level panel under the art, taller (v0.84; option B in mockups/level-height.html) */
     .dial { max-width: 176px; --ring: 76px; }  /* the top glyph's centre 12 px down, clear of the caret */
     .vol { grid-area: vol; align-self: end; }
     .deck { grid-area: deck; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
