@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.80 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.81 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.80 |
+| Version | v0.81 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.80 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.81 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -66,6 +66,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Dial caret | A `clip-path` triangle, not a CSS border triangle: borders round to whole device pixels and at the desktop fit zoom left it about 1 px off the glyphs (v0.76). `--ring` keeps the lit glyph clear of it. SVG glyphs (the tree) get even pixel sizes (12, lit 16) so centring them never lands on a half pixel, which the browser snaps off-centre |
 | Key corners | Keys are cut top-left and bottom-right, except shuffle and ◀ (`.key.mirror`: top-right and bottom-left) so their notch faces the key beside them, and the 01/79 readout (`.top-cut`: both top corners) so the tuner row is symmetrical. Two-way switches (`.seg`) are cut like PLAY/STOP, one key in two halves. Robert's choices, v0.63-64 and v0.69 |
 | Presets | Twelve in one row: six show, swipe or scroll for 7-12 (snaps by six). Two rows were tried and rejected: too tall for a laptop screen |
+| Panel height | Everything on desktop scales with width: shrinking the console widens its layout, and the square art and 2.4:1 map grow taller with it. Adding height to the top row (40 px tried for the Level panel in v0.81, `mockups/level-height.html`) cut the scale from 95% to 89% for 12 px on screen, and Robert couldn't see the gain. Real height has to come from the map's proportions, with every range re-fitted so it doesn't stretch |
 | Desktop fit | `fitDesktop()` scales `.note`, `.unit` and `.list` with CSS zoom (floor 70%) until the console fits the window height. Pointer code measuring distances must divide by `scaleOf(el)` |
 | Level on phones | Shares Spectrum's spot in `#swipe`: native scroll-snap, dots under it. `placeLevel()` moves the panel there below 960 px and back under the art above. Robert chose this over a separate panel |
 | Spectrum screens (03) | New displays go at the end of `VIS_MODES`: the saved choice is an index |
@@ -80,7 +81,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- v0.47 is live; v0.80 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
+- v0.47 is live; v0.81 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - 79 stations but 70 `DIAL_GLYPHS`, so the last nine stations reuse glyphs from the start of the list. Add nine more glyphs if Robert notices or wants each station unique.
