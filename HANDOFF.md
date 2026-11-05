@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.94 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.95 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.94 |
+| Version | v0.95 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.94 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.95 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -33,7 +33,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 | Area | Rule |
 |---|---|
-| Colour | Amber is the accent in every display mode (see Display modes for each mode's palette). The original tokens: `--amber #ffb02e`, `--amber-mid #d08c26`, `--amber-dim #9c6c22`, `--amber-ghost #241907`, `--line #4a3616`. Blue `#4fb4ff` for warnings only (no signal, offline, sleep's last minute). Map city dots yellow `#e8c43a` (hot `#ffe56e`). Nothing else |
+| Colour | Amber is the default accent in every display mode; since v0.95 a COLOUR strip in the display panel turns it to phosphor green (Robert's call; amber to green only, no other hues). The warning blue never turns. Eclipse GREEN with green lettering is low contrast: Robert chose to allow it and avoid it himself. The original tokens: The original tokens: `--amber #ffb02e`, `--amber-mid #d08c26`, `--amber-dim #9c6c22`, `--amber-ghost #241907`, `--line #4a3616`. Blue `#4fb4ff` for warnings only (no signal, offline, sleep's last minute). Map city dots yellow `#e8c43a` (hot `#ffe56e`). Nothing else |
 | Type | VT323 for data, Saira Condensed for labels, Michroma for the brand only |
 | Look | "Cyberpunk alien car dashboard", leaning retro-analog: chamfered panels, no panel name tabs (removed in v0.77 per `context/visual-design.md`; Robert also dropped the Signal panel's Day & night and listening headings in v0.74), registration brackets, unlit 88 behind numerals, dot matrix everywhere. Robert reacts badly to over-literal brand references (Braun etc.) |
 | Dial (desktop) | No glyphs that read as a known symbol (⌘ was swapped out). A station can set `glyph:` for a drawn one from `GLYPH_ART` (Christmas Vinyl HD has a tree); drawn glyphs use currentColor, never emoji, and are absolutely centred in the slot (inline SVG sits on the baseline and rides high). Text glyphs go through `glyphFor()`, which wraps each in a `.gc` span nudged by `glyphNudge()` (ink measured on a canvas) so it centres; slots centre with flex, since text-align can't centre a glyph wider than its box. Rotating window: ring of katakana glyphs, about six either side of the current one, fading. Not the centerpiece (he rejected that mockup). ◀ turns the ring clockwise, ▶ anticlockwise; drag follows the hand; scroll down or right = next |
@@ -56,6 +56,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 |---|---|
 | Canvases inflating the layout | A canvas with height 100% in a grid or flex row feeds its own size back. Use `contain: size` on the canvas, and on `.artcol` and `.strip`, so the right-hand controls set the top row's height |
 | Boot animation | `.unit > *` runs the stepped boot flicker, and an animation restarts whenever an element goes from `hidden` to shown. Anything that toggles inside `.unit` (the display panel) needs `animation: none` (v0.80). Its fill mode also holds a direct child's opacity at 1, so an opacity rule on a direct child of `.unit` (like `.vol`) does nothing: target its children (v0.89) |
+| Colour setting | `DISPLAY` turns the accent tokens (`ACCENT`: amber, mid, dim, ghosts, line, glows, textures) toward OKLCH hue 145 by the setting's fraction, only where a colour is amber-like (hue 30-110, chroma over .03), so chassis tints, cream lettering and Solar's slate don't move. Canvases and art get `hue-rotate(var(--hue-rot))` at the end of every mode's filter: 70 deg for Lunar and Eclipse (#ffb02e to #4fe245), 90 for Solar's dark ink (#9f3b00 to #006b00). Stored as piRadioHue (0-1), snapping to the ends within .1. Hard-coded CSS ambers must become tokens or they won't turn (the day bar was fixed in v0.95) |
 | Panel textures | Three, kept distinct on purpose (v0.86-0.90): the controls plate has 7 px dots (`--plate-dot`), the now-playing panel and the desktop station list 14 px fainter dots (`--strip-dot`, on `::before` so the chamfer diagonals survive; the list since v0.94), the Level and spectrum panels a 12 px grid (`--grid`, on their canvases; v0.91 added spectrum). All are `DISPLAY` tokens |
 | Power off | Stopped, `.unit.idle` (set with the art's and title's `.off`) dims the map canvas and foot, presets, shuffle, dial, tape, VOL and the phone tuner to 25%. PLAY/STOP stays lit as the power switch, and everything stays usable (v0.89). Since v0.93 `setPower()` runs one stepped flicker (`power-down` .6 s, `power-up` .7 s) over those and the art and title together, landing on each part's own level; the old .5 s fade made the controls lag the art. Not on first render (the boot covers it), not with reduced motion |
 | Class name clashes | It's one 2,500-line file. The ticker once used `.tk`, the tape's tick class, and turned the ticks into a solid line. Grep a class name before using it |
@@ -88,7 +89,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- v0.47 is live; v0.94 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
+- v0.47 is live; v0.95 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - 79 stations but 70 `DIAL_GLYPHS`, so the last nine stations reuse glyphs from the start of the list. Add nine more glyphs if Robert notices or wants each station unique.
