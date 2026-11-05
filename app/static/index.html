@@ -229,10 +229,10 @@ const DISPLAY = (() => {
   /* Level strip under the art (desktop): the last ~30 s of left and right level */
   .artcol { display: contents; }
   .lvl { display: none; }
-  .lvl canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size;
-                /* a faint graticule behind the Level displays, like a scope's (v0.89) */
-                background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-                background-size: 12px 12px; background-position: center; }
+  .lvl canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; }
+  /* A faint graticule behind the Level (v0.89) and Spectrum (v0.91) displays, like a scope's */
+  .lvl canvas, .vis canvas { background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+                             background-size: 12px 12px; background-position: center; }
 
   /* Up next: NTS shows on a small timeline, or the tracks recently heard on this station */
   .next { padding-top: 10px; display: grid; gap: 10px; }  /* spacing, not a rule, sets it off from the description */
