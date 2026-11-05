@@ -10,18 +10,25 @@
    before first paint so nothing flashes. Every mode's colours live in this script and are set
    inline on <html>; the CSS keeps only each mode's filters and overlays.
    Each mode has a tint strip of notches, blended in OKLab and snapping to a notch within 0.1.
-   Eclipse's five run round the colour wheel; Lunar's and Solar's three stay in one hue family
-   (cool, neutral, warm) and move only the chassis, glass, lines and unlit segments. Brightness
+   Eclipse's five run round the colour wheel; Lunar's three run black to grey and Solar's cool to
+   warm, and move only the chassis, glass, lines and unlit segments. Brightness
    moves what carries information (the lettering and line tokens here, the displays and art
    through --lum): below 100 toward the background, above it toward white, or black on Solar.
    Backgrounds and glass don't move with it. */
+/* Small JSON wrapper over localStorage; every saved setting goes through it */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+};
 const DISPLAY = (() => {
   const LUNAR = { amber: "#ffc24a", "amber-mid": "#ffb43a", "amber-dim": "#e0a040",
                   line: "#8a6428", glow: "#ffc24acc", "glow-soft": "#ffc24a99", texture: "#ffc24a10", vignette: "#00000073", scanline: "#0000002e",
                   "ghost-glass": "#2a1d0a" };
   // Solarized light. --screen stays dark: the displays are drawn amber on dark and the Solar
   // filter turns them to ink on pale glass; the painted glass is --glass
-  const SOLAR = { screen: "#0b0906", amber: "#cb4b16", "amber-mid": "#586e75", "amber-dim": "#657b83",
+  // "status-bar" sits under the iPhone's status bar in the installed app, whose text is white
+  // (black-translucent), so Solar's cream chassis doesn't swallow it
+  const SOLAR = { "status-bar": "#073642", screen: "#0b0906", amber: "#cb4b16", "amber-mid": "#586e75", "amber-dim": "#657b83",
                   glow: "#00000000", "glow-soft": "#00000000", texture: "#586e7510", vignette: "#00000000", scanline: "#00000000" };
   const ECLIPSE = { amber: "#ffb84a", glow: "#ffb84a55", "glow-soft": "#ffb84a40", vignette: "#00000040", scanline: "#00000014" };
   // Eclipse notches: orange and yellow were tried for the warm end and dropped, since they share
@@ -79,14 +86,11 @@ const DISPLAY = (() => {
     // --screen stays dark for its filter, so there the painted --glass moves
     if (mode === "solar") pal.glass = mix(pal.glass, pal.bg, .35); else pal.screen = mix(pal.screen, pal.bg, .35);
     pal.fill = mode === "solar" ? pal.glass : pal.screen;
-    // The plate behind the desktop controls: the same glass as the art's panel (v0.87), with the
-    // art's faint dot matrix in it
-    pal.plate = pal.fill;
+    // The plate behind the desktop controls is --fill too (v0.87), with the art's faint dot matrix
     pal["plate-dot"] = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "33";
     return pal;
   }
-  const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (_) { return d; } };
-  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+  const read = (k, d) => { const v = store.get(k, d); return v == null ? d : v; }, save = store.set;
   // One tint per mode (v0.83); v0.79-0.82 kept a single Eclipse tint as piRadioTint
   const tints = Object.assign({}, DEFAULT_TINT, { eclipse: +read("piRadioTint", 2) }, read("piRadioTints", {}));
   if (tints.v !== 2) { tints.lunar = 0; tints.v = 2; }  // v0.83's Lunar strip was cool/neutral/warm; it starts again at black
@@ -104,7 +108,9 @@ const DISPLAY = (() => {
     const r = document.documentElement, f = state.lum / 100, peak = m === "solar" ? "#000000" : "#ffffff";
     r.dataset.theme = m;
     for (const k in pal) {
-      const v = ["amber", "amber-mid", "amber-dim", "line"].includes(k) ? (f <= 1 ? mix(pal.bg, pal[k], f) : mix(pal[k], peak, f - 1)) : pal[k];
+      let v = ["amber", "amber-mid", "amber-dim", "line"].includes(k) ? (f <= 1 ? mix(pal.bg, pal[k], f) : mix(pal[k], peak, f - 1)) : pal[k];
+      if ((k === "glow" || k === "glow-soft") && f < 1)  // halos fade with the lettering, or they outshine it
+        v = v.slice(0, 7) + Math.round(parseInt(v.slice(7), 16) * f).toString(16).padStart(2, "0");
       r.style.setProperty("--" + k, v);
     }
     r.style.setProperty("--lum", f);
@@ -163,6 +169,10 @@ const DISPLAY = (() => {
   /* Solar: pale glass, and the amber-on-dark displays turned to dark ink by inverting them with the
      hue kept. Brightness goes first, so a higher setting means stronger ink */
   [data-theme="solar"] .screen { background-color: var(--glass); }
+  @media (display-mode: standalone) {
+    :root[data-theme="solar"]::before { content: ""; position: fixed; z-index: 11; top: 0; left: 0; right: 0;
+                                        height: env(safe-area-inset-top); background-color: var(--status-bar); }
+  }
   [data-theme="solar"] .screen canvas, [data-theme="solar"] .art img, [data-theme="solar"] .sigil {
     filter: brightness(var(--lum)) invert(1) hue-rotate(180deg) sepia(.25) saturate(1.4) contrast(1.15); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -724,7 +734,7 @@ const DISPLAY = (() => {
   .tuner-tape { height: 74px; }  /* any shorter and the numbers sit on the group labels */
 
   /* Display panel: drops from the header's mode key. A three-way switch like the map range, the
-     Eclipse tint as a strip like the tape tuner (segments painted with the chassis colour at each
+     mode's tint as a strip like the tape tuner (segments painted with the chassis colour at each
      point, an amber needle, notches named under it), brightness as a dot bar like VOL */
   /* It sits in .unit, so it must opt out of the console's boot flicker, which would otherwise replay
      each time the panel unhides */
@@ -810,12 +820,13 @@ const DISPLAY = (() => {
     .top { grid-area: keys; }
     .out { grid-area: out; }
     /* A borderless glass plate behind the controls column (v0.86), in the art panel's glass with the
-       dot matrix that sits behind the art (the sigil's 11-unit pitch at the art's size). Its top and
+       dot matrix that sits behind the art (the sigil's 11-unit pitch at the art's size), placed on the
+       controls' own grid areas (out to vol). Its top and
        bottom line up with the art, Level and signal panels (v0.87); the controls sit 12 px inside it,
        the vertical inset taken from the dial's padding so the row height doesn't change */
-    .ctl-plate { display: block; grid-area: 2 / 3 / 6 / 4; margin: 0 -12px; position: relative; z-index: 0; pointer-events: none;
+    .ctl-plate { display: block; grid-row: out-start / vol-end; grid-column: out-start / out-end; margin: 0 -12px; position: relative; z-index: 0; pointer-events: none;
                  --cut: 14px; clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
-                 background-color: var(--plate); background-image: radial-gradient(var(--plate-dot) .9px, transparent 1.3px);
+                 background-color: var(--fill); background-image: radial-gradient(var(--plate-dot) .9px, transparent 1.3px);
                  background-size: 7px 7px; background-position: center; background-repeat: repeat; }
     .out, .top, .dial-wrap, .vol { position: relative; z-index: 1; }
     .out { margin-top: 12px; } .vol { margin-bottom: 12px; }
@@ -1039,10 +1050,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<":
    stations.json, fetches NTS's public feeds itself, dithers art in the browser, plays every
    stream on this device, and keeps Recently played on this device. */
 const STATIC = !!window.PI_RADIO_STATIC;
-const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
-};
+// store is defined in <head>, ahead of DISPLAY
 
 /* GET JSON with a cache; if a fetch fails, keep serving the last good copy. */
 const jsonCache = {};
@@ -1754,6 +1762,7 @@ async function loadSchedule() {
     const sub = document.querySelector(`[data-sub="${ids[ch]}"]`);
     if (sub && shows[0]) sub.textContent = shows[0].title.toUpperCase();
   }
+  if (document.querySelector(".list.searching")) searchStations();  // what's on now is searchable
   $("sched").innerHTML = html || `<div class="empty">NO SCHEDULE</div>`;
   drawNext();
   $("sched").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => act.play(b.dataset.ch));
@@ -2094,7 +2103,8 @@ $("sleepBtn").addEventListener("click", cycleSleep);
 document.addEventListener("keydown", e => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
   const t = e.target;
-  if (t.matches && t.matches("input, textarea, select")) return;  // the volume slider keeps its arrows
+  if (t.matches && t.matches("input:not([type=range]), textarea, select")) return;
+  if (t.matches && t.matches("input[type=range]") && /^(Arrow|Page|Home|End)/.test(e.key)) return;  // sliders (volume, tint, brightness) keep their arrows
   const PRESET_KEYS = ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0", "Minus", "Equal"];
   const slot = PRESET_KEYS.indexOf(e.code) + 1;
   if (e.key === " " || (e.key === "Enter" && t === $("dial"))) {
@@ -2296,8 +2306,17 @@ function project(r, lat, lon, w, h) {
   if (r === RANGES.world) fx = ((fx + mapPan / 360) % 1 + 1) % 1;
   return [fx * w, (r.lat0 - lat) / (r.lat0 - r.lat1) * h];
 }
+/* Canvas glass: where a display cuts through what it drew (lakes, label backings, hidden ridges) it
+   erases to transparent, so the panel's glass shows through in every mode and tint. Painting
+   --screen instead turned to near white under Solar's filter */
+function knock(g, draw) {
+  const op = g.globalCompositeOperation;
+  g.globalCompositeOperation = "destination-out"; g.fillStyle = g.strokeStyle = "#000";
+  draw();
+  g.globalCompositeOperation = op;
+}
 function mapBaseLayer(c, w, h, dpr) {
-  const key = [mapRange, w, h, dpr, document.documentElement.dataset.theme, cssVar("--screen")].join();  // the glass follows the tint
+  const key = [mapRange, w, h, dpr].join();  // colours are fixed; the glass is erased, so modes don't change it
   if (mapBase && mapBase.key === key) return mapBase.canvas;
   const r = RANGES[mapRange], off = document.createElement("canvas");
   off.width = w * dpr; off.height = h * dpr;
@@ -2331,10 +2350,9 @@ function drawGeo(g, r, w, h) {
   };
   g.save();
   g.lineJoin = g.lineCap = "round";
-  const glass = cssVar("--screen");
-  path(GEO.lakes); g.fillStyle = glass; g.fill();
+  path(GEO.lakes); knock(g, () => g.fill());
   g.setLineDash([1, 2]); g.strokeStyle = "#86601f"; g.lineWidth = 1; g.stroke();
-  g.setLineDash([]); path(GEO.rivers); g.strokeStyle = glass; g.lineWidth = 1.4; g.stroke();
+  g.setLineDash([]); path(GEO.rivers); g.lineWidth = 1.4; knock(g, () => g.stroke());
   g.setLineDash([4, 2]); path(GEO.states.concat(GEO.borders)); g.strokeStyle = "#d08c26"; g.lineWidth = 1.1; g.stroke();
   g.restore();
 }
@@ -2459,8 +2477,8 @@ function drawMap(t) {
     labels.push([spot[0], spot[1], tw]);
     g.save();
     g.beginPath(); g.rect(spot[0] >= x ? spot[0] : spot[0] + tw - rw, spot[1], rw, 16); g.clip();  // wipe out from the dot's side
-    g.fillStyle = k.sel ? MARK : cssVar("--screen"); g.fillRect(spot[0], spot[1], tw, 16);
-    g.fillStyle = k.sel ? cssVar("--screen") : MARK; g.fillText(text, spot[0] + 3, spot[1] + 8);
+    if (k.sel) { g.fillStyle = MARK; g.fillRect(spot[0], spot[1], tw, 16); knock(g, () => g.fillText(text, spot[0] + 3, spot[1] + 8)); }
+    else { g.clearRect(spot[0], spot[1], tw, 16); g.fillStyle = MARK; g.fillText(text, spot[0] + 3, spot[1] + 8); }
     g.restore();
   }
 }
@@ -3428,7 +3446,7 @@ function drawIdle(g, w, h) {
   for (let x = 0; x < w; x += 4) g.fillRect(x, Math.round(h / 2), 2, 1);
   g.font = "18px VT323, monospace"; g.textAlign = "center"; g.textBaseline = "middle";
   const tw = g.measureText("NO CARRIER").width + 14;
-  g.fillStyle = cssVar("--screen"); g.fillRect(w / 2 - tw / 2, h / 2 - 10, tw, 20);
+  g.clearRect(w / 2 - tw / 2, h / 2 - 10, tw, 20);
   g.fillStyle = "#9c6c22"; g.fillText("NO CARRIER", w / 2, h / 2 + 1);
 }
 function drawBars(g, w, h) {
@@ -3459,7 +3477,7 @@ function drawSpectrogram(g, w, h, t) {
       g.fillRect(x, 1 + r * ch, cw - 1, ch - 1);
     }
   }
-  g.fillStyle = cssVar("--screen"); g.fillRect(0, 0, lab, h);
+  g.clearRect(0, 0, lab, h);
   g.font = "13px VT323, monospace"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#9c6c22";
   [["16K", 1], ["4K", .72], ["1K", .48], ["250", .24], ["60", .02]].forEach(([l, f]) => g.fillText(l, 0, 1 + (1 - f) * (h - 8) + 3));
 }
@@ -3564,8 +3582,7 @@ function drawRidges(g, w, h, t, slot) {
       const at = lv => lv[i0] + (lv[i1] - lv[i0]) * (f - i0), v = at(a) + (at(b) - at(a)) * frac;
       pts.push([x, Math.round(base - v * Math.pow(Math.sin(Math.PI * x / w), 1.5) * gap * 3.4)]);
     }
-    g.fillStyle = cssVar("--screen");
-    g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(w, h); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(w, h); g.closePath(); knock(g, () => g.fill());  // hide the ridges behind
     g.fillStyle = tier(1 - r / rows * .75);
     pts.forEach(([x, y]) => g.fillRect(x, y, 2, 2));
   }
