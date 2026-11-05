@@ -421,10 +421,10 @@ const DISPLAY = (() => {
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; isolation: isolate; }
-  /* Like an unlit display behind the text (v0.90): the plate's dot matrix at twice the pitch and
+  /* Like an unlit display behind the text (v0.90; the station list too, v0.94): the plate's dot matrix at twice the pitch and
      fainter, so it stays under the lettering. On a pseudo-element, since a background-image on the
      panel itself would replace the chamfer's corner diagonals */
-  .strip::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  .strip::before, .list::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
                    background-image: radial-gradient(var(--strip-dot) .9px, transparent 1.3px); background-size: 14px 14px; background-position: center; }
   .unit > *, .strip > div { min-width: 0; }  /* long scrolling titles must not widen the page */
   .detail { display: none; }
@@ -502,7 +502,8 @@ const DISPLAY = (() => {
   .vol.hw .vol-hw { display: block; }
 
   /* Station board */
-  .list { width: 100%; max-width: 420px; }
+  .list { width: 100%; max-width: 420px; position: relative; isolation: isolate; }
+  @media (max-width: 959px) { .list::before { display: none; } }  /* the station list's dots (v0.94) are desktop only, like its frame and fill */
   .list-head {
     display: none; justify-content: space-between; font-family: var(--dot); font-size: 18px;
     letter-spacing: .08em; color: var(--amber-dim); border-bottom: 1px dashed var(--line);
