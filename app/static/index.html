@@ -446,6 +446,10 @@ const DISPLAY = (() => {
   .unit.idle .playstop > span { transition: background-color .5s cubic-bezier(.15, .8, .3, 1), color .5s cubic-bezier(.15, .8, .3, 1),
                                             border-color .5s cubic-bezier(.15, .8, .3, 1), box-shadow .5s cubic-bezier(.15, .8, .3, 1); }
   .unit .playstop:active > span { transition-duration: .08s; }
+  /* The visualisers stay readable while stopped (NO CARRIER), so they don't dim, but on play they warm
+     up too (v0.99): from faint to full on the same curve, at the map's place in the sweep */
+  @keyframes warm-up { from { opacity: .15; } }
+  .unit.waking :is(.lvl canvas, .vis canvas) { animation: warm-up 1s cubic-bezier(.55, 0, .25, 1) .3s backwards; }
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; isolation: isolate; }
@@ -1715,8 +1719,17 @@ function render(s) {
   document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === id));
 }
 
-/* Power off and on: .unit.idle holds the dim, and the CSS transitions run the fall and the warm-up */
-const setPower = on => document.querySelector(".unit").classList.toggle("idle", !on);
+/* Power off and on: .unit.idle holds the dim, and the CSS transitions run the fall and the warm-up.
+   Coming on, .waking runs the visualisers' warm-up once */
+let powerTimer;
+function setPower(on) {
+  const u = document.querySelector(".unit"), waking = on && u.classList.contains("idle");
+  u.classList.toggle("idle", !on);
+  if (waking) {
+    u.classList.remove("waking"); void u.offsetWidth; u.classList.add("waking");
+    clearTimeout(powerTimer); powerTimer = setTimeout(() => u.classList.remove("waking"), 1500);
+  } else if (!on) u.classList.remove("waking");
+}
 
 /* Station board: collapsible groups (open state kept on this device), rows numbered in dial order. */
 const GROUP_COL = { "NTS Live": "colA", "Infinite Mixtapes": "colA", "Terrascan FM": "colB", "Genre Radio": "colB" };  // the rest: colC
