@@ -439,6 +439,13 @@ const DISPLAY = (() => {
   .unit:not(.idle) :is(#navMap, #mapFoot) { transition-delay: .3s; }  /* ids: the rule above carries an id's weight */
   .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) {
     transition: opacity .5s cubic-bezier(.15, .8, .3, 1); }
+  /* PLAY/STOP stays lit at rest (it's the power switch) but its light moves on the same curves:
+     PLAY warms up with the sweep, STOP lights with the fall (v0.97). A press still answers at once */
+  .unit .playstop > span { transition: background-color 1s cubic-bezier(.55, 0, .25, 1), color 1s cubic-bezier(.55, 0, .25, 1),
+                                       border-color 1s cubic-bezier(.55, 0, .25, 1), box-shadow 1s cubic-bezier(.55, 0, .25, 1); }
+  .unit.idle .playstop > span { transition: background-color .5s cubic-bezier(.15, .8, .3, 1), color .5s cubic-bezier(.15, .8, .3, 1),
+                                            border-color .5s cubic-bezier(.15, .8, .3, 1), box-shadow .5s cubic-bezier(.15, .8, .3, 1); }
+  .unit .playstop:active > span { transition-duration: .08s; }
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; isolation: isolate; }

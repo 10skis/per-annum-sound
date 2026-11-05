@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.96 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.97 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.96 |
+| Version | v0.97 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.96 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.97 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -58,7 +58,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Boot animation | `.unit > *` runs the stepped boot flicker, and an animation restarts whenever an element goes from `hidden` to shown. Anything that toggles inside `.unit` (the display panel) needs `animation: none` (v0.80). Its fill mode also holds a direct child's opacity at 1, so an opacity rule on a direct child of `.unit` (like `.vol`) does nothing: target its children (v0.89) |
 | Colour setting | `DISPLAY` turns the accent tokens (`ACCENT`: amber, mid, dim, ghosts, line, glows, textures) toward OKLCH hue 145 by the setting's fraction, only where a colour is amber-like (hue 30-110, chroma over .03), so chassis tints, cream lettering and Solar's slate don't move. Canvases and art get `hue-rotate(var(--hue-rot))` at the end of every mode's filter: 70 deg for Lunar and Eclipse (#ffb02e to #4fe245), 90 for Solar's dark ink (#9f3b00 to #006b00). Stored as piRadioHue (0-1), snapping to the ends within .1. Hard-coded CSS ambers must become tokens or they won't turn (the day bar was fixed in v0.95) |
 | Panel textures | Three, kept distinct on purpose (v0.86-0.90): the controls plate has 7 px dots (`--plate-dot`), the now-playing panel and the desktop station list 14 px fainter dots (`--strip-dot`, on `::before` so the chamfer diagonals survive; the list since v0.94), the Level and spectrum panels a 12 px grid (`--grid`, on their canvases; v0.91 added spectrum). All are `DISPLAY` tokens |
-| Power off | Stopped, `.unit.idle` (set with the art's and title's `.off`) dims the map canvas and foot, presets, shuffle, dial, tape, VOL and the phone tuner to 25%. PLAY/STOP stays lit as the power switch, and everything stays usable (v0.89). Since v0.96 one pair of CSS transitions covers those and the art and title together: down .5 s, fast then settling; up 1 s, slow start, sweeping controls, then title (+.1 s), art (+.2 s), map (+.3 s). Robert read v0.93's stepped flicker as a glitch, not a power-up: keep power changes smooth. The delay rules need id selectors to outweigh the base rule |
+| Power off | Stopped, `.unit.idle` (set with the art's and title's `.off`) dims the map canvas and foot, presets, shuffle, dial, tape, VOL and the phone tuner to 25%. PLAY/STOP stays lit as the power switch, and everything stays usable (v0.89). Since v0.96 one pair of CSS transitions covers those and the art and title together: down .5 s, fast then settling; up 1 s, slow start, sweeping controls, then title (+.1 s), art (+.2 s), map (+.3 s). Robert read v0.93's stepped flicker as a glitch, not a power-up: keep power changes smooth. The delay rules need id selectors to outweigh the base rule. PLAY/STOP never dims, but since v0.97 its amber moves between the halves on the same curves (PLAY 1 s warm-up, STOP .5 s fall); a press still answers in .08 s |
 | Class name clashes | It's one 2,500-line file. The ticker once used `.tk`, the tape's tick class, and turned the ticks into a solid line. Grep a class name before using it |
 | Phone header | The full header needs about 460 px, so below 960 px (where the unit is at most 420 wide) it shows P·A·S and drops the clock and "ON AIR". Anything wider than the screen widens the whole page on iPhone and knocks the art and tape out of line |
 | Off-air stations | The Lot Radio (`lot`) goes off air at times; its playlist then answers #EXT-X-ERROR and the page shows NO SIGNAL under the title. Check their site before calling a stream dead |
@@ -89,7 +89,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- v0.47 is live; v0.96 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
+- v0.47 is live; v0.97 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - 79 stations but 70 `DIAL_GLYPHS`, so the last nine stations reuse glyphs from the start of the list. Add nine more glyphs if Robert notices or wants each station unique.
