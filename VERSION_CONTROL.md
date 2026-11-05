@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.89: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.90: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.90 | 2026-11-05 | Sparse dot pattern in the now-playing panel | [link](updates/2026-11-05-now-playing-dots.md) |
 | v0.89 | 2026-11-05 | Power off: map and controls dim when stopped; faint grid behind the Level displays | [link](updates/2026-11-05-power-off-level-grid.md) |
 | v0.88 | 2026-11-05 | Review fixes: Solar status bar, glows dim with brightness, keys from sliders, canvas glass erased, live search, plate on named areas | [link](updates/2026-11-05-review-fixes.md) |
 | v0.87 | 2026-11-04 | Controls plate in the art panel's glass, lined up with the panels beside it | [link](updates/2026-11-04-plate-aligned.md) |

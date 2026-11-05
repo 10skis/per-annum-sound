@@ -89,6 +89,7 @@ const DISPLAY = (() => {
     // The plate behind the desktop controls is --fill too (v0.87), with the art's faint dot matrix
     pal["plate-dot"] = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "33";
     pal.grid = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "14";  // the Level panel's graticule
+    pal["strip-dot"] = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "1f";  // the now-playing panel's sparser, fainter dots
     return pal;
   }
   const read = (k, d) => { const v = store.get(k, d); return v == null ? d : v; }, save = store.set;
@@ -412,7 +413,12 @@ const DISPLAY = (() => {
   .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape) { opacity: .25; }  /* .vol's children: .vol itself is held at full by the boot animation */
 
   /* Text strip; on desktop it grows into the show detail panel */
-  .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; }
+  .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; isolation: isolate; }
+  /* Like an unlit display behind the text (v0.90): the plate's dot matrix at twice the pitch and
+     fainter, so it stays under the lettering. On a pseudo-element, since a background-image on the
+     panel itself would replace the chamfer's corner diagonals */
+  .strip::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+                   background-image: radial-gradient(var(--strip-dot) .9px, transparent 1.3px); background-size: 14px 14px; background-position: center; }
   .unit > *, .strip > div { min-width: 0; }  /* long scrolling titles must not widen the page */
   .detail { display: none; }
   .line { font-family: var(--dot); white-space: nowrap; overflow: hidden; line-height: 1; transition: opacity .2s; }
