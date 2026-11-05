@@ -88,6 +88,7 @@ const DISPLAY = (() => {
     pal.fill = mode === "solar" ? pal.glass : pal.screen;
     // The plate behind the desktop controls is --fill too (v0.87), with the art's faint dot matrix
     pal["plate-dot"] = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "33";
+    pal.grid = (mode === "solar" ? pal.amber : pal["amber-dim"]) + "14";  // the Level panel's graticule
     return pal;
   }
   const read = (k, d) => { const v = store.get(k, d); return v == null ? d : v; }, save = store.set;
@@ -227,7 +228,10 @@ const DISPLAY = (() => {
   /* Level strip under the art (desktop): the last ~30 s of left and right level */
   .artcol { display: contents; }
   .lvl { display: none; }
-  .lvl canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size; }
+  .lvl canvas { width: 100%; height: 100%; min-height: 0; display: block; contain: size;
+                /* a faint graticule behind the Level displays, like a scope's (v0.89) */
+                background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+                background-size: 12px 12px; background-position: center; }
 
   /* Up next: NTS shows on a small timeline, or the tracks recently heard on this station */
   .next { padding-top: 10px; display: grid; gap: 10px; }  /* spacing, not a rule, sets it off from the description */
@@ -402,6 +406,10 @@ const DISPLAY = (() => {
     filter: drop-shadow(0 0 2px var(--glow-soft)); transition: opacity .2s;
   }
   .off img, .off .line, .off .detail { opacity: .2; text-shadow: none; }
+  /* Power off (v0.89): stopped, the map and the controls dim with the art and the title. PLAY/STOP
+     stays lit, since it's the power switch; everything stays usable and comes back up on play */
+  .map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape { transition: opacity .5s cubic-bezier(.3, .7, .3, 1); }
+  .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape) { opacity: .25; }  /* .vol's children: .vol itself is held at full by the boot animation */
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; }
@@ -1626,6 +1634,7 @@ function render(s) {
   $("btnStop").classList.toggle("on", !on);
   $("artScreen").classList.toggle("off", !on);
   $("strip").classList.toggle("off", !on);
+  document.querySelector(".unit").classList.toggle("idle", !on);  // power off: see .unit.idle
   drawPresets(id, on);
   $("sleepBtn").hidden = !on;
 
