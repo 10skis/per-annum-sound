@@ -408,9 +408,16 @@ const DISPLAY = (() => {
   }
   .off img, .off .line, .off .detail { opacity: .2; text-shadow: none; }
   /* Power off (v0.89): stopped, the map and the controls dim with the art and the title. PLAY/STOP
-     stays lit, since it's the power switch; everything stays usable and comes back up on play */
-  .map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape { transition: opacity .5s cubic-bezier(.3, .7, .3, 1); }
-  .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape) { opacity: .25; }  /* .vol's children: .vol itself is held at full by the boot animation */
+     stays lit, since it's the power switch; everything stays usable. .vol's children, since .vol
+     itself is held at full by the boot animation */
+  .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape) { opacity: .25; }
+  /* Power down and up (v0.93): every part that dims flickers together, in the boot animation's
+     stepped style, then settles at its own level (no end keyframe, so each lands where its rule puts
+     it). setPower() adds the class for one run */
+  @keyframes power-down { 0% { opacity: 1; } 14% { opacity: .5; } 24% { opacity: .9; } 38% { opacity: .3; } 52% { opacity: .55; } }
+  @keyframes power-up { 0% { opacity: .2; } 16% { opacity: .75; } 28% { opacity: .3; } 44% { opacity: 1; } 58% { opacity: .55; } 70% { opacity: 1; } }
+  .unit.power-down :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) { animation: power-down .6s linear; }
+  .unit.power-up :is(.map canvas, .map-foot, .presets, #btnRandom, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) { animation: power-up .7s linear; }
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; isolation: isolate; }
@@ -1640,7 +1647,7 @@ function render(s) {
   $("btnStop").classList.toggle("on", !on);
   $("artScreen").classList.toggle("off", !on);
   $("strip").classList.toggle("off", !on);
-  document.querySelector(".unit").classList.toggle("idle", !on);  // power off: see .unit.idle
+  setPower(on);
   drawPresets(id, on);
   $("sleepBtn").hidden = !on;
 
@@ -1672,6 +1679,20 @@ function render(s) {
   }
 
   document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === id));
+}
+
+/* Power off and on: .unit.idle holds the dim (see the CSS); a change of state runs the flicker once.
+   Not on the first render, which the boot animation covers */
+let powerWas = null, powerTimer;
+function setPower(on) {
+  const u = document.querySelector(".unit");
+  u.classList.toggle("idle", !on);
+  if (powerWas !== null && powerWas !== on && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    u.classList.remove("power-up", "power-down"); void u.offsetWidth;  // restart if it's mid-run
+    u.classList.add(on ? "power-up" : "power-down");
+    clearTimeout(powerTimer); powerTimer = setTimeout(() => u.classList.remove("power-up", "power-down"), 800);
+  }
+  powerWas = on;
 }
 
 /* Station board: collapsible groups (open state kept on this device), rows numbered in dial order. */
