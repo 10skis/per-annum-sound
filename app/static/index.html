@@ -2392,6 +2392,7 @@ function toggleZoom(x, y) {
   else { if (mapZ.z < 1.01) { mapZ.fx = x; mapZ.fy = y; mapZ.px = mapZ.py = 0; } mapZ.target = mapRange === "galaxy" ? GAL_ZOOM : MAP_ZOOM; }
   $("navMap").style.touchAction = mapZ.target > 1 ? "none" : "pan-y";  // zoomed: any finger drag pans; unzoomed: only sideways
 }
+const MARK = "#e8c43a", MARK_HOT = "#ffe56e";  // station markers on the maps and the galaxy
 function drawMap(t) {
   if (mapRange === "galaxy") return drawGalaxy(t);
   const c = $("navMap");
@@ -2454,7 +2455,6 @@ function drawMap(t) {
   mapHits = clusters;
   // Markers first, labels on top. A city shows just its dot until the pointer is over it (or it's
   // selected); then its label wipes out from the dot, and wipes back when the pointer leaves.
-  const MARK = "#e8c43a", MARK_HOT = "#ffe56e";
   for (const k of clusters) {
     k.ids = k.cities.flatMap(ci => ci.ids);
     k.key = k.cities[0].name;
@@ -2637,23 +2637,20 @@ function drawGalaxy(t) {
   const dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
   if (!W || !H) return;
   if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
-  const g = c.getContext("2d"), css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
-  const A = v("--amber"), MID = v("--amber-mid"), DIM = v("--amber-dim"), GHOST = v("--amber-ghost"), LINE = v("--line"), BG = v("--bg");
+  // Drawn in the maps' own palette (v0.92): square dots in Terra's land tones, yellow station
+  // markers, dotted lines, dim plotter text. Fixed colours like the maps, so each mode's canvas
+  // filter treats them the same; the CSS tokens are already bright and went white under Lunar's
+  const g = c.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
   const { z, tx, ty } = zoomStep(t, W, H);
   const tilt = .5, R0 = Math.min(W * .44, (H - 30) * .5 / tilt), R = R0 * z, cx = W / 2 * z + tx, cy = (H / 2 + 3) * z + ty;  // zoom folded into centre and radius
   const spin = reduceMotion ? 0 : (t / 1000) * TAU / 300;  // one turn every five minutes
   const at = (r, a) => [cx + R * r * Math.cos(a + spin), cy + R * r * Math.sin(a + spin) * tilt];
-  // Orbit rings and bearing ticks, like the map's plotter frame
-  g.strokeStyle = LINE; g.lineWidth = 1; g.setLineDash([1, 3]);
-  for (const rr of [.33, .66, 1]) { g.beginPath(); g.ellipse(cx, cy, R * rr, R * rr * tilt, 0, 0, TAU); g.stroke(); }
-  g.setLineDash([]);
-  for (let i = 0; i < 36; i++) { const a = i * TAU / 36, k = i % 3 ? 1.03 : 1.06;
-    g.beginPath(); g.moveTo(cx + R * Math.cos(a), cy + R * Math.sin(a) * tilt); g.lineTo(cx + R * k * Math.cos(a), cy + R * k * Math.sin(a) * tilt); g.stroke(); }
-  // The disc, in four fills: ghost, dim, mid, amber
+  // The disc: square dots in four tones, up to Terra's land; a dotted graticule outside it, like
+  // the maps' grid (fixed to the frame, so it doesn't turn)
   const CELL = W < 400 ? 3.5 : 4, paths = [new Path2D(), new Path2D(), new Path2D(), new Path2D()], T = GAL.table;
-  const dot = (k, x, y, r) => { paths[k].moveTo(x + r, y); paths[k].arc(x, y, r, 0, TAU); };
-  for (let y = CELL / 2; y < H; y += CELL) for (let x = CELL / 2; x < W; x += CELL) {
+  const dot = (k, x, y, d) => paths[k].rect(x - d / 2, y - d / 2, d, d);
+  for (let y = CELL / 2, iy = 0; y < H; y += CELL, iy++) for (let x = CELL / 2, ix = 0; x < W; x += CELL, ix++) {
     const dx = (x - cx) / R, dy = (y - cy) / (R * tilt), r = Math.hypot(dx, dy);
     let L = 0;
     if (r < GAL_RMAX) {
@@ -2662,31 +2659,30 @@ function drawGalaxy(t) {
       L = T[ri * GAL_NA + a0] * (1 - f) + T[ri * GAL_NA + a1] * f;  // blended round the circle, so the turn is smooth
     }
     if (dy < 0) L *= .8;  // far side, a little dimmer
-    if (L < .1) { dot(0, x, y, .55); continue; }
-    dot(L > 1.7 ? 3 : L > .8 ? 2 : 1, x, y, Math.min(CELL * .6, .35 + Math.sqrt(L) * CELL * .3));
+    if (L < .1) { if (ix % 15 === 0 || iy % 15 === 0) dot(0, x, y, 1.5); continue; }
+    dot(L > 1.4 ? 3 : L > .5 ? 2 : 1, x, y, Math.min(3, 1.3 + Math.sqrt(L) * 1.6));  // up to Terra's 3 px land dots
   }
-  [GHOST, DIM, MID, A].forEach((col, k) => { g.fillStyle = col; g.fill(paths[k]); });
-  // Constellation lines along each arm, then the stars
+  ["#3a2a10", "#6e5019", "#86601f", "#a87426"].forEach((col, k) => { g.fillStyle = col; g.fill(paths[k]); });
+  // Each arm's stations joined by a dotted line, then the stars as the maps' city markers
   const cur = selectedId(), playing = S && S.playing, hov = galHover && STN[galHover];
   galPts = GAL.stars.map(s => { const [x, y] = at(s.r, s.a); return { ...s, x, y }; });
-  g.strokeStyle = DIM; g.globalAlpha = .55;
+  g.strokeStyle = "#86601f"; g.lineWidth = 1; g.setLineDash([1, 2]);
   for (let k = 0; k < 4; k++) { const arm = galPts.filter(p => p.k === k).sort((a, b) => a.r - b.r);
     g.beginPath(); arm.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.stroke(); }
-  g.globalAlpha = 1;
+  g.setLineDash([]);
   for (const p of galPts) {
     const lit = p.id === cur, sib = hov && hov.city && STN[p.id].city === hov.city;
-    const s = lit || sib ? 5 : p.k < 0 ? 2 : 3;  // the NTS ring smaller, so the core stays a core
-    g.fillStyle = BG; g.fillRect(p.x - s / 2 - 1.5, p.y - s / 2 - 1.5, s + 3, s + 3);  // a dark gap so each star reads as a marker
-    g.fillStyle = A; g.shadowColor = A; g.shadowBlur = lit ? 10 : 4;
+    const s = lit || sib ? 6 : p.k < 0 ? 3 : 4;  // the NTS ring smaller, so the core stays a core
+    g.clearRect(p.x - s / 2 - 1.5, p.y - s / 2 - 1.5, s + 3, s + 3);  // a gap of glass so each star reads as a marker
+    g.fillStyle = lit || sib || p.id === galHover ? MARK_HOT : MARK; g.shadowColor = "#d9b000"; g.shadowBlur = lit && playing ? 10 : 4;
     g.fillRect(p.x - s / 2, p.y - s / 2, s, s); g.shadowBlur = 0;
-    if (lit && playing && !reduceMotion) {
-      const k = (t / 2400) % 1;  // slow breathing ring
-      g.strokeStyle = A; g.globalAlpha = 1 - k;
-      g.beginPath(); g.arc(p.x, p.y, 4 + k * 12, 0, TAU); g.stroke(); g.globalAlpha = 1;
+    if (lit && playing && !reduceMotion) {  // the maps' widening square
+      const ph = (t % 1600) / 1600, rad = 4 + ph * 10;
+      g.strokeStyle = `rgba(232,196,58,${(1 - ph) * .85})`; g.strokeRect(p.x - rad, p.y - rad, rad * 2, rad * 2);
     }
   }
-  // Arm names past each arm's outermost star
-  g.font = "12px VT323, monospace"; g.fillStyle = MID; g.textBaseline = "middle";
+  // Arm names past each arm's outermost star, in the plotter's dim text
+  g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22"; g.textBaseline = "middle";
   GAL_ARMS.forEach((name, k) => {
     const tip = galPts.filter(p => p.k === k).sort((a, b) => b.r - a.r)[0]; if (!tip) return;
     const [x, y] = at(tip.r + .1, tip.a + .08);
@@ -2694,19 +2690,19 @@ function drawGalaxy(t) {
     g.textAlign = x < cx ? "right" : "left";
     g.fillText(`${GAL_LABEL[name]} ${GAL.counts[k]}`, Math.max(2, Math.min(W - 2, x)), Math.max(16, Math.min(H - 14, y)));
   });
-  // Hover: name and city on a leader line
+  // Hover: name and city on a leader line, in the maps' label style
   const h = galPts.find(p => p.id === galHover);
   if (h) {
     const st = STN[h.id], label = `${st.name} · ${st.city || "ONLINE"}`.toUpperCase(), right = h.x < W - 150;
     const lx = h.x + (right ? 18 : -18), ly = Math.max(14, h.y - 14);
-    g.strokeStyle = A; g.beginPath(); g.moveTo(h.x, h.y); g.lineTo(lx, ly); g.stroke();
+    g.strokeStyle = MARK; g.beginPath(); g.moveTo(h.x, h.y); g.lineTo(lx, ly); g.stroke();
     g.strokeRect(h.x - 5.5, h.y - 5.5, 11, 11);
-    g.font = "14px VT323, monospace"; g.textAlign = right ? "left" : "right"; g.textBaseline = "bottom";
-    const tw = g.measureText(label).width; g.fillStyle = BG; g.fillRect(right ? lx : lx - tw - 4, ly - 14, tw + 4, 14);
-    g.fillStyle = A; g.fillText(label, lx + (right ? 2 : -2), ly);
+    g.font = "15px VT323, monospace"; g.textAlign = right ? "left" : "right"; g.textBaseline = "bottom";
+    const tw = g.measureText(label).width; g.clearRect(right ? lx : lx - tw - 4, ly - 15, tw + 4, 15);
+    g.fillStyle = MARK; g.fillText(label, lx + (right ? 2 : -2), ly);
   }
   // Plotter corners
-  g.font = "12px VT323, monospace"; g.fillStyle = DIM;
+  g.font = "12px VT323, monospace"; g.fillStyle = "#9c6c22";
   g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${galPts.length} STARS · ${W < 400 ? "SBC" : "SBC · 14° PITCH"}${z > 1.01 ? `  ×${z.toFixed(1)}` : ""}`, 2, 1);
   g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(`ROT ${String(Math.round((spin * 180 / Math.PI) % 360)).padStart(3, "0")}°`, W - 2, H - 1);
 }

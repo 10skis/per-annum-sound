@@ -1,15 +1,15 @@
 # Per Annum Sound: Handoff
 
-Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.91 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
+Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-03 at v0.34, updated at v0.92 so a new session can pick up without re-reading 34 update notes. History lives in `VERSION_CONTROL.md` and `updates/`; this file is the rules and the traps.
 
 ## Snapshot
 
 | Field | Value |
 |---|---|
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
-| Version | v0.91 |
+| Version | v0.92 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.91 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
+| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.92 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
 | Repo | `~/Documents/claude-workspace`, pushed to GitHub |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
 | Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
@@ -44,7 +44,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Art shimmer | Breathing, not flashing (v0.50): a 5.2 s ring or 4.6 s sweep every 7 to 16 s, dots swelling by up to about 40%, no highlight colour. Cover art and sigils (v0.51). Since v0.49 halftone art swells its own dots (read back from the image onto `#artDots`, image hidden only during the ripple); logos keep the `.shimmer` overlay |
 | Hold | Tap the art to hold shimmer and sigil rotation; tap the title to stop its scroll. Tap again resumes; remembered per device. About opens from the line under the title and the description, not the title |
 | Sigil (no artwork) | Turning dotted rings, city code large with city name under it (not the station number), glowing dot matrix behind (a halo under each dot, v0.65; page and art.py match). Breathes with the same ripple as cover art |
-| Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. USA and EUROPE carry borders and state/province lines (both dashed amber, so the two ranges match), rivers and lakes from `static/geo.js` (`make_geo.py`, Natural Earth 1:50m), drawn once into the cached base layer. Phones (map under 460 px) get none of it, plain dots like TERRA (Robert's call). Ranges USA, EUROPE, TERRA (the world view; `world` in code and storage) and GALAXY; in TERRA, tapping the European or North American cluster zooms to that range. GALAXY (`drawGalaxy`) is the collection as a barred spiral: NTS round the bulge, one arm per group lit by group size, stations along it by longitude; a halftone on a fixed grid from a polar light table, about 1 ms a frame. Tap a star to play; tap empty space to zoom 2.6× (the grid stays put and the disc grows under it), drag or scroll to move, tap again to come out. Zoom and pan share `zoomStep`/`toggleZoom` with the maps |
+| Map | Dots only; label wipes out on hover. World view drifts left slowly, pauses on hover. Click empty map = zoom 1.9×, again = out; drag or scroll pans. USA and EUROPE carry borders and state/province lines (both dashed amber, so the two ranges match), rivers and lakes from `static/geo.js` (`make_geo.py`, Natural Earth 1:50m), drawn once into the cached base layer. Phones (map under 460 px) get none of it, plain dots like TERRA (Robert's call). Ranges USA, EUROPE, TERRA (the world view; `world` in code and storage) and GALAXY; in TERRA, tapping the European or North American cluster zooms to that range. GALAXY (`drawGalaxy`) is the collection as a barred spiral: NTS round the bulge, one arm per group lit by group size, stations along it by longitude; a halftone on a fixed grid from a polar light table, about 1 ms a frame. Since v0.92 it's drawn in the maps' fixed palette like Terra: square dots up to Terra's 3 px #86601f land, yellow `MARK` station squares, dotted arm lines, #9c6c22 plotter text, a dotted graticule outside the disc, no orbit rings. It used to read the CSS tokens, which are already bright and went white under Lunar's canvas filter; canvas art should use the maps' fixed colours. Tap a star to play; tap empty space to zoom 2.6× (the grid stays put and the disc grows under it), drag or scroll to move, tap again to come out. Zoom and pan share `zoomStep`/`toggleZoom` with the maps |
 | Signal panel | Every station gets: what's on (NTS timeline or recent tracks), day and night bar, nearby and similar, your listening |
 | Board | Search at the end of the Recently played row (its own row on phones, v0.82): every word must match a station's name, city, place, code, genre, group, "NTS" for any NTS channel, or the row's live subtitle. Matching groups open for the search without touching the saved open state; empty groups hide; Enter plays the first match; / focuses, Esc clears. Collapsible groups. Columns: NTS Live and Infinite Mixtapes; Terrascan FM and Genre Radio; Deep Cuts and Talk Radio (`GROUP_COL`). Two columns 960–1279 px (third column under the second), three from 1280. Recently played ticker above the columns, hover lights the row |
 | Header readouts | City, position, local time, distance from NYC, signal. Scroll slower than the station title when too long |
@@ -88,7 +88,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- v0.47 is live; v0.91 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
+- v0.47 is live; v0.92 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - 79 stations but 70 `DIAL_GLYPHS`, so the last nine stations reuse glyphs from the start of the list. Add nine more glyphs if Robert notices or wants each station unique.
