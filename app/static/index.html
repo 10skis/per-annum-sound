@@ -426,18 +426,19 @@ const DISPLAY = (() => {
   }
   .off img, .off .line, .off .detail { opacity: .2; text-shadow: none; }
   /* Power off (v0.89): stopped, the map and the controls dim with the art and the title, PLAY/STOP
-     included since v0.98 (Robert's call); everything stays usable. .vol's children, since .vol
+     included since v0.98 and the Level and spectrum displays since v0.100 (Robert's calls); everything
+     stays usable. .vol's children, since .vol
      itself is held at full by the boot animation */
-  .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .playstop, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape) { opacity: .25; }
+  .unit.idle :is(.map canvas, .map-foot, .lvl canvas, .vis canvas, .presets, #btnRandom, .playstop, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape) { opacity: .25; }
   /* Power down and up (v0.96, after v0.93's stepped flicker read as a glitch): one smooth curve for
      everything that dims. Down drops fast and settles, like a switch cutting out; up starts slow and
      rises to full, like a valve warming, sweeping out from the controls to the panels and the map */
-  :is(.map canvas, .map-foot, .presets, #btnRandom, .playstop, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) {
+  :is(.map canvas, .map-foot, .lvl canvas, .vis canvas, .presets, #btnRandom, .playstop, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) {
     transition: opacity 1s cubic-bezier(.55, 0, .25, 1); }
   .unit:not(.idle) :is(#strip .line, #strip .detail) { transition-delay: .1s; }
   .unit:not(.idle) :is(#artScreen img, #artScreen .sigil) { transition-delay: .2s; }
-  .unit:not(.idle) :is(#navMap, #mapFoot) { transition-delay: .3s; }  /* ids: the rule above carries an id's weight */
-  .unit.idle :is(.map canvas, .map-foot, .presets, #btnRandom, .playstop, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) {
+  .unit:not(.idle) :is(#navMap, #mapFoot, #lvl, #vis, #fall) { transition-delay: .3s; }  /* ids: the rule above carries an id's weight */
+  .unit.idle :is(.map canvas, .map-foot, .lvl canvas, .vis canvas, .presets, #btnRandom, .playstop, .dial-wrap, .vol > *, .tuner, .tuner-hint, .tuner-tape, #artScreen img, #artScreen .sigil, #strip .line, #strip .detail) {
     transition: opacity .5s cubic-bezier(.15, .8, .3, 1); }
   /* PLAY/STOP's light also moves between its halves on the same curves: PLAY warms up with the
      sweep, STOP lights with the fall (v0.97). A press still answers at once */
@@ -446,10 +447,6 @@ const DISPLAY = (() => {
   .unit.idle .playstop > span { transition: background-color .5s cubic-bezier(.15, .8, .3, 1), color .5s cubic-bezier(.15, .8, .3, 1),
                                             border-color .5s cubic-bezier(.15, .8, .3, 1), box-shadow .5s cubic-bezier(.15, .8, .3, 1); }
   .unit .playstop:active > span { transition-duration: .08s; }
-  /* The visualisers stay readable while stopped (NO CARRIER), so they don't dim, but on play they warm
-     up too (v0.99): from faint to full on the same curve, at the map's place in the sweep */
-  @keyframes warm-up { from { opacity: .15; } }
-  .unit.waking :is(.lvl canvas, .vis canvas) { animation: warm-up 1s cubic-bezier(.55, 0, .25, 1) .3s backwards; }
 
   /* Text strip; on desktop it grows into the show detail panel */
   .strip { aspect-ratio: 4 / 1; padding: 6px 12px; display: grid; align-content: center; gap: 2px; isolation: isolate; }
@@ -1719,17 +1716,8 @@ function render(s) {
   document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.id === id));
 }
 
-/* Power off and on: .unit.idle holds the dim, and the CSS transitions run the fall and the warm-up.
-   Coming on, .waking runs the visualisers' warm-up once */
-let powerTimer;
-function setPower(on) {
-  const u = document.querySelector(".unit"), waking = on && u.classList.contains("idle");
-  u.classList.toggle("idle", !on);
-  if (waking) {
-    u.classList.remove("waking"); void u.offsetWidth; u.classList.add("waking");
-    clearTimeout(powerTimer); powerTimer = setTimeout(() => u.classList.remove("waking"), 1500);
-  } else if (!on) u.classList.remove("waking");
-}
+/* Power off and on: .unit.idle holds the dim, and the CSS transitions run the fall and the warm-up */
+const setPower = on => document.querySelector(".unit").classList.toggle("idle", !on);
 
 /* Station board: collapsible groups (open state kept on this device), rows numbered in dial order. */
 const GROUP_COL = { "NTS Live": "colA", "Infinite Mixtapes": "colA", "Terrascan FM": "colB", "Genre Radio": "colB" };  // the rest: colC
