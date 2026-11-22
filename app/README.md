@@ -41,9 +41,9 @@ The spectrum shows LIVE when it's reading MPD's audio (the FIFO output in `dev/m
 .venv/bin/python build_static.py
 ```
 
-Live at https://perannum.netlify.app (published 2026-11-02; renamed from spiffy-elf-9ebf5d.netlify.app on 2026-11-03).
+Live at https://10skis.github.io/per-annum-sound/. Every push to `main` rebuilds it and publishes it to GitHub Pages (`.github/workflows/pages.yml`), so there's nothing to upload. The build takes a minute or two; progress is on the repo's Actions tab. On the iPhone, open the address in Safari, then Share → Add to Home Screen.
 
-That writes `web/`. To publish it, go to https://app.netlify.com/drop (free account), drag the `web` folder onto the page, and open the address Netlify gives you on the iPhone, then Share → Add to Home Screen. To update it later, rebuild and drag the folder onto the same site's Deploys page. Cloudflare Pages works the same way.
+It moved from Netlify (perannum.netlify.app) on 2026-11-22.
 
 ## Listening away from home with the Pi
 

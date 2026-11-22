@@ -9,17 +9,17 @@ Start here (a paste-in restart prompt is in `NEXT_SESSION.md`). Written 2026-11-
 | Product | Per Annum Sound (renamed from Pi Radio; folder stays `pi-radio`) |
 | Version | v0.101 |
 | Owner | Robert |
-| Live site | https://perannum.netlify.app (v0.47 live as of 2026-11-04, v0.101 waiting; was spiffy-elf-9ebf5d.netlify.app; Robert re-drags `app/web` to update) |
-| Repo | `~/Documents/claude-workspace`, pushed to GitHub |
+| Live site | https://10skis.github.io/per-annum-sound/, published by GitHub Actions on every push to `main` (moved from perannum.netlify.app on 2026-11-22) |
+| Repo | `~/Documents/per-annum-sound`, public at https://github.com/10skis/per-annum-sound (personal account; split out of the work workspace repo on 2026-11-22) |
 | Hardware | Raspberry Pi device scoped in `SCOPE.md`; not ordered |
-| Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
+| Open to-dos | `TODO.md` |
 
 ## How it runs
 
 | Thing | How |
 |---|---|
 | Server version (the Pi later) | `app/run.sh`, port 8080. FastAPI plus MPD; falls back to a silent mock player when MPD isn't running |
-| No-server version (Netlify) | `.venv/bin/python build_static.py` writes `app/web/`. Serve locally with `python3 -m http.server 8090` from `app/web` |
+| No-server version (GitHub Pages) | `.venv/bin/python build_static.py` writes `app/web/`. Serve locally with `python3 -m http.server 8090` from `app/web` |
 | One page, two modes | `app/static/index.html` serves both. The build injects `window.PI_RADIO_STATIC = true`; the `DATA` object switches between the server API and fetching NTS and stations.json directly |
 | Station data | `app/stations.yaml`: groups, `places` (lat/lon/label), `timezones`, per-station `about`, `info`, `genre`, `glyph`, `profile`, `founded`, `notable`, `site`, `map`, plus `codes` (airport-style city codes for the map and sigil; London is LDN by choice, not LON). Loaded by `catalog.py` for both server and build, which sorts each group by place A to Z, then name, with Online last; that is the list and dial order, so file order within a group doesn't matter |
 | Art | `art.py`: 45° halftone for covers, 1-bit for logos, sigil for stations with none. The page has matching JS for the no-server build |
@@ -81,7 +81,7 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 | Layering | The art image's drop-shadow filter paints it as its own layer. Anything meant to sit on top (`.shimmer`) needs a z-index, or it's hidden. The shimmer was invisible from v0.17 to v0.33 because of this |
 | `hidden` ignored | `[hidden] { display: none !important }` exists because class display rules override the attribute |
 | Patching | Edits are scripted string replacements with `assert count == 1`. Comment markers often appear twice (CSS and JS); match the longer, unique form |
-| Streams | Must be HTTPS (Netlify page). HLS is only detected by `.m3u8` in the URL; a playlist at a bare address (wyep.org/stream) fails, so use a direct MP3/AAC stream. More than 70 stations needs more `DIAL_GLYPHS`. BBC Radio 4 is UK-only; World Service plays abroad. Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them. No "tap play" note: fast scrolling aborts plays and used to flash it. The browser pane runs no animation frames while hidden, so rAF-timed checks stall; test logic directly, or draw frames by hand and save them. `build_static.py` replaces `web/`, so restart any server running from it |
+| Streams | Must be HTTPS (the Pages site). HLS is only detected by `.m3u8` in the URL; a playlist at a bare address (wyep.org/stream) fails, so use a direct MP3/AAC stream. More than 70 stations needs more `DIAL_GLYPHS`. BBC Radio 4 is UK-only; World Service plays abroad. Track info only from feeds that allow browser access (KEXP, Airtime, radio.co, Radiocult). Kiosk, alHara and FIP logos block browsers, so the build pre-renders them. No "tap play" note: fast scrolling aborts plays and used to flash it. The browser pane runs no animation frames while hidden, so rAF-timed checks stall; test logic directly, or draw frames by hand and save them. `build_static.py` replaces `web/`, so restart any server running from it |
 | Wikimedia art | Needs a descriptive user agent (`UA` in `art.py`) or it returns 429 and the build quietly drops the FIP logos. Check `web/art/` after a build |
 | Track titles | Some feeds send file names (250119_0258). `fileLike()` in the page filters them; prefer a feed's show name over its track title |
 | iPhone | Pages can't set volume; the bar becomes a "use the volume buttons" note |
@@ -89,10 +89,10 @@ After any change: rebuild `web/`, check in the browser at 1371 or 1440 px and at
 
 ## Open items
 
-- v0.47 is live; v0.101 is built and pushed, waiting for Robert to re-drag `app/web` to Netlify (he has about 50 Netlify credits, so he batches deploys). Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
+- Pushing to `main` deploys the site, so commit only what's ready to go live. Chrome and iOS keep an installed app's old icon: remove and reinstall it (Chrome: chrome://apps, Remove from Chrome) to see the new one.
 - Oroko Radio announced an indefinite hiatus in April 2026; its stream still answers. Robert to decide whether it stays.
 - Chillhop Radio is FluxFM's channel, not the Chillhop Music label's own stream of the same name. Possible rename to FluxFM ChillHop.
 - 79 stations but 70 `DIAL_GLYPHS`, so the last nine stations reuse glyphs from the start of the list. Add nine more glyphs if Robert notices or wants each station unique.
 - Dial glyphs: Robert accepted the text glyphs as centred under the caret (the residue is optics at his window's 0.77 fit); the tree was genuinely off and was fixed in v0.77. Don't reopen without a fresh screenshot.
 - The galaxy is small on phones (map panel about 300 x 125); zoom (tap) helps. No ask to change it yet.
-- MPD install and the hardware build: see TODO.md and SCOPE.md. On hold as of 2026-11-03.
+- MPD install and the hardware build: see `TODO.md` and SCOPE.md. On hold as of 2026-11-03.

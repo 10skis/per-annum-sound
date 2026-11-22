@@ -1,11 +1,11 @@
 # Per Annum Sound: restart brief
 
-Paste the block below into a new Claude Code chat (working directory `~/Documents/claude-workspace`) to pick up where we left off.
+Paste the block below into a new Claude Code chat (working directory `~/Documents/per-annum-sound`) to pick up where we left off.
 
 ```
-Picking up Per Annum Sound, my internet-radio web app, in projects/pi-radio. Read projects/pi-radio/HANDOFF.md first (rules, traps, open items), then the top of projects/pi-radio/VERSION_CONTROL.md for recent versions. Don't read every update file.
+Picking up Per Annum Sound, my internet-radio web app, in ~/Documents/per-annum-sound. Read HANDOFF.md first (rules, traps, open items), then the top of VERSION_CONTROL.md for recent versions. Don't read every update file.
 
-Where it stands: v0.101 is built (app/web) and pushed to GitHub. The live site https://perannum.netlify.app is still on v0.47; I re-drag app/web to Netlify myself, so don't deploy. 79 stations; map ranges USA / EUROPE / TERRA / GALAXY; display modes Lunar / Eclipse / Solar, each with its own tint strip, and one brightness setting and an amber-to-green colour setting, in a panel under the header's mode key.
+Where it stands: v0.103 is live at https://10skis.github.io/per-annum-sound/. Every push to main publishes it through GitHub Actions, so only push what's ready. 79 stations; map ranges USA / EUROPE / TERRA / GALAXY; display modes Lunar / Eclipse / Solar, each with its own tint strip, and one brightness setting and an amber-to-green colour setting, in a panel under the header's mode key.
 
 How I want to work: one small change at a time, built, checked in the browser at desktop and phone width, logged and pushed. If I ask a question, answer it and stop. If you're unsure what I mean, ask before building, and when I compare to something existing ("like Terra"), match it exactly. Keep replies short.
 
@@ -17,10 +17,10 @@ First task: [write it here]
 | Field | Value |
 |---|---|
 | Version | v0.101 (2026-11-06) |
-| Live site | https://perannum.netlify.app, on v0.47 until the next re-drag |
+| Live site | https://10skis.github.io/per-annum-sound/, deployed on every push to `main` |
 | Rules and traps | `HANDOFF.md` |
 | History | `VERSION_CONTROL.md`, `updates/` |
-| Open to-dos | `projects/TODO.md`, lines starting "Per Annum Sound:" |
+| Open to-dos | `TODO.md` |
 | Local preview | `cd app && .venv/bin/python build_static.py`, then `python3 -m http.server 8091 --directory web` |
 
 ## Last run (v0.68 to v0.101, 2026-11-04 to 06)
@@ -54,6 +54,6 @@ First task: [write it here]
 
 ## Worth doing next (Robert's call)
 
-- Re-drag `app/web` to Netlify, then check on the iPhone (haptics, notch, Spectrum/Level swipe).
+- Add the new address to the iPhone Home Screen, then check (haptics, notch, Spectrum/Level swipe).
 - Nine more dial glyphs so every station has its own.
 - Open questions in `HANDOFF.md`: Oroko Radio's hiatus, the Chillhop name.

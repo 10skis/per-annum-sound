@@ -7,13 +7,14 @@
 **Goal:** A DIY Raspberry Pi radio for NTS and other internet radio on the Edifier speakers, with physical controls and an iPhone/Mac web app as a second remote. Personal project.
 
 ## Current version
-v0.102: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://perannum.netlify.app. Radio output still on a mock player until MPD is installed. Hardware not ordered
+v0.103: Per Annum Sound web app with 79 stations, console styling, nav map, halftone art, schedule, spectrum and on-device playback, plus a no-server build for a free static host so it works away from home before the Pi, live at https://10skis.github.io/per-annum-sound/. Radio output still on a mock player until MPD is installed. Hardware not ordered
 
 ## History
 Newest first. Each entry links to its update file.
 
 | Version | Date | Summary | Update |
 |---|---|---|---|
+| v0.103 | 2026-11-22 | Own public repo on 10skis; GitHub Pages replaces Netlify | [link](updates/2026-11-22-own-repo-pages.md) |
 | v0.102 | 2026-11-22 | Mutant Radio moved to its own HLS stream after RadioKing went 404 | [link](updates/2026-11-22-mutant-stream.md) |
 | v0.101 | 2026-11-06 | PLAY breathes like a standby light while stopped | [link](updates/2026-11-06-standby-glow.md) |
 | v0.100 | 2026-11-06 | Visualisers dim and warm up exactly like the map | [link](updates/2026-11-06-visualisers-power.md) |
@@ -118,4 +119,4 @@ Newest first. Each entry links to its update file.
 | v0.1 | 2026-11-02 | Project created, device and web app scoped | [link](updates/2026-11-02-project-created.md) |
 
 ## Open items
-Tracked in `~/Documents/claude-workspace/projects/TODO.md`.
+Tracked in `TODO.md`.

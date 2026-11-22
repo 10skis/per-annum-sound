@@ -1,5 +1,5 @@
 """Builds the no-server version of the app into web/, ready to upload to a static host
-(Netlify, Cloudflare Pages). Run after changing stations.yaml or the page:
+(GitHub Pages). Run after changing stations.yaml or the page:
     .venv/bin/python build_static.py
 """
 

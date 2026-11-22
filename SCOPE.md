@@ -115,7 +115,7 @@ A web page served by the Pi and saved to the iPhone home screen (Safari → Shar
 | Signal readout | Codec, bitrate, sample rate, plus a clock |
 | Recently played | Last 50 shows and tracks, logged every 15 s while playing |
 | Output switch | RADIO plays on the speakers at home; THIS DEVICE plays the stream on the phone or laptop, with lock-screen controls |
-| Away from home | Until the Pi: a no-server build on a free static host (Netlify, live at https://perannum.netlify.app). With the Pi: Tailscale private network to it |
+| Away from home | Until the Pi: a no-server build on a free static host (GitHub Pages, live at https://10skis.github.io/per-annum-sound/). With the Pi: Tailscale private network to it |
 | Spectrum | 32-band analyser from MPD's FIFO output; a simulation labelled SIM when that isn't available |
 | Presets | Twelve preset keys in one row, six showing and a swipe for 7-12, car-radio style: tap to play, hold to save the current station. Kept per device for now; the first six are candidates for physical buttons on the Pi |
 | Listening and sleep timers | Time on the current station next to ON AIR; ZZ sets a 15, 30, 60 or 90 minute sleep timer that fades out where the device allows |
@@ -157,4 +157,4 @@ Changed 2026-11-02: the web app is built first, on the Mac, then the physical de
 
 ## Open items
 
-Tracked in `~/Documents/claude-workspace/projects/TODO.md`.
+Tracked in `TODO.md`.

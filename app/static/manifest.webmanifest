@@ -1,12 +1,12 @@
 {
   "name": "Per Annum Sound",
   "short_name": "Per Annum",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0e0c0a",
   "theme_color": "#0e0c0a",
   "icons": [
-    {"src": "/static/icon-180.png", "sizes": "180x180", "type": "image/png"},
-    {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png"}
+    {"src": "static/icon-180.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "static/icon-512.png", "sizes": "512x512", "type": "image/png"}
   ]
 }
