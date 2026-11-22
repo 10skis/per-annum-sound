@@ -16,6 +16,8 @@
 ## Verified
 - Before publishing, scanned the project's full history for work names, the work email, credentials and local addresses. Only the commit author email needed changing; listening history and state files were never committed.
 - Built locally and served under `/per-annum-sound/`: all 79 stations load, no missing files.
+- Live: the Actions deploy passed in 31 s. On https://10skis.github.io/per-annum-sound/ every file loads, the service worker registers at the subpath, all 79 stations are there and Mutant Radio played. Not yet checked on the iPhone.
+- Pushes from this checkout use the 10skis account through a repo-level credential helper (`gh auth token --user 10skis`); gh's active account stays the work one, so the workspace still pushes as rwitenski-flowx.
 
 ## Next steps
 - Add the new address to the iPhone Home Screen, and delete the Netlify site. See `TODO.md`.
